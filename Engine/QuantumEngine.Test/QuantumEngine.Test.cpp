@@ -3,6 +3,8 @@
 
 #include "framework.h"
 #include "QuantumEngine.Test.h"
+#include "Platform/Application.h"
+#include "Platform/GraphicWindow.h"
 
 #define MAX_LOADSTRING 100
 
@@ -26,33 +28,35 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Place code here.
-
+    QuantumEngine::Platform::Application::CreateApplication(hInstance);
+    auto win = QuantumEngine::Platform::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
+    win->Update();
     // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_QUANTUMENGINETEST, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
+    //LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+    //LoadStringW(hInstance, IDC_QUANTUMENGINETEST, szWindowClass, MAX_LOADSTRING);
+    //MyRegisterClass(hInstance);
 
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
+    //// Perform application initialization:
+    //if (!InitInstance (hInstance, nCmdShow))
+    //{
+    //    return FALSE;
+    //}
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_QUANTUMENGINETEST));
+    //HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_QUANTUMENGINETEST));
 
-    MSG msg;
+    //MSG msg;
 
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
+    //// Main message loop:
+    //while (GetMessage(&msg, nullptr, 0, 0))
+    //{
+    //    if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+    //    {
+    //        TranslateMessage(&msg);
+    //        DispatchMessage(&msg);
+    //    }
+    //}
 
-    return (int) msg.wParam;
+    //return (int) msg.wParam;
 }
 
 
