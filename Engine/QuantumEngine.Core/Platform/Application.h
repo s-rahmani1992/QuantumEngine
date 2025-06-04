@@ -15,11 +15,12 @@ namespace QuantumEngine::Platform {
 		static void CreateApplication(HINSTANCE hInstance); //Creates singleton for apploication 
 		static ref<GraphicWindow> CreateGraphicWindow(const WindowProperties& properties); // Creates new window object with properties
 	private:
-		static void CreateWindowClass();
+		void CreateWindowClass();
+		static Application m_instance;
 
-		static HINSTANCE m_app_instance;
+		HINSTANCE m_app_instance;
+		ATOM winClass;
 
-		static ATOM winClass;
 		static LRESULT CALLBACK OnWindowMessage(HWND, UINT, WPARAM, LPARAM);
 	};
 }
