@@ -5,6 +5,7 @@
 #include "QuantumEngine.Test.h"
 #include "Platform/Application.h"
 #include "Platform/GraphicWindow.h"
+#include "DX12GPUDeviceManager.h"
 
 #define MAX_LOADSTRING 100
 
@@ -29,6 +30,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // TODO: Place code here.
     QuantumEngine::Platform::Application::CreateApplication(hInstance);
+    QuantumEngine::Platform::Application::InitializeGraphicDevice<QuantumEngine::Rendering::DX12::DX12GPUDeviceManager>();
     auto win = QuantumEngine::Platform::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
     win->Update();
     // Initialize global strings

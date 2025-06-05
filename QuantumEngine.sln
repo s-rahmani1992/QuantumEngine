@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuantumEngine.Core", "Engin
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuantumEngine.Test", "Engine\QuantumEngine.Test\QuantumEngine.Test.vcxproj", "{236E2B11-253D-47D9-9244-3A0A6C3BA54B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QuantumEngine.Rendering.DirectX12", "Engine\QuantumEngine.Rendering.DirectX12\QuantumEngine.Rendering.DirectX12.vcxproj", "{BFEABCF0-C11B-4676-A29E-88FC2D265235}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -23,6 +25,10 @@ Global
 		{236E2B11-253D-47D9-9244-3A0A6C3BA54B}.Debug|x64.Build.0 = Debug|x64
 		{236E2B11-253D-47D9-9244-3A0A6C3BA54B}.Release|x64.ActiveCfg = Release|x64
 		{236E2B11-253D-47D9-9244-3A0A6C3BA54B}.Release|x64.Build.0 = Release|x64
+		{BFEABCF0-C11B-4676-A29E-88FC2D265235}.Debug|x64.ActiveCfg = Debug|x64
+		{BFEABCF0-C11B-4676-A29E-88FC2D265235}.Debug|x64.Build.0 = Debug|x64
+		{BFEABCF0-C11B-4676-A29E-88FC2D265235}.Release|x64.ActiveCfg = Release|x64
+		{BFEABCF0-C11B-4676-A29E-88FC2D265235}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -30,6 +36,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{9DAA880F-4D66-4557-B473-D8183FD9DCFB} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{236E2B11-253D-47D9-9244-3A0A6C3BA54B} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{BFEABCF0-C11B-4676-A29E-88FC2D265235} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {02ED7E20-D96E-427D-A8FA-1414DFBA3EAE}

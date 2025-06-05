@@ -8,6 +8,9 @@
     <Filter Include="Platform">
       <UniqueIdentifier>{51e82458-ad42-43f9-b8ec-702d07e43b5b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Rendering">
+      <UniqueIdentifier>{54f46882-533c-47d8-9a56-edcb967b7691}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\GraphicWindow.h">
@@ -19,6 +22,9 @@
     </ClInclude>
     <ClInclude Include="Platform\CommonWin.h">
       <Filter>Platform</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\GPUDeviceManager.h">
+      <Filter>Rendering</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

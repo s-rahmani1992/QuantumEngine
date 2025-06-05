@@ -55,7 +55,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Engine/QuantumEngine.Core/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Core;$(SolutionDir)Engine\QuantumEngine.Rendering.DirectX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -72,7 +72,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)/Engine/QuantumEngine.Core/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Core;$(SolutionDir)Engine\QuantumEngine.Rendering.DirectX12;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
@@ -102,6 +102,9 @@
   <ItemGroup>
     <ProjectReference Include="..\QuantumEngine.Core\QuantumEngine.Core.vcxproj">
       <Project>{9daa880f-4d66-4557-b473-d8183fd9dcfb}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\QuantumEngine.Rendering.DirectX12\QuantumEngine.Rendering.DirectX12.vcxproj">
+      <Project>{bfeabcf0-c11b-4676-a29e-88fc2d265235}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
