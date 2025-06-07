@@ -24,6 +24,12 @@
     <ClInclude Include="DX12GPUDeviceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DX12CommandExecuter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12GraphicContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -33,6 +39,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DX12GPUDeviceManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12CommandExecuter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12GraphicContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

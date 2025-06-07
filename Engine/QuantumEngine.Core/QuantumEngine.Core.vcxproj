@@ -97,6 +97,7 @@
     <ClInclude Include="Platform\CommonWin.h" />
     <ClInclude Include="Platform\GraphicWindow.h" />
     <ClInclude Include="Rendering\GPUDeviceManager.h" />
+    <ClInclude Include="Rendering\GraphicContext.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

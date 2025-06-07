@@ -1,5 +1,8 @@
 #include "pch.h"
+#include "Platform/GraphicWindow.h"
 #include "DX12GPUDeviceManager.h"
+#include "DX12CommandExecuter.h"
+#include "DX12GraphicContext.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 {
@@ -40,6 +43,17 @@ bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 		return false;
 }
 
+ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
+{
+	ref<DX12CommandExecuter> cmdExecuter = CreateCommandExecuter();
+	ref<DX12GraphicContext> context = std::make_shared< DX12GraphicContext>(2, cmdExecuter, window);
+	
+	if (context->Initialize(m_device.Get(), m_factory))
+		return context;
+
+	return nullptr;
+}
+
 QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::~DX12GPUDeviceManager()
 {
 #ifdef _DEBUG
@@ -48,4 +62,26 @@ QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::~DX12GPUDeviceManager()
 		m_dxgi_debug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_FLAGS(DXGI_DEBUG_RLO_DETAIL | DXGI_DEBUG_RLO_IGNORE_INTERNAL));
 	}
 #endif
+}
+
+ref<QuantumEngine::Rendering::DX12::DX12CommandExecuter> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateCommandExecuter()
+{
+	//Command Queue
+	ComPtr<ID3D12CommandQueue> cmdqueue;
+	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc{
+	.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
+	.Priority = D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
+	.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
+	.NodeMask = 0,
+	};
+
+	if (FAILED(m_device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdqueue))))
+		return nullptr;
+
+	//fence
+	ComPtr<ID3D12Fence1> fence;
+	if (FAILED(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence))))
+		return nullptr;
+
+	return std::make_shared<DX12CommandExecuter>(cmdqueue, fence);
 }

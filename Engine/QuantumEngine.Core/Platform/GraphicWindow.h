@@ -23,7 +23,7 @@ namespace QuantumEngine::Platform {
 		inline UInt16 GetWidth() const { return m_width; }
 		inline UInt16 GetHeight() const { return m_height; }
 		inline HWND GetHandle() const { return m_handle; }
-		void Update();
+		bool Update();
 	private:
 		HWND m_handle;
 		UInt16 m_width;

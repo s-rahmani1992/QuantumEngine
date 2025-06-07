@@ -6,6 +6,7 @@
 #include "Platform/Application.h"
 #include "Platform/GraphicWindow.h"
 #include "DX12GPUDeviceManager.h"
+#include "Rendering/GraphicContext.h"
 
 #define MAX_LOADSTRING 100
 
@@ -30,9 +31,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // TODO: Place code here.
     QuantumEngine::Platform::Application::CreateApplication(hInstance);
-    QuantumEngine::Platform::Application::InitializeGraphicDevice<QuantumEngine::Rendering::DX12::DX12GPUDeviceManager>();
+    auto gpuDevice = QuantumEngine::Platform::Application::InitializeGraphicDevice<QuantumEngine::Rendering::DX12::DX12GPUDeviceManager>();
     auto win = QuantumEngine::Platform::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
-    win->Update();
+    auto gpuContext = gpuDevice->CreateContextForWindows(win);
+    while (true) {
+        if (win->Update() == false)
+            break;
+
+        gpuContext->Render();
+    }
     // Initialize global strings
     //LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     //LoadStringW(hInstance, IDC_QUANTUMENGINETEST, szWindowClass, MAX_LOADSTRING);

@@ -15,11 +15,13 @@ namespace QuantumEngine::Platform {
 	public:
 		static void CreateApplication(HINSTANCE hInstance); //Creates singleton for apploication 
 		static ref<GraphicWindow> CreateGraphicWindow(const WindowProperties& properties); // Creates new window object with properties
+		inline static ref<Rendering::GPUDeviceManager> GetGPUDevice() { return m_instance.m_gpu_device; } 
 		
 		template<class T>
-		static void InitializeGraphicDevice() {
+		static ref<Rendering::GPUDeviceManager> InitializeGraphicDevice() {
 			m_instance.m_gpu_device = std::make_shared<T>();
 			m_instance.m_gpu_device->Initialize();
+			return m_instance.m_gpu_device;
 		}
 
 	private:
