@@ -100,7 +100,6 @@
     <ClInclude Include="Rendering\GraphicContext.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Platform\Application.cpp" />
     <ClCompile Include="Platform\GraphicWindow.cpp" />
   </ItemGroup>
