@@ -7,6 +7,12 @@
 #include "Platform/GraphicWindow.h"
 #include "DX12GPUDeviceManager.h"
 #include "Rendering/GraphicContext.h"
+#include "Rendering/Shader.h"
+#include "HLSLShader.h"
+#include "HLSLShaderImporter.h"
+
+namespace OS = QuantumEngine::Platform;
+namespace DX12 = QuantumEngine::Rendering::DX12;
 
 #define MAX_LOADSTRING 100
 
@@ -30,10 +36,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     // TODO: Place code here.
-    QuantumEngine::Platform::Application::CreateApplication(hInstance);
-    auto gpuDevice = QuantumEngine::Platform::Application::InitializeGraphicDevice<QuantumEngine::Rendering::DX12::DX12GPUDeviceManager>();
-    auto win = QuantumEngine::Platform::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
+    OS::Application::CreateApplication(hInstance);
+    auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
+    auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
     auto gpuContext = gpuDevice->CreateContextForWindows(win);
+
+    LPWSTR rootF = new WCHAR[500];
+    DWORD size;
+    size = GetModuleFileNameW(NULL, rootF, 500);
+    std::wstring root = std::wstring(rootF, size);
+
+    const size_t last_slash_idx = root.rfind('\\');
+    if (std::string::npos != last_slash_idx)
+        root = root.substr(0, last_slash_idx);
+
+    delete[] rootF;
+    std::string errorStr;
+    ref<QuantumEngine::Rendering::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::DX12_Shader_Type::VERTEX_SHADER, errorStr);
+
+    if (vertexShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
+    ref<QuantumEngine::Rendering::Shader> pixelShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.pix.hlsl", DX12::DX12_Shader_Type::PIXEL_SHADER, errorStr);
+
+    if (pixelShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
     while (true) {
         if (win->Update() == false)
             break;

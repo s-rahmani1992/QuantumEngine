@@ -7,6 +7,9 @@
     <Filter Include="Rendering">
       <UniqueIdentifier>{54f46882-533c-47d8-9a56-edcb967b7691}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{4d1af0e8-a6d6-46aa-97a7-27bdc4a1f017}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\GraphicWindow.h">
@@ -23,6 +26,9 @@
       <Filter>Rendering</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\GraphicContext.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\Shader.h">
       <Filter>Rendering</Filter>
     </ClInclude>
   </ItemGroup>
