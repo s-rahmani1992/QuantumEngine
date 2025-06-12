@@ -93,6 +93,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BasicTypes.h" />
+    <ClInclude Include="Core\Mesh.h" />
+    <ClInclude Include="Core\Vector2.h" />
+    <ClInclude Include="Core\Vector3.h" />
     <ClInclude Include="Platform\Application.h" />
     <ClInclude Include="Platform\CommonWin.h" />
     <ClInclude Include="Platform\GraphicWindow.h" />
@@ -101,6 +104,9 @@
     <ClInclude Include="Rendering\Shader.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Mesh.cpp" />
+    <ClCompile Include="Core\Vector2.cpp" />
+    <ClCompile Include="Core\Vector3.cpp" />
     <ClCompile Include="Platform\Application.cpp" />
     <ClCompile Include="Platform\GraphicWindow.cpp" />
   </ItemGroup>

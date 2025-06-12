@@ -10,9 +10,12 @@
 #include "Rendering/Shader.h"
 #include "HLSLShader.h"
 #include "HLSLShaderImporter.h"
+#include "Core/Mesh.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
+
+using namespace QuantumEngine;
 
 #define MAX_LOADSTRING 100
 
@@ -52,6 +55,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     delete[] rootF;
     std::string errorStr;
+
+    // Compiling Shaders
     ref<QuantumEngine::Rendering::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::DX12_Shader_Type::VERTEX_SHADER, errorStr);
 
     if (vertexShader == nullptr) {
@@ -65,6 +70,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
         return 0;
     }
+
+    // Adding Meshes
+    std::vector<Vertex> vertices = {
+        Vertex(Vector3(-0.5f, -0.5f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.5f, -0.5f, 0.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.0f, 0.8f, 0.0f), Vector2(0.5f, 1.0f), Vector3(0.0f)),
+    };
+
+    std::vector<UInt32> indices = {0, 1, 2};
+
+    std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vertices, indices);
+
+    gpuDevice->UploadMeshToGPU(mesh);
 
     while (true) {
         if (win->Update() == false)
