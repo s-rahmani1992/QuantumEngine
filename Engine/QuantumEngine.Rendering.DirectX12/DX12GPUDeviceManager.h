@@ -27,20 +27,14 @@ namespace QuantumEngine::Rendering::DX12 {
 	public:
 		virtual bool Initialize() override;
 		virtual ref<GraphicContext> CreateContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window) override;
-		virtual void UploadMeshToGPU(const ref<Mesh>& mesh) override;
+		virtual ref<GPUAssetManager> CreateAssetManager() override;
+
 		~DX12GPUDeviceManager();
 		ref<DX12CommandExecuter> CreateCommandExecuter();
 	private:
-		ref<DX12CommandExecuter> CreateUploadCommandExecuter();
-
 		ComPtr<IDXGIFactory7> m_factory;
 		ComPtr<IDXGIAdapter4> m_adapter;
 		ComPtr<ID3D12Device10> m_device;
-
-		ComPtr<ID3D12CommandAllocator> m_uploadCommandAllocator;
-		ComPtr<ID3D12GraphicsCommandList7> m_uploadCommandList;
-		ref<DX12CommandExecuter> m_meshUploadCommandExecuter;
-		std::map<ref<Mesh>, ref<DX12MeshController>> m_meshes;
 
 #ifdef _DEBUG
 		Microsoft::WRL::ComPtr<ID3D12Debug6> m_d3d12_dubug;

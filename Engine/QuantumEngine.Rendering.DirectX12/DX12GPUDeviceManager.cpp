@@ -3,7 +3,7 @@
 #include "DX12GPUDeviceManager.h"
 #include "DX12CommandExecuter.h"
 #include "DX12GraphicContext.h"
-#include "DX12MeshController.h"
+#include "DX12AssetManager.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 {
@@ -42,17 +42,6 @@ bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 
 	if (!adapterFound)
 		return false;
-
-	// Command Executer for Mesh Upload
-	m_meshUploadCommandExecuter = CreateUploadCommandExecuter();
-
-	//command allocator for mesh upload
-	if (FAILED(m_device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&m_uploadCommandAllocator))))
-		return false;
-
-	//Command List for mesh upload
-	if (FAILED(m_device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_uploadCommandList))))
-		return false;
 }
 
 ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
@@ -66,25 +55,14 @@ ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::DX12::DX
 	return nullptr;
 }
 
-void QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::UploadMeshToGPU(const ref<Mesh>& mesh)
+ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateAssetManager()
 {
-	if (m_meshes.find(mesh) != m_meshes.end()) { // mesh has already been uploaded
-		return;
-	}
+	auto assetManager = std::make_shared<DX12AssetManager>();
 
-	auto meshController = std::make_shared<DX12MeshController>(mesh);
+	if(assetManager->Initialize(m_device) == false)
+		return nullptr;
 
-	if (meshController->Initialize(m_device) == false)
-		return;
-
-	// Reset Commands
-	m_uploadCommandAllocator->Reset();
-	m_uploadCommandList->Reset(m_uploadCommandAllocator.Get(), nullptr);
-
-	// Execute Upload Commands
-	meshController->UploadToGPU(m_uploadCommandList);
-	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
-	m_meshes.insert({ mesh, meshController });
+	return assetManager;
 }
 
 QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::~DX12GPUDeviceManager()
@@ -103,28 +81,6 @@ ref<QuantumEngine::Rendering::DX12::DX12CommandExecuter> QuantumEngine::Renderin
 	ComPtr<ID3D12CommandQueue> cmdqueue;
 	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc{
 	.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
-	.Priority = D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
-	.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
-	.NodeMask = 0,
-	};
-
-	if (FAILED(m_device->CreateCommandQueue(&cmdQueueDesc, IID_PPV_ARGS(&cmdqueue))))
-		return nullptr;
-
-	//fence
-	ComPtr<ID3D12Fence1> fence;
-	if (FAILED(m_device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence))))
-		return nullptr;
-
-	return std::make_shared<DX12CommandExecuter>(cmdqueue, fence);
-}
-
-ref<QuantumEngine::Rendering::DX12::DX12CommandExecuter> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateUploadCommandExecuter()
-{
-	//Command Queue
-	ComPtr<ID3D12CommandQueue> cmdqueue;
-	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc{
-	.Type = D3D12_COMMAND_LIST_TYPE_COPY,
 	.Priority = D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
 	.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
 	.NodeMask = 0,

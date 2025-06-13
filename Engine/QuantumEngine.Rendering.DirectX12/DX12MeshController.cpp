@@ -117,7 +117,7 @@ void QuantumEngine::Rendering::DX12::DX12MeshController::UploadToGPU(ComPtr<ID3D
 	range.Begin = 0;
 	range.End = size - 1;
 	m_uploadIndexBuffer->Map(0, &range, &uploadAddress);
-	std::memcpy(uploadAddress, meshData, range.End);
+	std::memcpy(uploadAddress, indexData, range.End);
 	m_uploadIndexBuffer->Unmap(0, &range);
 	uploadCommandList->CopyBufferRegion(m_indexBuffer.Get(), 0, m_uploadIndexBuffer.Get(), 0, size);
 }

@@ -11,9 +11,13 @@
 #include "HLSLShader.h"
 #include "HLSLShaderImporter.h"
 #include "Core/Mesh.h"
+#include "Rendering/ShaderProgram.h"
+#include "Core/GameEntity.h"
+#include "Rendering/GPUAssetManager.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
+namespace Render = QuantumEngine::Rendering;
 
 using namespace QuantumEngine;
 
@@ -43,6 +47,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
     auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
     auto gpuContext = gpuDevice->CreateContextForWindows(win);
+    auto assetManager = gpuDevice->CreateAssetManager();
+    gpuContext->RegisterAssetManager(assetManager);
 
     LPWSTR rootF = new WCHAR[500];
     DWORD size;
@@ -57,32 +63,52 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::string errorStr;
 
     // Compiling Shaders
-    ref<QuantumEngine::Rendering::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::DX12_Shader_Type::VERTEX_SHADER, errorStr);
+    ref<QuantumEngine::Rendering::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::VERTEX_SHADER, errorStr);
 
     if (vertexShader == nullptr) {
         MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
         return 0;
     }
 
-    ref<QuantumEngine::Rendering::Shader> pixelShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.pix.hlsl", DX12::DX12_Shader_Type::PIXEL_SHADER, errorStr);
+    ref<Render::Shader> pixelShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.pix.hlsl", DX12::PIXEL_SHADER, errorStr);
 
     if (pixelShader == nullptr) {
         MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
         return 0;
     }
 
+    auto program = std::make_shared<Render::ShaderProgram>(std::initializer_list<ref<Render::Shader>>{ vertexShader, pixelShader });
+
     // Adding Meshes
     std::vector<Vertex> vertices = {
-        Vertex(Vector3(-0.5f, -0.5f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.5f, -0.5f, 0.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.0f, 0.8f, 0.0f), Vector2(0.5f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(-0.8f, -0.8f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-0.2f, -0.8f, 0.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-0.5f, 0.1f, 0.0f), Vector2(0.5f, 1.0f), Vector3(0.0f)),
     };
 
-    std::vector<UInt32> indices = {0, 1, 2};
+    std::vector<UInt32> indices = {0, 2, 1};
 
     std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vertices, indices);
 
-    gpuDevice->UploadMeshToGPU(mesh);
+    assetManager->UploadMeshToGPU(mesh);
+
+    std::vector<Vertex> vertices1 = {
+        Vertex(Vector3(0.2f, 0.2f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.7f, 0.2f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.7f, 0.7f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.2f, 0.7f, 0.0f), Vector2(0.0f), Vector3(0.0f)),
+    };
+
+    std::vector<UInt32> indices1 = { 0, 2, 1, 0, 3, 2 };
+
+    std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>(vertices1, indices1);
+
+    assetManager->UploadMeshToGPU(mesh1);
+
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(mesh, program);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(mesh1, program);
+    gpuContext->AddGameEntity(entity1);
+    gpuContext->AddGameEntity(entity2);
 
     while (true) {
         if (win->Update() == false)

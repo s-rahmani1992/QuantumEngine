@@ -4,7 +4,7 @@
 
 namespace QuantumEngine::Rendering::DX12 {
 	class HLSLShader;
-	enum class DX12_Shader_Type;
+	enum DX12_Shader_Type;
 
 	class HLSLShaderImporter {
 	public:

@@ -2,7 +2,7 @@
 #include "Rendering/Shader.h"
 
 namespace QuantumEngine::Rendering::DX12 {
-	enum class DX12_Shader_Type {
+	enum DX12_Shader_Type { //TODO If possible, convert to enum class
 		VERTEX_SHADER = 0,
 		PIXEL_SHADER = 1,
 	};

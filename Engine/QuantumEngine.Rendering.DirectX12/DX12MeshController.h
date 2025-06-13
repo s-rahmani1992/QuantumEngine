@@ -16,6 +16,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		inline D3D12_INPUT_LAYOUT_DESC* GetLayoutDesc() { return &m_layoutDesc; }
 		inline D3D12_VERTEX_BUFFER_VIEW* GetVertexView() { return &m_bufferView; }
 		inline D3D12_INDEX_BUFFER_VIEW* GetIndexView() { return &m_indexView; }
+		inline ref<Mesh> GetMesh() { return m_mesh; }
 		bool Initialize(const ComPtr<ID3D12Device10>& device);
 		void UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList);
 	private:

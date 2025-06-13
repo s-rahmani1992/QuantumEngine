@@ -93,15 +93,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BasicTypes.h" />
+    <ClInclude Include="Core\GameEntity.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Vector2.h" />
     <ClInclude Include="Core\Vector3.h" />
     <ClInclude Include="Platform\Application.h" />
     <ClInclude Include="Platform\CommonWin.h" />
     <ClInclude Include="Platform\GraphicWindow.h" />
+    <ClInclude Include="Rendering\GPUAssetManager.h" />
     <ClInclude Include="Rendering\GPUDeviceManager.h" />
     <ClInclude Include="Rendering\GraphicContext.h" />
     <ClInclude Include="Rendering\Shader.h" />
+    <ClInclude Include="Rendering\ShaderProgram.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Mesh.cpp" />

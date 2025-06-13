@@ -40,6 +40,15 @@
     <ClInclude Include="Core\Vector3.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\GameEntity.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\ShaderProgram.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\GPUAssetManager.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
