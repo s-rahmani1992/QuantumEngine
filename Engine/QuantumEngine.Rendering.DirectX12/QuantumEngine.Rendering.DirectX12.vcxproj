@@ -153,6 +153,7 @@
     <ClInclude Include="DX12GraphicContext.h" />
     <ClInclude Include="DX12MeshController.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="HLSLMaterial.h" />
     <ClInclude Include="HLSLShader.h" />
     <ClInclude Include="HLSLShaderImporter.h" />
     <ClInclude Include="pch.h" />
@@ -163,6 +164,7 @@
     <ClCompile Include="DX12GPUDeviceManager.cpp" />
     <ClCompile Include="DX12GraphicContext.cpp" />
     <ClCompile Include="DX12MeshController.cpp" />
+    <ClCompile Include="HLSLMaterial.cpp" />
     <ClCompile Include="HLSLShader.cpp" />
     <ClCompile Include="HLSLShaderImporter.cpp" />
     <ClCompile Include="pch.cpp">

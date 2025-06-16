@@ -18,6 +18,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12CommandExecuter;
 	class DX12MeshController;
 	class DX12AssetManager;
+	class HLSLMaterial;
 
 	class DX12GraphicContext : public GraphicContext
 	{
@@ -33,6 +34,7 @@ namespace QuantumEngine::Rendering::DX12 {
 			ComPtr<ID3D12PipelineState> pipeline;
 			ref<DX12MeshController> meshController;
 			ComPtr<ID3D12RootSignature> rootSignature;
+			ref<HLSLMaterial> material;
 		};
 
 		UInt8 m_bufferCount;

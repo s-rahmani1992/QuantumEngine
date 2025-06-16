@@ -93,6 +93,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BasicTypes.h" />
+    <ClInclude Include="Core\Color.h" />
     <ClInclude Include="Core\GameEntity.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Vector2.h" />
@@ -103,10 +104,12 @@
     <ClInclude Include="Rendering\GPUAssetManager.h" />
     <ClInclude Include="Rendering\GPUDeviceManager.h" />
     <ClInclude Include="Rendering\GraphicContext.h" />
+    <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Rendering\Shader.h" />
     <ClInclude Include="Rendering\ShaderProgram.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Color.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
     <ClCompile Include="Core\Vector2.cpp" />
     <ClCompile Include="Core\Vector3.cpp" />

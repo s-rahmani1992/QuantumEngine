@@ -49,6 +49,12 @@
     <ClInclude Include="Rendering\GPUAssetManager.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="Rendering\Material.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Color.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -64,6 +70,9 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Vector3.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Color.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

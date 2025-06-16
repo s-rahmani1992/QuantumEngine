@@ -23,7 +23,7 @@ namespace QuantumEngine::Rendering {
 				return nullptr;
 			}
 		}
-	private:
+	protected:
 		std::vector<ref<Shader>> m_shaders;
 	};
 }

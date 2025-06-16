@@ -8,6 +8,7 @@
 #include "Core/Mesh.h"
 #include "Rendering/ShaderProgram.h"
 #include "HLSLShader.h"
+#include "HLSLMaterial.h"
 
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
@@ -143,9 +144,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		scissorRect.bottom = m_window->GetHeight();
 		m_commandList->RSSetScissorRects(1, &scissorRect);
 
-		float color[] = { 0.3f, 0.7f, 0.9f };
-		m_commandList->SetGraphicsRoot32BitConstants(0, 3, color, 0);
-
+		entity.material->RegisterValues(m_commandList);
+		
 		//m_commandList->DrawInstanced(entity.meshController->GetMesh()->GetVertexCount(), 1, 0, 0);
 		int h = entity.meshController->GetMesh()->GetIndexCount();
 		m_commandList->DrawIndexedInstanced(entity.meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);
@@ -186,8 +186,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//Shader Part
-	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(gameEntity->GetShaderProgram()->GetShader(VERTEX_SHADER));
-	auto pixelShader = gameEntity->GetShaderProgram()->GetShader(PIXEL_SHADER);
+	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(gameEntity->GetMaterial()->GetProgram()->GetShader(VERTEX_SHADER));
+	auto pixelShader = gameEntity->GetMaterial()->GetProgram()->GetShader(PIXEL_SHADER);
 	pipelineStateDesc.VS.BytecodeLength = vertexShader->GetCodeSize();
 	pipelineStateDesc.VS.pShaderBytecode = vertexShader->GetByteCode();
 	pipelineStateDesc.PS.BytecodeLength = pixelShader->GetCodeSize();
@@ -288,8 +288,9 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	m_device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pso));
 	m_entities.push_back(DX12GameEntityGPU{
 		.pipeline = pso,
-		.meshController = meshController, 
-		.rootSignature = rootSignature
+		.meshController = meshController,
+		.rootSignature = rootSignature,
+		.material = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial()),
 		});
 }
 

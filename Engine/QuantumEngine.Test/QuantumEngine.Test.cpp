@@ -14,6 +14,7 @@
 #include "Rendering/ShaderProgram.h"
 #include "Core/GameEntity.h"
 #include "Rendering/GPUAssetManager.h"
+#include "HLSLMaterial.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -105,8 +106,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     assetManager->UploadMeshToGPU(mesh1);
 
-    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(mesh, program);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(mesh1, program);
+    ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
+    material1->Initialize();
+    material1->SetColor("color", Color(0.9f, 0.2f, 0.9f, 1.0f));
+
+    ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
+    material2->Initialize();
+    material2->SetColor("color", Color(0.2f, 0.1f, 0.8f, 1.0f));
+
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(mesh, material1);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(mesh1, material2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
 
