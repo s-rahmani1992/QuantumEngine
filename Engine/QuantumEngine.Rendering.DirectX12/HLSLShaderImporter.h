@@ -2,6 +2,8 @@
 #include "BasicTypes.h"
 #include <string>
 
+#pragma comment(lib, "dxcompiler.lib")
+
 namespace QuantumEngine::Rendering::DX12 {
 	class HLSLShader;
 	enum DX12_Shader_Type;

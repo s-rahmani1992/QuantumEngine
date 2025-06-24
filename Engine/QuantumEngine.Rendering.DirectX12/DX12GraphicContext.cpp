@@ -8,6 +8,7 @@
 #include "Core/Mesh.h"
 #include "Rendering/ShaderProgram.h"
 #include "HLSLShader.h"
+#include "HLSLShaderProgram.h"
 #include "HLSLMaterial.h"
 
 
@@ -201,9 +202,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 
 	//Root Signature
 
-	ComPtr<ID3D12RootSignature> rootSignature;
-	auto h = m_device->CreateRootSignature(0, vertexShader->GetRootSignatureData(), vertexShader->GetRootSignatureLength(), IID_PPV_ARGS(&rootSignature));
-	pipelineStateDesc.pRootSignature = rootSignature.Get();
+	auto program = std::dynamic_pointer_cast<HLSLShaderProgram>(gameEntity->GetMaterial()->GetProgram())->GetReflectionData();
+	pipelineStateDesc.pRootSignature = program->rootSignature.Get();
 
 	//Rasterizer
 	pipelineStateDesc.RasterizerState;
@@ -289,7 +289,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	m_entities.push_back(DX12GameEntityGPU{
 		.pipeline = pso,
 		.meshController = meshController,
-		.rootSignature = rootSignature,
+		.rootSignature = program->rootSignature,
 		.material = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial()),
 		});
 }

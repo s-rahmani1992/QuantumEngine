@@ -15,6 +15,8 @@ namespace QuantumEngine::Rendering {
 
 		}
 
+		virtual ~ShaderProgram(){}
+
 		ref<Shader> GetShader(Int32 index) {
 			try {
 				return m_shaders.at(index);

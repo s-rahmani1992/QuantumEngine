@@ -1,8 +1,9 @@
-#include "colorRootSig.hlsli"
 
-float4 color : register(b0);
+cbuffer Material : register(b1)
+{
+    float4 color;
+};
 
-[RootSignature(MyRS1)]
 float4 main() : SV_TARGET
 {
     return color;

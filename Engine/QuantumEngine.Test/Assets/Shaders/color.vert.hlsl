@@ -1,8 +1,12 @@
-#include "colorRootSig.hlsli"
-//#define MyRS1 \
-//"RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT) " 
-[RootSignature(MyRS1)]
+
+cbuffer Transform : register(b0)
+{
+    float scale;
+    float2 offset;
+};
+
 float4 main(float3 pos : POSITION) : SV_POSITION
 {
-    return float4(pos, 1.0f);
+    float2 p = (scale * pos.xy) + offset;
+    return float4(p.xy, pos.z, 1.0f);
 }
