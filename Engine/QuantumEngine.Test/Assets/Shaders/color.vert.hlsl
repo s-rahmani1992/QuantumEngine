@@ -1,12 +1,27 @@
 
+struct VS_INPUT
+{
+    float4 pos : POSITION;
+    float2 texCoord : TEXCOORD;
+};
+
+struct VS_OUTPUT
+{
+    float4 pos : SV_POSITION;
+    float2 texCoord : TEXCOORD;
+};
+
 cbuffer Transform : register(b0)
 {
     float scale;
     float2 offset;
 };
 
-float4 main(float3 pos : POSITION) : SV_POSITION
+VS_OUTPUT main(VS_INPUT vertexIn)
 {
-    float2 p = (scale * pos.xy) + offset;
-    return float4(p.xy, pos.z, 1.0f);
+    VS_OUTPUT vsOut;
+    float2 p = (scale * vertexIn.pos.xy) + offset;
+    vsOut.pos = float4(p.xy, vertexIn.pos.z, 1.0f);
+    vsOut.texCoord = vertexIn.texCoord;
+    return vsOut;
 }

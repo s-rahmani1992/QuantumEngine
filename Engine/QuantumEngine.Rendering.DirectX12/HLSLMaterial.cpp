@@ -3,6 +3,8 @@
 #include "HLSLShader.h"
 #include "HLSLShaderProgram.h"
 #include "Core/Vector2.h"
+#include "DX12Texture2DController.h"
+#include "Core/Texture2D.h"
 
 QuantumEngine::Rendering::DX12::HLSLMaterial::HLSLMaterial(const ref<ShaderProgram>& program)
     :Material(program)
@@ -38,6 +40,11 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
             });
     }
 
+    for (auto& p : reflection->boundResourceDatas) {
+        if (p.resourceData.Dimension == D3D_SRV_DIMENSION_TEXTURE2D)
+            m_texture2DValues.insert_or_assign(p.name, SRVData{ .rootParamIndex = p.rootParameterIndex });
+    }
+
 	return true;
 }
 
@@ -64,6 +71,14 @@ std::map<std::string, D3D12_SHADER_VARIABLE_DESC> QuantumEngine::Rendering::DX12
     return constantBuffers;
 }
 
+void QuantumEngine::Rendering::DX12::HLSLMaterial::UpdateHeaps()
+{
+    m_allHeaps.clear();
+
+    for (auto& tValue : m_texture2DValues)
+        m_allHeaps.push_back(tValue.second.gpuHandle.Get());
+}
+
 void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12GraphicsCommandList7>& commandList)
 {
     for (auto& colorField : m_colorValues)
@@ -72,6 +87,11 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12G
         commandList->SetGraphicsRoot32BitConstants(floatField.second.rootParamIndex, 1, &(floatField.second.value), floatField.second.offset);
     for (auto& vector2Field : m_vector2Values)
         commandList->SetGraphicsRoot32BitConstants(vector2Field.second.rootParamIndex, 2, &vector2Field.second.value, vector2Field.second.offset);
+    
+    commandList->SetDescriptorHeaps(m_allHeaps.size(), m_allHeaps.data());
+
+    for (auto& texture2DField : m_texture2DValues)
+        commandList->SetGraphicsRootDescriptorTable(texture2DField.second.rootParamIndex, texture2DField.second.gpuHandle->GetGPUDescriptorHandleForHeapStart());
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetColor(const std::string& fieldName, const Color& color)
@@ -98,5 +118,15 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetVector2(const std::string&
 
     if (field != m_vector2Values.end()) {
         (*field).second.value = fValue;
+    }
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue)
+{
+    auto field = m_texture2DValues.find(fieldName);
+
+    if (field != m_texture2DValues.end()) {
+        (*field).second.gpuHandle = std::dynamic_pointer_cast<DX12Texture2DController>(texValue->GetGPUHandle())->GetShaderView();
+        UpdateHeaps();
     }
 }

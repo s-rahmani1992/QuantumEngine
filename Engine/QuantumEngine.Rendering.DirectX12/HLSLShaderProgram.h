@@ -6,9 +6,16 @@
 using namespace Microsoft::WRL;
 
 namespace QuantumEngine::Rendering::DX12 {
+    struct BoundResourceData {
+        UInt32 rootParameterIndex;
+        std::string name;
+        D3D12_SHADER_INPUT_BIND_DESC resourceData;
+    };
+
     struct HLSLProgramReflection {
         ComPtr<ID3D12RootSignature> rootSignature;
         std::vector<std::pair<UInt32, HLSLRootConstantData>> rootConstants;
+        std::vector<BoundResourceData> boundResourceDatas;
     };
 
     class HLSLShaderProgram : public ShaderProgram

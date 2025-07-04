@@ -19,6 +19,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
 	struct HLSLShaderReflection {
 		std::vector<HLSLRootConstantData> rootConstants;
+		std::vector<std::pair<std::string, D3D12_SHADER_INPUT_BIND_DESC>> boundVariables;
 	};
 
 	class HLSLShader : public Shader {

@@ -32,5 +32,8 @@ QuantumEngine::Rendering::DX12::HLSLShader::HLSLShader(Byte* byteCode, UInt64 co
                 });
             }
         }
+        else {
+            m_reflection.boundVariables.push_back({ std::string(boundResource.Name), boundResource });
+        }
     }
 }

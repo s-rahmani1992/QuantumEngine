@@ -1,7 +1,9 @@
 #include "pch.h"
 #include "DX12AssetManager.h"
 #include "DX12MeshController.h"
+#include "DX12Texture2DController.h"
 #include "DX12CommandExecuter.h"
+#include "Core/Texture2D.h"
 
 void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadMeshToGPU(const ref<Mesh>& mesh)
 {
@@ -22,6 +24,28 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadMeshToGPU(const ref
 	meshController->UploadToGPU(m_uploadCommandList);
 	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
 	m_meshes.insert({ mesh, meshController });
+}
+
+void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadTextureToGPU(const ref<Texture2D>& texture)
+{
+	if (m_textures.find(texture) != m_textures.end()) { // mesh has already been uploaded
+		return;
+	}
+
+	auto texture2DController = std::make_shared<DX12Texture2DController>(texture);
+
+	if (texture2DController->Initialize(m_device) == false)
+		return;
+
+	// Reset Commands
+	m_uploadCommandAllocator->Reset();
+	m_uploadCommandList->Reset(m_uploadCommandAllocator.Get(), nullptr);
+
+	// Execute Upload Commands
+	texture2DController->UploadToGPU(m_uploadCommandList);
+	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
+	texture->SetGPUHandle(texture2DController);
+	m_textures.insert({ texture, texture2DController });
 }
 
 bool QuantumEngine::Rendering::DX12::DX12AssetManager::Initialize(ComPtr<ID3D12Device10>& device)

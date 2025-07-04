@@ -95,7 +95,10 @@
     <ClInclude Include="BasicTypes.h" />
     <ClInclude Include="Core\Color.h" />
     <ClInclude Include="Core\GameEntity.h" />
+    <ClInclude Include="Core\GUIDUtility.h" />
     <ClInclude Include="Core\Mesh.h" />
+    <ClInclude Include="Core\Texture2D.h" />
+    <ClInclude Include="Core\Texture2DImporter.h" />
     <ClInclude Include="Core\Vector2.h" />
     <ClInclude Include="Core\Vector3.h" />
     <ClInclude Include="Platform\Application.h" />
@@ -103,6 +106,7 @@
     <ClInclude Include="Platform\GraphicWindow.h" />
     <ClInclude Include="Rendering\GPUAssetManager.h" />
     <ClInclude Include="Rendering\GPUDeviceManager.h" />
+    <ClInclude Include="Rendering\GPUTexture2DController.h" />
     <ClInclude Include="Rendering\GraphicContext.h" />
     <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Rendering\Shader.h" />
@@ -111,6 +115,8 @@
   <ItemGroup>
     <ClCompile Include="Core\Color.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
+    <ClCompile Include="Core\Texture2D.cpp" />
+    <ClCompile Include="Core\Texture2DImporter.cpp" />
     <ClCompile Include="Core\Vector2.cpp" />
     <ClCompile Include="Core\Vector3.cpp" />
     <ClCompile Include="Platform\Application.cpp" />

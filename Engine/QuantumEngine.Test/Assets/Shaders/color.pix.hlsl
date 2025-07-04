@@ -1,10 +1,20 @@
 
+struct VS_OUTPUT
+{
+    float4 pos : SV_POSITION;
+    float2 texCoord : TEXCOORD;
+};
+
 cbuffer Material : register(b1)
 {
     float4 color;
 };
 
-float4 main() : SV_TARGET
+Texture2D mainTexture : register(t0);
+sampler mainSampler : register(s0);
+
+float4 main(VS_OUTPUT input) : SV_TARGET
 {
-    return color;
+    float4 texColor = mainTexture.Sample(mainSampler, input.texCoord);
+    return color * texColor;
 }

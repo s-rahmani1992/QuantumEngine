@@ -55,6 +55,18 @@
     <ClInclude Include="Core\Color.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Texture2D.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Texture2DImporter.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\GUIDUtility.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\GPUTexture2DController.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -73,6 +85,12 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Color.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Texture2D.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Texture2DImporter.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
