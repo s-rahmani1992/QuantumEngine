@@ -89,6 +89,61 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 		device->CreateRenderTargetView(m_buffers[i].Get(), &rtv_desc, m_rtvHandles[i]);
 	}
 
+	// Create Depth Buffer
+	D3D12_RESOURCE_DESC depthResourceDesc;
+	depthResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
+	depthResourceDesc.Alignment = 0;
+	depthResourceDesc.Width = m_window->GetWidth();
+	depthResourceDesc.Height = m_window->GetHeight();
+	depthResourceDesc.DepthOrArraySize = 1;
+	depthResourceDesc.MipLevels = 1;
+	depthResourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthResourceDesc.SampleDesc.Count = 1;
+	depthResourceDesc.SampleDesc.Quality = 0;
+	depthResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
+	depthResourceDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL;
+
+	D3D12_HEAP_PROPERTIES depthHeapProps
+	{
+	.Type = D3D12_HEAP_TYPE_DEFAULT,
+	.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+	.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+	.CreationNodeMask = 0,
+	.VisibleNodeMask = 0,
+	};
+
+	D3D12_CLEAR_VALUE depthClearValue;
+	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthClearValue.DepthStencil.Depth = 1.0f;
+	depthClearValue.DepthStencil.Stencil = 0;
+
+	if (FAILED(device->CreateCommittedResource(&depthHeapProps, D3D12_HEAP_FLAG_NONE,
+		&depthResourceDesc, D3D12_RESOURCE_STATE_DEPTH_WRITE, &depthClearValue,
+		IID_PPV_ARGS(&m_depthStencilBuffer)))) 
+		return false;
+
+	D3D12_DESCRIPTOR_HEAP_DESC depthHeapDesc{
+	.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV,
+	.NumDescriptors = 1,
+	.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+	.NodeMask = 0,
+	};
+
+	if (FAILED(device->CreateDescriptorHeap(&depthHeapDesc, IID_PPV_ARGS(&m_depthStencilvHeap))))
+		return false;
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthViewDesc{
+		.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+		.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
+		.Flags = D3D12_DSV_FLAG_NONE,
+		.Texture2D = D3D12_TEX2D_DSV{.MipSlice = 0},
+	};
+
+	device->CreateDepthStencilView(
+		m_depthStencilBuffer.Get(),
+		&depthViewDesc,
+		m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart());
+
 	return true;
 }
 
@@ -114,9 +169,14 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		},	
 	};
 	m_commandList->ResourceBarrier(1, &beginBarrier);
+
+	m_commandList->ClearDepthStencilView(m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart(),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+	
 	float clearColor[] = { 0.1f, 0.7f, 0.3f, 1.0f };
+	auto dsvHandle = m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart();
 	m_commandList->ClearRenderTargetView(m_rtvHandles[m_current_buffer_index], clearColor, 0, nullptr);
-	m_commandList->OMSetRenderTargets(1, &m_rtvHandles[m_current_buffer_index], false, nullptr);
+	m_commandList->OMSetRenderTargets(1, &m_rtvHandles[m_current_buffer_index], false, &dsvHandle);
 	//draw
 
 	for (auto& entity : m_entities) {
@@ -263,10 +323,10 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
 	//Depth buffer
-	pipelineStateDesc.DepthStencilState.DepthEnable = FALSE;
-	pipelineStateDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
-	pipelineStateDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-	pipelineStateDesc.DepthStencilState.StencilEnable = FALSE;
+	pipelineStateDesc.DepthStencilState.DepthEnable = TRUE;
+	pipelineStateDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+	pipelineStateDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+	pipelineStateDesc.DepthStencilState.StencilEnable = TRUE;
 	pipelineStateDesc.DepthStencilState.StencilReadMask = 0;
 	pipelineStateDesc.DepthStencilState.StencilWriteMask = 0;
 	pipelineStateDesc.DepthStencilState.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;

@@ -44,6 +44,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12DescriptorHeap> m_rtvDescriptorHeap;
 		std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> m_rtvHandles;
 
+		ComPtr<ID3D12Resource> m_depthStencilBuffer;
+		ComPtr<ID3D12DescriptorHeap> m_depthStencilvHeap;
+
 		ref<DX12CommandExecuter> m_commandExecuter;
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;
 
