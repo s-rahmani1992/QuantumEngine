@@ -3,6 +3,7 @@
 #include "HLSLShader.h"
 #include "HLSLShaderProgram.h"
 #include "Core/Vector2.h"
+#include "Core/Matrix4.h"
 #include "DX12Texture2DController.h"
 #include "Core/Texture2D.h"
 
@@ -38,6 +39,14 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
                 .size = 4,
                 .value = Color(),
             });
+
+        else if (p.second.registerData.Num32BitValues == 16) // it's color
+            m_matrixValues.insert_or_assign(p.second.name, RootConstantData<Matrix4>{
+            .rootParamIndex = p.first,
+                .offset = p.second.variableDesc.StartOffset / 4,
+                .size = 16,
+                .value = Matrix4(),
+        });
     }
 
     for (auto& p : reflection->boundResourceDatas) {
@@ -87,7 +96,10 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12G
         commandList->SetGraphicsRoot32BitConstants(floatField.second.rootParamIndex, 1, &(floatField.second.value), floatField.second.offset);
     for (auto& vector2Field : m_vector2Values)
         commandList->SetGraphicsRoot32BitConstants(vector2Field.second.rootParamIndex, 2, &vector2Field.second.value, vector2Field.second.offset);
-    
+    for (auto& matrixField : m_matrixValues)
+        commandList->SetGraphicsRoot32BitConstants(matrixField.second.rootParamIndex, 16, &matrixField.second.value, matrixField.second.offset);
+
+
     commandList->SetDescriptorHeaps(m_allHeaps.size(), m_allHeaps.data());
 
     for (auto& texture2DField : m_texture2DValues)
@@ -128,5 +140,14 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetTexture2D(const std::strin
     if (field != m_texture2DValues.end()) {
         (*field).second.gpuHandle = std::dynamic_pointer_cast<DX12Texture2DController>(texValue->GetGPUHandle())->GetShaderView();
         UpdateHeaps();
+    }
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetMatrix(const std::string& fieldName, const Matrix4& matrixValue)
+{
+    auto field = m_matrixValues.find(fieldName);
+
+    if (field != m_matrixValues.end()) {
+        (*field).second.value = matrixValue;
     }
 }

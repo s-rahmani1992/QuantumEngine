@@ -1,7 +1,7 @@
 
 struct VS_INPUT
 {
-    float4 pos : POSITION;
+    float3 pos : POSITION;
     float2 texCoord : TEXCOORD;
 };
 
@@ -11,17 +11,16 @@ struct VS_OUTPUT
     float2 texCoord : TEXCOORD;
 };
 
-cbuffer Transform : register(b0)
+cbuffer wTransform : register(b0)
 {
-    float scale;
-    float2 offset;
+    float4x4 worldMatrix;
+    float4x4 projectMatrix;
 };
 
 VS_OUTPUT main(VS_INPUT vertexIn)
 {
     VS_OUTPUT vsOut;
-    float2 p = (scale * vertexIn.pos.xy) + offset;
-    vsOut.pos = float4(p.xy, vertexIn.pos.z, 1.0f);
+    vsOut.pos = mul(float4(vertexIn.pos, 1.0f), mul(worldMatrix, projectMatrix));
     vsOut.texCoord = vertexIn.texCoord;
     return vsOut;
 }

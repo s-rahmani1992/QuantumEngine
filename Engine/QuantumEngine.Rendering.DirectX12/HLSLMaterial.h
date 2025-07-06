@@ -8,6 +8,7 @@ using namespace Microsoft::WRL;
 
 namespace QuantumEngine {
 	struct Vector2;
+	struct Matrix4;
 	class Texture2D;
 }
 
@@ -21,7 +22,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetFloat(const std::string& fieldName, const Float& fValue);
 		void SetVector2(const std::string& fieldName, const Vector2& fValue);
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
-
+		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
 	private:
 		template<typename T>
 		struct RootConstantData {
@@ -42,6 +43,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::map<std::string, RootConstantData<Float>> m_floatValues;
 		std::map<std::string, RootConstantData<Vector2>> m_vector2Values;
 		std::map<std::string, RootConstantData<Color>> m_colorValues;
+		std::map<std::string, RootConstantData<Matrix4>> m_matrixValues;
 		std::map<std::string, SRVData> m_texture2DValues;
 		std::vector<ID3D12DescriptorHeap*> m_allHeaps;
 	};

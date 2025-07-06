@@ -304,7 +304,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.RTVFormats[7] = DXGI_FORMAT_UNKNOWN;
 
 	//DSV
-	pipelineStateDesc.DSVFormat = DXGI_FORMAT_UNKNOWN;
+	pipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
 
 	//Blend
 	pipelineStateDesc.BlendState.AlphaToCoverageEnable = FALSE;
