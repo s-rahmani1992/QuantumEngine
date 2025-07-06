@@ -96,6 +96,7 @@
     <ClInclude Include="Core\Color.h" />
     <ClInclude Include="Core\GameEntity.h" />
     <ClInclude Include="Core\GUIDUtility.h" />
+    <ClInclude Include="Core\Matrix4.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Texture2D.h" />
     <ClInclude Include="Core\Texture2DImporter.h" />
@@ -114,6 +115,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Color.cpp" />
+    <ClCompile Include="Core\Matrix4.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
     <ClCompile Include="Core\Texture2DImporter.cpp" />

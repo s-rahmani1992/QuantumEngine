@@ -67,6 +67,9 @@
     <ClInclude Include="Rendering\GPUTexture2DController.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Matrix4.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -91,6 +94,9 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Texture2DImporter.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Matrix4.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

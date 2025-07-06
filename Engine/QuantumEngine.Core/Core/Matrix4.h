@@ -1,0 +1,20 @@
+#pragma once
+#include <initializer_list>
+#include "../BasicTypes.h"
+
+namespace QuantumEngine {
+	struct Vector3;
+
+	struct Matrix4 {
+	public:
+		Matrix4(const std::initializer_list<Float>& values);
+		Matrix4();
+		Matrix4 operator*(const Matrix4& matrixB);
+		static Matrix4 Scale(const Vector3& scale);
+		static Matrix4 Translate(const Vector3& translate);
+		static Matrix4 Rotate(const Vector3& axis, Float angleDeg);
+		static Matrix4 PerspectiveProjection(Float near, Float far, Float acpect, Float FOV);
+	private:
+		Float m_values[16];
+	};
+}

@@ -14,3 +14,23 @@ QuantumEngine::Vector3::Vector3(Float x, Float y, Float z)
 	:x(x), y(y), z(z)
 {
 }
+
+QuantumEngine::Vector3 QuantumEngine::Vector3::Normalize() const
+{
+	Float m = Magnitude();
+
+	if (m == 0.0f)
+		return Vector3(0.0f);
+
+	return Vector3(x / m, y / m, z / m);
+}
+
+Float QuantumEngine::Vector3::Magnitude() const
+{
+	return sqrtf(SquareMagnitude());
+}
+
+Float QuantumEngine::Vector3::SquareMagnitude() const
+{
+	return (x * x) + (y * y) + (z * z);
+}

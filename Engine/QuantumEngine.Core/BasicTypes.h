@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <memory>
 
+#define PI 3.14159265359f
+
 typedef unsigned char Byte;
 
 typedef std::uint8_t UInt8;
