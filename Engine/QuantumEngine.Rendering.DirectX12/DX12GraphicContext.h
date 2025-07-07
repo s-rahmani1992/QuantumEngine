@@ -7,6 +7,7 @@
 
 namespace QuantumEngine {
 	class GameEntity;
+	class Transform;
 
 	namespace Platform {
 		class GraphicWindow;
@@ -35,6 +36,7 @@ namespace QuantumEngine::Rendering::DX12 {
 			ref<DX12MeshController> meshController;
 			ComPtr<ID3D12RootSignature> rootSignature;
 			ref<HLSLMaterial> material;
+			ref<Transform> transform;
 		};
 
 		UInt8 m_bufferCount;

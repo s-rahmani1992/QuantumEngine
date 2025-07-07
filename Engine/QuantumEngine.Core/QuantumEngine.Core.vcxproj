@@ -100,6 +100,7 @@
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Texture2D.h" />
     <ClInclude Include="Core\Texture2DImporter.h" />
+    <ClInclude Include="Core\Transform.h" />
     <ClInclude Include="Core\Vector2.h" />
     <ClInclude Include="Core\Vector3.h" />
     <ClInclude Include="Platform\Application.h" />
@@ -119,6 +120,7 @@
     <ClCompile Include="Core\Mesh.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
     <ClCompile Include="Core\Texture2DImporter.cpp" />
+    <ClCompile Include="Core\Transform.cpp" />
     <ClCompile Include="Core\Vector2.cpp" />
     <ClCompile Include="Core\Vector3.cpp" />
     <ClCompile Include="Platform\Application.cpp" />

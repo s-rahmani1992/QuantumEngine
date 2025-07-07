@@ -10,6 +10,7 @@ namespace QuantumEngine {
 		Matrix4(const std::initializer_list<Float>& values);
 		Matrix4();
 		Matrix4 operator*(const Matrix4& matrixB);
+		Vector3 operator*(const Vector3& matrixB);
 		static Matrix4 Scale(const Vector3& scale);
 		static Matrix4 Translate(const Vector3& translate);
 		static Matrix4 Rotate(const Vector3& axis, Float angleDeg);

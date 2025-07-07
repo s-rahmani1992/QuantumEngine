@@ -18,6 +18,7 @@
 #include "Core/Texture2D.h"
 #include "Core/Texture2DImporter.h"
 #include "Core/Matrix4.h"
+#include "Core/Transform.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -91,9 +92,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Adding Meshes
     std::vector<Vertex> vertices = {
-        Vertex(Vector3(-0.5f, -0.8f, 0.2f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.5f, -0.8f, 0.2f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.f, 0.8f, 1.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-0.5f, -0.8f, 0.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.5f, -0.8f, 0.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.f, 0.8f, 0.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
     };
 
     std::vector<UInt32> indices = {0, 2, 1};
@@ -103,13 +104,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     assetManager->UploadMeshToGPU(mesh);
 
     std::vector<Vertex> vertices1 = {
-        Vertex(Vector3(-0.6f, -0.6f, 0.5f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.6f, -0.6f, 0.5f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.6f, 0.6f, 0.5f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
-        Vertex(Vector3(-0.6f, 0.6f, 0.5f), Vector2(0.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 1.0f, -1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, -1.0f, 1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, -1.0f, 1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 1.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 1.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
     };
 
-    std::vector<UInt32> indices1 = { 0, 2, 1, 0, 3, 2 };
+    std::vector<UInt32> indices1 = { 
+        0, 2, 1, 0, 3, 2,
+        4, 5, 6, 4, 6, 7,
+        2, 6, 5, 2, 6, 1,
+        0, 4, 7, 0, 7, 3,
+    };
 
     std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>(vertices1, indices1);
 
@@ -120,23 +130,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
     material1->Initialize();
     material1->SetColor("color", Color(0.1f, 0.5f, 0.1f, 1.0f));
-    Matrix4 mat1 = Matrix4::Scale(Vector3(0.3f));
-    mat1 = Matrix4::Translate(Vector3(0.4f, 0.3f, 2.0f)) * Matrix4::Rotate(Vector3(0.0f, 0.0f, 1.0f), 45) * mat1;
-    material1->SetMatrix("worldMatrix", mat1);
     material1->SetMatrix("projectMatrix", project);
     material1->SetTexture2D("mainTexture", tex1);
 
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
     material2->Initialize();
     material2->SetColor("color", Color(0.7f, 0.3f, 0.2f, 1.0f));
-    Matrix4 mat2 = Matrix4::Scale(Vector3(0.6f));
-    mat2 = Matrix4::Translate(Vector3(-0.2f, -0.4f, 1.0f)) * Matrix4::Rotate(Vector3(0.0f, 0.0f, 1.0f), -60) * mat2;
-    material2->SetMatrix("worldMatrix", mat2);
     material2->SetMatrix("projectMatrix", project);
     material2->SetTexture2D("mainTexture", tex2);
 
-    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(mesh, material1);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(mesh1, material2);
+    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1);
+    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 6.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), -60);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
 

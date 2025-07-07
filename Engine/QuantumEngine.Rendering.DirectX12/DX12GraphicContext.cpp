@@ -6,6 +6,7 @@
 #include "DX12MeshController.h"
 #include "Core/GameEntity.h"
 #include "Core/Mesh.h"
+#include "Core/Transform.h"
 #include "Rendering/ShaderProgram.h"
 #include "HLSLShader.h"
 #include "HLSLShaderProgram.h"
@@ -206,9 +207,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		m_commandList->RSSetScissorRects(1, &scissorRect);
 
 		entity.material->RegisterValues(m_commandList);
+		entity.material->SetMatrix("worldMatrix", entity.transform->Matrix());
 		
-		//m_commandList->DrawInstanced(entity.meshController->GetMesh()->GetVertexCount(), 1, 0, 0);
-		int h = entity.meshController->GetMesh()->GetIndexCount();
 		m_commandList->DrawIndexedInstanced(entity.meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);
 	}
 
@@ -351,6 +351,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		.meshController = meshController,
 		.rootSignature = program->rootSignature,
 		.material = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial()),
+		.transform = gameEntity->GetTransform(),
 		});
 }
 
