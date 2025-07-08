@@ -58,5 +58,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<DX12AssetManager> m_assetManager;
 
 		std::vector<DX12GameEntityGPU> m_entities;
+		const DXGI_FORMAT m_depthFormat = DXGI_FORMAT_D32_FLOAT;
 	};
 }

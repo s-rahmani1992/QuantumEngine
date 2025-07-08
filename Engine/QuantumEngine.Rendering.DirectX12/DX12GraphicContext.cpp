@@ -98,7 +98,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 	depthResourceDesc.Height = m_window->GetHeight();
 	depthResourceDesc.DepthOrArraySize = 1;
 	depthResourceDesc.MipLevels = 1;
-	depthResourceDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthResourceDesc.Format = m_depthFormat;
 	depthResourceDesc.SampleDesc.Count = 1;
 	depthResourceDesc.SampleDesc.Quality = 0;
 	depthResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN;
@@ -114,7 +114,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 	};
 
 	D3D12_CLEAR_VALUE depthClearValue;
-	depthClearValue.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthClearValue.Format = m_depthFormat;
 	depthClearValue.DepthStencil.Depth = 1.0f;
 	depthClearValue.DepthStencil.Stencil = 0;
 
@@ -134,7 +134,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 		return false;
 
 	D3D12_DEPTH_STENCIL_VIEW_DESC depthViewDesc{
-		.Format = DXGI_FORMAT_D24_UNORM_S8_UINT,
+		.Format = m_depthFormat,
 		.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D,
 		.Flags = D3D12_DSV_FLAG_NONE,
 		.Texture2D = D3D12_TEX2D_DSV{.MipSlice = 0},
@@ -195,8 +195,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		viewPort.Height = m_window->GetHeight();
 		viewPort.Width = m_window->GetWidth();
 		viewPort.TopLeftX = viewPort.TopLeftY = 0;
-		viewPort.MinDepth = 1.0f;
-		viewPort.MaxDepth = 0.0f;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
 		m_commandList->RSSetViewports(1, &viewPort);
 
 		//Rect Scissor
@@ -304,7 +304,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.RTVFormats[7] = DXGI_FORMAT_UNKNOWN;
 
 	//DSV
-	pipelineStateDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	pipelineStateDesc.DSVFormat = m_depthFormat;
 
 	//Blend
 	pipelineStateDesc.BlendState.AlphaToCoverageEnable = FALSE;
@@ -326,7 +326,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.DepthStencilState.DepthEnable = TRUE;
 	pipelineStateDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
 	pipelineStateDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
-	pipelineStateDesc.DepthStencilState.StencilEnable = TRUE;
+	pipelineStateDesc.DepthStencilState.StencilEnable = FALSE;
 	pipelineStateDesc.DepthStencilState.StencilReadMask = 0;
 	pipelineStateDesc.DepthStencilState.StencilWriteMask = 0;
 	pipelineStateDesc.DepthStencilState.FrontFace.StencilFailOp = D3D12_STENCIL_OP_KEEP;
