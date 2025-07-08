@@ -23,11 +23,14 @@ namespace QuantumEngine::Platform {
 		inline UInt16 GetWidth() const { return m_width; }
 		inline UInt16 GetHeight() const { return m_height; }
 		inline HWND GetHandle() const { return m_handle; }
-		bool Update();
+		inline bool ShouldClose() const { return m_closeFlag; }
+		void SetCloseFlag(bool close) { m_closeFlag = close; }
+		void Update(const Float& deltaTime);
 	private:
 		HWND m_handle;
 		UInt16 m_width;
 		UInt16 m_height;
 		std::wstring m_title;
+		bool m_closeFlag;
 	};
 }

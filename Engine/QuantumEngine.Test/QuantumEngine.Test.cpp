@@ -146,11 +146,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
 
-    while (true) {
-        if (win->Update() == false)
-            break;
-
+    Int64 countsPerSecond = 0;
+    QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
+    double secondsPerCount = 1.0 / (double)countsPerSecond;
+    Int32 fps = 60;
+    Float targetDelta = 1.0f / fps;
+    Float deltaTime = 0.0f;
+    Int64 lastCount = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&lastCount);
+    Int64 currentCount = 0;
+    while (win->ShouldClose() == false) {
+        QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
+        win->Update(deltaTime);
         gpuContext->Render();
+
+        deltaTime = secondsPerCount * (currentCount - lastCount);
+        while (deltaTime < targetDelta) {
+            QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
+            deltaTime = secondsPerCount * (currentCount - lastCount);
+        }
+        lastCount = currentCount;
+        int fpsd = (int)(1.0f / deltaTime);
     }
     // Initialize global strings
     //LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);

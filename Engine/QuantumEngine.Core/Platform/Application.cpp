@@ -44,7 +44,7 @@ LRESULT QuantumEngine::Platform::Application::OnWindowMessage(HWND hwnd, UINT ms
         break;
     }
     case WM_DESTROY:
-        PostQuitMessage(0);
+        window->SetCloseFlag(true);
         return 0;
     }
     return DefWindowProcW(hwnd, msg, wParam, lParam);
