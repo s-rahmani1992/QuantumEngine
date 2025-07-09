@@ -30,6 +30,9 @@ namespace QuantumEngine {
 			m_scale = scale;
 			UpdateMatrix();
 		}
+
+		void MoveForward(Float delta);
+		void MoveRight(Float delta);
 	private:
 		void UpdateDirections();
 		void UpdateMatrix();

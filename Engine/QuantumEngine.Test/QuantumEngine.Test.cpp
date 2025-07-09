@@ -19,6 +19,8 @@
 #include "Core/Texture2DImporter.h"
 #include "Core/Matrix4.h"
 #include "Core/Transform.h"
+#include "Core/Camera/PerspectiveCamera.h"
+#include "CameraController.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -73,6 +75,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     assetManager->UploadTextureToGPU(tex1);
     assetManager->UploadTextureToGPU(tex2);
 
+    // Creating the camera
+    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 100.0f, (float)win->GetWidth() / win->GetHeight(), 45);
+    CameraController camController(mainCamera);
+
     // Compiling Shaders
     ref<QuantumEngine::Rendering::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::VERTEX_SHADER, errorStr);
 
@@ -125,7 +132,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     assetManager->UploadMeshToGPU(mesh1);
 
-    Matrix4 project = Matrix4::PerspectiveProjection(0.1f, 100, (float)win->GetWidth() / win->GetHeight(), 45);
+    Matrix4 project = mainCamera->ProjectionMatrix();
 
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
     material1->Initialize();
@@ -141,7 +148,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1);
-    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 6.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), -60);
+    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), -60);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
@@ -158,6 +165,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     while (win->ShouldClose() == false) {
         QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
         win->Update(deltaTime);
+        camController.Update(deltaTime);
+        material1->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
+        material2->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
         gpuContext->Render();
 
         deltaTime = secondsPerCount * (currentCount - lastCount);

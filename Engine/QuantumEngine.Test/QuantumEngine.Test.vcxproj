@@ -98,12 +98,14 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraController.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="QuantumEngine.Test.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="QuantumEngine.Test.cpp" />
   </ItemGroup>
   <ItemGroup>

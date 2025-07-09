@@ -93,6 +93,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BasicTypes.h" />
+    <ClInclude Include="Core\Camera\Camera.h" />
+    <ClInclude Include="Core\Camera\PerspectiveCamera.h" />
     <ClInclude Include="Core\Color.h" />
     <ClInclude Include="Core\GameEntity.h" />
     <ClInclude Include="Core\GUIDUtility.h" />
@@ -115,6 +117,8 @@
     <ClInclude Include="Rendering\ShaderProgram.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\Camera\Camera.cpp" />
+    <ClCompile Include="Core\Camera\PerspectiveCamera.cpp" />
     <ClCompile Include="Core\Color.cpp" />
     <ClCompile Include="Core\Matrix4.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />

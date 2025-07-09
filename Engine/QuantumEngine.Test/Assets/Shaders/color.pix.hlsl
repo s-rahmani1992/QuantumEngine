@@ -5,7 +5,7 @@ struct VS_OUTPUT
     float2 texCoord : TEXCOORD;
 };
 
-cbuffer Material : register(b1)
+cbuffer Material : register(b2)
 {
     float4 color;
 };

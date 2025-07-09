@@ -13,6 +13,16 @@ QuantumEngine::Transform::Transform()
 {
 }
 
+void QuantumEngine::Transform::MoveForward(Float delta)
+{
+	SetPosition(m_position + (delta * m_forward));
+}
+
+void QuantumEngine::Transform::MoveRight(Float delta)
+{
+	SetPosition(m_position + (delta * m_right));
+}
+
 void QuantumEngine::Transform::UpdateDirections()
 {
 	Matrix4 mat = Matrix4::Rotate(m_axis, m_angle);

@@ -34,3 +34,23 @@ Float QuantumEngine::Vector3::SquareMagnitude() const
 {
 	return (x * x) + (y * y) + (z * z);
 }
+
+QuantumEngine::Vector3 QuantumEngine::Vector3::operator-()
+{
+	return Vector3(-x, -y, -z);
+}
+
+QuantumEngine::Vector3 QuantumEngine::Vector3::operator+(const Vector3& vectorB)
+{
+	return Vector3(x + vectorB.x, y + vectorB.y, z + vectorB.z);
+}
+
+QuantumEngine::Vector3 QuantumEngine::Vector3::operator*(Float fValue)
+{
+	return Vector3(fValue * x, fValue * y, fValue * z);
+}
+
+QuantumEngine::Vector3 operator*(Float fValue, const QuantumEngine::Vector3& vector)
+{
+	return QuantumEngine::Vector3(fValue * vector.x, fValue * vector.y, fValue * vector.z);
+}

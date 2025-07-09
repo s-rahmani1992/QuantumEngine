@@ -10,9 +10,14 @@ namespace QuantumEngine {
 		Vector3 Normalize() const;
 		Float Magnitude() const;
 		Float SquareMagnitude() const;
+		Vector3 operator-();
+		Vector3 operator+(const Vector3& vectorB);
+		Vector3 operator*(Float fValue);
 	public:
 		Float x;
 		Float y;
 		Float z;
 	};
 }
+
+QuantumEngine::Vector3 operator*(Float fValue, const QuantumEngine::Vector3& vector);
