@@ -99,12 +99,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Adding Meshes
     std::vector<Vertex> vertices = {
-        Vertex(Vector3(-0.5f, -0.8f, 0.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.5f, -0.8f, 0.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.f, 0.8f, 0.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 0.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 0.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 0.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 0.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(0.0f, 2.0f, 0.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
     };
 
-    std::vector<UInt32> indices = {0, 2, 1};
+    std::vector<UInt32> indices = {
+        1, 0, 4,
+        2, 1, 4,
+        3, 2, 4,
+        0, 3, 4,
+        0, 3, 2,
+        0, 2, 1,
+    };
 
     std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vertices, indices);
 
@@ -124,8 +133,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::vector<UInt32> indices1 = { 
         0, 2, 1, 0, 3, 2,
         4, 5, 6, 4, 6, 7,
-        2, 6, 5, 2, 6, 1,
+        2, 6, 5, 2, 5, 1,
         0, 4, 7, 0, 7, 3,
+        3, 7, 6, 3, 6, 2,
+        1, 5, 4, 1, 4, 0,
     };
 
     std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>(vertices1, indices1);
@@ -136,19 +147,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
     material1->Initialize();
-    material1->SetColor("color", Color(0.1f, 0.5f, 0.1f, 1.0f));
+    material1->SetColor("color", Color(0.3f, 0.8f, 0.8f, 1.0f));
     material1->SetMatrix("projectMatrix", project);
     material1->SetTexture2D("mainTexture", tex1);
 
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
     material2->Initialize();
-    material2->SetColor("color", Color(0.7f, 0.3f, 0.2f, 1.0f));
+    material2->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     material2->SetMatrix("projectMatrix", project);
     material2->SetTexture2D("mainTexture", tex2);
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1);
-    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), -60);
+    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
