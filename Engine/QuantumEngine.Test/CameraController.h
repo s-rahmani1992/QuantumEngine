@@ -8,5 +8,9 @@ public:
 	void Update(Float deltaTime);
 private:
 	ref<QuantumEngine::Camera> m_camera;
+	Float m_moveSpeed;
+	Float m_rotateSpeed;
+	Float xPos;
+	Float yPos;
 };
 

@@ -33,6 +33,7 @@ namespace QuantumEngine {
 
 		void MoveForward(Float delta);
 		void MoveRight(Float delta);
+		void RotateAround(const Vector3& axis, Float angleDeg);
 	private:
 		void UpdateDirections();
 		void UpdateMatrix();
