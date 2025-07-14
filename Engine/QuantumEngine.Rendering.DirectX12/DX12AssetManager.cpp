@@ -55,7 +55,7 @@ bool QuantumEngine::Rendering::DX12::DX12AssetManager::Initialize(ComPtr<ID3D12D
 	//Command Queue
 	ComPtr<ID3D12CommandQueue> cmdqueue;
 	D3D12_COMMAND_QUEUE_DESC cmdQueueDesc{
-	.Type = D3D12_COMMAND_LIST_TYPE_COPY,
+	.Type = D3D12_COMMAND_LIST_TYPE_DIRECT,
 	.Priority = D3D12_COMMAND_QUEUE_PRIORITY_HIGH,
 	.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE,
 	.NodeMask = 0,
@@ -71,10 +71,10 @@ bool QuantumEngine::Rendering::DX12::DX12AssetManager::Initialize(ComPtr<ID3D12D
 
 	m_meshUploadCommandExecuter = std::make_shared<DX12CommandExecuter>(cmdqueue, fence);
 	
-	if (FAILED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COPY, IID_PPV_ARGS(&m_uploadCommandAllocator))))
+	if (FAILED(device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_uploadCommandAllocator))))
 		return false;
 
-	if (FAILED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_COPY, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_uploadCommandList))))
+	if (FAILED(device->CreateCommandList1(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3D12_COMMAND_LIST_FLAG_NONE, IID_PPV_ARGS(&m_uploadCommandList))))
 		return false;
 
 	return true;

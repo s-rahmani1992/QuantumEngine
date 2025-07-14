@@ -19,12 +19,15 @@ namespace QuantumEngine::Rendering::DX12 {
 		inline ref<Mesh> GetMesh() { return m_mesh; }
 		bool Initialize(const ComPtr<ID3D12Device10>& device);
 		void UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList);
+		ComPtr<ID3D12Resource2> GetBLAS() { return m_bottomLevelAccelationData; }
 	private:
 		ref<Mesh> m_mesh;
 		ComPtr<ID3D12Resource2> m_uploadVertexBuffer;
 		ComPtr<ID3D12Resource2> m_vertexBuffer;
 		ComPtr<ID3D12Resource2> m_uploadIndexBuffer;
 		ComPtr<ID3D12Resource2> m_indexBuffer;
+		ComPtr<ID3D12Resource2> m_rtScratchBuffer;
+		ComPtr<ID3D12Resource2> m_bottomLevelAccelationData;
 		D3D12_INPUT_LAYOUT_DESC m_layoutDesc;
 		D3D12_VERTEX_BUFFER_VIEW m_bufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexView;

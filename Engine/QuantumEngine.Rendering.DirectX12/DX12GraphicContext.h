@@ -29,6 +29,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual void Render() override;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) override;
 		virtual void AddGameEntity(ref<GameEntity>& gameEntity) override;
+		virtual bool PrepareRayTracingData() override;
 	private:
 		struct DX12GameEntityGPU {
 		public:
@@ -59,5 +60,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		std::vector<DX12GameEntityGPU> m_entities;
 		const DXGI_FORMAT m_depthFormat = DXGI_FORMAT_D32_FLOAT;
+
+		ComPtr<ID3D12Resource2> m_topLevelAccelerationStructure;
 	};
 }
