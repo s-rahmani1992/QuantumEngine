@@ -61,10 +61,13 @@ ref<QuantumEngine::Rendering::Shader> QuantumEngine::Rendering::DX12::HLSLShader
     std::wstring targetProfile;
     switch (shaderType) {
     case DX12_Shader_Type::VERTEX_SHADER:
-        targetProfile = L"vs_6_0";
+        targetProfile = L"vs_6_6";
         break;
     case DX12_Shader_Type::PIXEL_SHADER:
-        targetProfile = L"ps_6_0";
+        targetProfile = L"ps_6_6";
+        break;
+    case DX12_Shader_Type::LIB_SHADER:
+        targetProfile = L"lib_6_6";
         break;
         // Add other shader types as needed
     default:
@@ -76,12 +79,12 @@ ref<QuantumEngine::Rendering::Shader> QuantumEngine::Rendering::DX12::HLSLShader
     std::vector<LPWSTR> arguments;
     // -E for the entry point (eg. 'main')
     arguments.push_back((WCHAR*)L"-E");
-    arguments.push_back((WCHAR*)L"main");
+    arguments.push_back((WCHAR*)(shaderType == DX12_Shader_Type::LIB_SHADER ? L"" : L"main"));
 
     // -T for the target profile (eg. 'ps_6_6')
     arguments.push_back((WCHAR*)L"-T");
     arguments.push_back((WCHAR*)targetProfile.c_str());
-
+    
     // Strip reflection data and pdbs (see later)
     arguments.push_back((WCHAR*)L"-Qstrip_debug");
     arguments.push_back((WCHAR*)L"-Qstrip_reflect");
@@ -111,6 +114,13 @@ ref<QuantumEngine::Rendering::Shader> QuantumEngine::Rendering::DX12::HLSLShader
         return nullptr;
     }
 
+    ComPtr<IDxcBlob> pshaderObjectData;
+    result = compileResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pshaderObjectData), nullptr);
+
+    if (FAILED(result)) {
+        return nullptr;
+    }
+
     // Get Reflection
     ComPtr<IDxcBlob> pReflectionData;
     compileResult->GetOutput(DXC_OUT_REFLECTION, IID_PPV_ARGS(pReflectionData.GetAddressOf()), nullptr);
@@ -119,19 +129,25 @@ ref<QuantumEngine::Rendering::Shader> QuantumEngine::Rendering::DX12::HLSLShader
         .Size = pReflectionData->GetBufferSize(),
         .Encoding = 0,
     };
-    ComPtr<ID3D12ShaderReflection> pShaderReflection;
-    result = pUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&pShaderReflection));
 
-    if (FAILED(result)) {
-        return nullptr;
-    }
-    
-    ComPtr<IDxcBlob> pshaderObjectData;
-    result = compileResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pshaderObjectData), nullptr);
-    
-    if (FAILED(result)) {
-        return nullptr;
-    }
+    if (shaderType == DX12_Shader_Type::LIB_SHADER) {
+        ComPtr<ID3D12LibraryReflection> pLibraryReflection;
+        result = pUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&pLibraryReflection));
 
-    return std::make_shared<HLSLShader>((Byte*)pshaderObjectData->GetBufferPointer(), (UInt64)pshaderObjectData->GetBufferSize(), shaderType, pShaderReflection);
+        if (FAILED(result)) {
+            return nullptr;
+        }
+
+        return std::make_shared<HLSLShader>((Byte*)pshaderObjectData->GetBufferPointer(), (UInt64)pshaderObjectData->GetBufferSize(), shaderType, pLibraryReflection);
+    }
+    else {
+        ComPtr<ID3D12ShaderReflection> pShaderReflection;
+        result = pUtils->CreateReflection(&reflectionBuffer, IID_PPV_ARGS(&pShaderReflection));
+
+        if (FAILED(result)) {
+            return nullptr;
+        }
+
+        return std::make_shared<HLSLShader>((Byte*)pshaderObjectData->GetBufferPointer(), (UInt64)pshaderObjectData->GetBufferSize(), shaderType, pShaderReflection);
+    }
 }
