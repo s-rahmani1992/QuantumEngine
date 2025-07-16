@@ -2,7 +2,7 @@
 #include "HLSLShader.h"
 
 QuantumEngine::Rendering::DX12::HLSLShader::HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType)
-    :Shader(byteCode, codeLength), m_shaderType(shaderType){ }
+    :Shader(byteCode, codeLength, shaderType), m_shaderType(shaderType){ }
 
 QuantumEngine::Rendering::DX12::HLSLShader::HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType, ComPtr<ID3D12ShaderReflection>& shaderReflection)
 	:HLSLShader(byteCode, codeLength, shaderType)
