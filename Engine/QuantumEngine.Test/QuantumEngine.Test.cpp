@@ -81,7 +81,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     CameraController camController(mainCamera);
 
     // Compiling Shaders
-    ref<QuantumEngine::Rendering::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::VERTEX_SHADER, errorStr);
+    ref<Render::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::VERTEX_SHADER, errorStr);
 
     if (vertexShader == nullptr) {
         MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
@@ -95,8 +95,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader });
+    ref<Render::Shader> rtShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\rt_shader.lib.hlsl", DX12::LIB_SHADER, errorStr);
 
+    if (rtShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
+    auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader });
+    auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader });
     // Adding Meshes
     std::vector<Vertex> vertices = {
         Vertex(Vector3(-1.0f, 0.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
@@ -163,7 +170,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
-    gpuContext->PrepareRayTracingData();
+    gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
     QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);

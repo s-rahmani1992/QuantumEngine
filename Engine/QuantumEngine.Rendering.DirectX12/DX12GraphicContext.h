@@ -29,7 +29,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual void Render() override;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) override;
 		virtual void AddGameEntity(ref<GameEntity>& gameEntity) override;
-		virtual bool PrepareRayTracingData() override;
+		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) override;
 	private:
 		struct DX12GameEntityGPU {
 		public:

@@ -355,7 +355,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		});
 }
 
-bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData()
+bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(const ref<ShaderProgram>& rtProgram)
 {
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS& topLevelInputs = topLevelBuildDesc.Inputs;
@@ -468,6 +468,86 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData()
 	m_commandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
 
 	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
+
+	// Ray Tracing Pipeline
+	ref<HLSLShaderProgram> hlslRTProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram);
+
+	ref<HLSLShader> libShader = std::dynamic_pointer_cast<HLSLShader>(hlslRTProgram->GetShader(LIB_SHADER));
+	std::vector<D3D12_STATE_SUBOBJECT> subobjects(5);
+
+	// Create DXIL Sub Object
+	D3D12_DXIL_LIBRARY_DESC dxilLibDesc;
+
+	auto entries = libShader->GetEntryPoints();
+	std::vector<D3D12_EXPORT_DESC> exportDescs(entries.size());
+
+	std::vector<std::wstring> wNames(entries.size());
+
+	for (uint32_t i = 0; i < entries.size(); i++)
+	{
+		int size_needed = MultiByteToWideChar(CP_UTF8, 0, entries[i].data(), (int)entries[i].size(), nullptr, 0);
+		wNames[i] = std::wstring(size_needed, 0);
+		MultiByteToWideChar(CP_UTF8, 0, entries[i].data(), (int)entries[i].size(), &wNames[i][0], size_needed);
+	}
+
+	for (uint32_t i = 0; i < entries.size(); i++)
+	{
+		exportDescs[i].Name = wNames[i].c_str();
+		exportDescs[i].Flags = D3D12_EXPORT_FLAG_NONE;
+		exportDescs[i].ExportToRename = nullptr;
+	}
+
+	dxilLibDesc.DXILLibrary = D3D12_SHADER_BYTECODE{
+		.pShaderBytecode = libShader->GetByteCode(),
+		.BytecodeLength = libShader->GetCodeSize(),
+	};
+	dxilLibDesc.NumExports = entries.size();
+	dxilLibDesc.pExports = exportDescs.data();
+
+	subobjects[0].Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
+	subobjects[0].pDesc = &dxilLibDesc;
+
+	// Create Hit Group
+
+	D3D12_HIT_GROUP_DESC desc = {};
+	desc.IntersectionShaderImport = nullptr;
+	desc.AnyHitShaderImport = nullptr;
+	desc.ClosestHitShaderImport = L"chs";
+	desc.HitGroupExport = L"MyHitGroup";
+	desc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
+
+	subobjects[1].Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
+	subobjects[1].pDesc = &desc;
+
+	// Global Root Signature 
+	subobjects[2].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
+	subobjects[2].pDesc = hlslRTProgram->GetReflectionData()->rootSignature.GetAddressOf();
+
+	// Shader Config
+	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig;
+	shaderConfig.MaxPayloadSizeInBytes = 3 * sizeof(Float);
+	shaderConfig.MaxAttributeSizeInBytes = 2 * sizeof(Float);
+	subobjects[3].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
+	subobjects[3].pDesc = &shaderConfig;
+
+	// Pipeline Config
+	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig;
+	pipelineConfig.MaxTraceRecursionDepth = 1;
+	subobjects[4].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
+	subobjects[4].pDesc = &pipelineConfig;
+
+	// Create the State Object
+	D3D12_STATE_OBJECT_DESC stateObjectDesc;
+	stateObjectDesc.NumSubobjects = 5;
+	stateObjectDesc.pSubobjects = subobjects.data();
+	stateObjectDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
+
+	ComPtr<ID3D12StateObject> rtStateObject;
+
+	if (FAILED(m_device->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&rtStateObject)))) {
+		return false;
+	}
+
 	return true;
 }
 

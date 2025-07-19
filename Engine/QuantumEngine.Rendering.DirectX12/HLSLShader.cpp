@@ -59,6 +59,9 @@ void QuantumEngine::Rendering::DX12::HLSLShader::FillReflection(ComPtr<ID3D12Lib
         ID3D12FunctionReflection* funcReflection = libraryReflection->GetFunctionByIndex(i);
         D3D12_FUNCTION_DESC funcDesc;
         funcReflection->GetDesc(&funcDesc);
+        std::string g(funcDesc.Name);
+        auto lastIndex = g.find_first_of('@');
+        m_entryPoints.push_back(g.substr(2, lastIndex - 2));
 
         for (int r = 0; r < funcDesc.BoundResources; r++) {
             D3D12_SHADER_INPUT_BIND_DESC boundResource;

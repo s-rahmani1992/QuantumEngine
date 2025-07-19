@@ -11,6 +11,8 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
     std::map<std::pair<UInt32, UInt32>, UInt32> bufferSizes;
     std::vector<D3D12_ROOT_PARAMETER> rootParameters;
     std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
+    std::vector<D3D12_DESCRIPTOR_RANGE> ranges(20); //TODO calculate number of ranges beforehand
+    int rangeIndex = 0;
 
     for (auto& shader : m_shaders) {
         auto hlslShader = std::dynamic_pointer_cast<HLSLShader>(shader);
@@ -76,9 +78,23 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
                         .resourceData = shaderBoundVariable.second,
                     });
 
-                //TODO If possible, Find a way to define descriptor table for adjacent texture registers
-                D3D12_DESCRIPTOR_RANGE descRange{
-                    .RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV,
+                D3D12_DESCRIPTOR_RANGE_TYPE rangeType;
+
+                switch (shaderBoundVariable.second.Type)
+                {
+                case D3D_SIT_RTACCELERATIONSTRUCTURE:
+                case D3D_SIT_TEXTURE:
+                    rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+                    break;
+                case D3D11_SIT_UAV_RWTYPED:
+                    rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+                    break;
+                default:
+                    break;
+                }
+                //TODO If possible, Find a way to define descriptor table for adjacent Binding registers
+                ranges[rangeIndex]=D3D12_DESCRIPTOR_RANGE{
+                    .RangeType = rangeType,
                     .NumDescriptors = 1,
                     .BaseShaderRegister = shaderBoundVariable.second.BindPoint,
                     .RegisterSpace = shaderBoundVariable.second.Space,
@@ -89,11 +105,11 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
                 .ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE,
                 .DescriptorTable = D3D12_ROOT_DESCRIPTOR_TABLE{
                     .NumDescriptorRanges = 1,
-                    .pDescriptorRanges = &descRange,
+                    .pDescriptorRanges = ranges.data() + rangeIndex,
                     },
                 .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
                 });
-
+                rangeIndex++;
                 rootParameterIndex++;
             }
         }

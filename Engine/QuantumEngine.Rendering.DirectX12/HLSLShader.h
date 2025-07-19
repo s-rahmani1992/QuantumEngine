@@ -29,11 +29,13 @@ namespace QuantumEngine::Rendering::DX12 {
 		HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType, ComPtr<ID3D12ShaderReflection>& shaderReflection);
 		HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType, ComPtr<ID3D12LibraryReflection>& libraryReflection);
 		HLSLShaderReflection* GetReflection() { return &m_reflection; }
+		std::vector<std::string> GetEntryPoints() { return m_entryPoints; }
 	private:
 		void FillReflection(ComPtr<ID3D12ShaderReflection>& shaderReflection);
 		void FillReflection(ComPtr<ID3D12LibraryReflection>& libraryReflection);
 	private:
 		DX12_Shader_Type m_shaderType;
 		HLSLShaderReflection m_reflection;
+		std::vector<std::string> m_entryPoints;
 	};
 }
