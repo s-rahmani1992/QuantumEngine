@@ -51,7 +51,7 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
 
     for (auto& p : reflection->boundResourceDatas) {
         if (p.resourceData.Dimension == D3D_SRV_DIMENSION_TEXTURE2D)
-            m_texture2DValues.insert_or_assign(p.name, SRVData{ .rootParamIndex = p.rootParameterIndex });
+            m_heapValues.insert_or_assign(p.name, HeapData{ .rootParamIndex = p.rootParameterIndex });
     }
 
 	return true;
@@ -84,7 +84,7 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::UpdateHeaps()
 {
     m_allHeaps.clear();
 
-    for (auto& tValue : m_texture2DValues)
+    for (auto& tValue : m_heapValues)
         m_allHeaps.push_back(tValue.second.gpuHandle.Get());
 }
 
@@ -99,11 +99,10 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12G
     for (auto& matrixField : m_matrixValues)
         commandList->SetGraphicsRoot32BitConstants(matrixField.second.rootParamIndex, 16, &matrixField.second.value, matrixField.second.offset);
 
-
-    commandList->SetDescriptorHeaps(m_allHeaps.size(), m_allHeaps.data());
-
-    for (auto& texture2DField : m_texture2DValues)
-        commandList->SetGraphicsRootDescriptorTable(texture2DField.second.rootParamIndex, texture2DField.second.gpuHandle->GetGPUDescriptorHandleForHeapStart());
+    for (auto& heapField : m_heapValues) {
+        commandList->SetDescriptorHeaps(1, heapField.second.gpuHandle.GetAddressOf());
+        commandList->SetGraphicsRootDescriptorTable(heapField.second.rootParamIndex, heapField.second.gpuHandle->GetGPUDescriptorHandleForHeapStart());
+    }
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetColor(const std::string& fieldName, const Color& color)
@@ -135,10 +134,15 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetVector2(const std::string&
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue)
 {
-    auto field = m_texture2DValues.find(fieldName);
+    SetDescriptorHeap(fieldName, std::dynamic_pointer_cast<DX12Texture2DController>(texValue->GetGPUHandle())->GetShaderView());
+}
 
-    if (field != m_texture2DValues.end()) {
-        (*field).second.gpuHandle = std::dynamic_pointer_cast<DX12Texture2DController>(texValue->GetGPUHandle())->GetShaderView();
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap)
+{
+    auto field = m_heapValues.find(fieldName);
+
+    if (field != m_heapValues.end()) {
+        (*field).second.gpuHandle = descriptorHeap;
         UpdateHeaps();
     }
 }

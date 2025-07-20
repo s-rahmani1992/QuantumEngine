@@ -22,6 +22,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetFloat(const std::string& fieldName, const Float& fValue);
 		void SetVector2(const std::string& fieldName, const Vector2& fValue);
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
+		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
 		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
 	private:
 		template<typename T>
@@ -32,7 +33,7 @@ namespace QuantumEngine::Rendering::DX12 {
 			T value;
 		};
 
-		struct SRVData {
+		struct HeapData {
 			UInt32 rootParamIndex;
 			ComPtr<ID3D12DescriptorHeap> gpuHandle;
 		};
@@ -44,7 +45,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::map<std::string, RootConstantData<Vector2>> m_vector2Values;
 		std::map<std::string, RootConstantData<Color>> m_colorValues;
 		std::map<std::string, RootConstantData<Matrix4>> m_matrixValues;
-		std::map<std::string, SRVData> m_texture2DValues;
+		std::map<std::string, HeapData> m_heapValues;
 		std::vector<ID3D12DescriptorHeap*> m_allHeaps;
 	};
 }

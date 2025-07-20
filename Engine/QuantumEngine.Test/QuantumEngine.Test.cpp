@@ -170,6 +170,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
+    gpuContext->SetCamera(mainCamera);
     gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
