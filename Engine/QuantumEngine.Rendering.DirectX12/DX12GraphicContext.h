@@ -22,6 +22,10 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLMaterial;
 	class HLSLShaderProgram;
 
+	namespace RayTracing {
+		class RTAccelarationStructure;
+	}
+
 	class DX12GraphicContext : public GraphicContext
 	{
 	public:
@@ -64,10 +68,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::vector<DX12GameEntityGPU> m_entities;
 		const DXGI_FORMAT m_depthFormat = DXGI_FORMAT_D32_FLOAT;
 
-		ComPtr<ID3D12Resource2> m_topLevelAccelerationStructure;
-		ComPtr<ID3D12DescriptorHeap> m_tlasHeap; 
-		ComPtr<ID3D12Resource2> m_tlasUpload;
-		ComPtr<ID3D12Resource2> m_rtScratchBuffer;
 		ComPtr<ID3D12Resource2> m_outputBuffer;
 		ComPtr<ID3D12DescriptorHeap> m_outputHeap;
 
@@ -75,5 +75,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12Resource2> m_shaderTableBuffer;
 
 		ref<HLSLShaderProgram> m_rtProgram;
+		ref<RayTracing::RTAccelarationStructure> m_TLASController;
 	};
 }

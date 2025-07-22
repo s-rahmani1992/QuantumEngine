@@ -13,6 +13,8 @@
 #include "HLSLShaderProgram.h"
 #include "HLSLMaterial.h"
 #include <vector>
+#include "RayTracing/RTAccelarationStructure.h"
+#include "DX12Utilities.h"
 
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
@@ -152,18 +154,18 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 {
-	UpdateTLAS();
-
 	// Reset Commands
 	m_commandAllocator->Reset();
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+	
+	UpdateTLAS();
 
-	ID3D12DescriptorHeap* heaps1[] = { m_tlasHeap.Get() };
+	ID3D12DescriptorHeap* heaps1[] = { m_TLASController->GetDescriptor().Get() };
 	ID3D12DescriptorHeap* heaps2[] = { m_outputHeap.Get() };
 	
 	m_commandList->SetComputeRootSignature((m_rtProgram->GetReflectionData()->rootSignature).Get());
 	m_commandList->SetDescriptorHeaps(1, heaps1);
-	m_commandList->SetComputeRootDescriptorTable(0, m_tlasHeap->GetGPUDescriptorHandleForHeapStart());
+	m_commandList->SetComputeRootDescriptorTable(0, m_TLASController->GetDescriptor()->GetGPUDescriptorHandleForHeapStart());
 	m_commandList->SetDescriptorHeaps(1, heaps2);
 	m_commandList->SetComputeRootDescriptorTable(1, m_outputHeap->GetGPUDescriptorHandleForHeapStart());
 	int mShaderTableEntrySize = 64;
@@ -399,129 +401,30 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(const ref<ShaderProgram>& rtProgram)
 {
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS& topLevelInputs = topLevelBuildDesc.Inputs;
-	topLevelInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	topLevelInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_ALLOW_UPDATE;
-	topLevelInputs.NumDescs = m_entities.size();
-	topLevelInputs.pGeometryDescs = nullptr;
-	topLevelInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO topLevelPrebuildInfo = {};
-	m_device->GetRaytracingAccelerationStructurePrebuildInfo(&topLevelInputs, &topLevelPrebuildInfo);
-
-	D3D12_HEAP_PROPERTIES bufferHeapProps{};
-	bufferHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-	bufferHeapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	bufferHeapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	bufferHeapProps.CreationNodeMask = 0;
-	bufferHeapProps.VisibleNodeMask = 0;
-
-	D3D12_RESOURCE_DESC rtScratchBufDesc = {};
-	rtScratchBufDesc.Alignment = 0;
-	rtScratchBufDesc.DepthOrArraySize = 1;
-	rtScratchBufDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	rtScratchBufDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
-	rtScratchBufDesc.Format = DXGI_FORMAT_UNKNOWN;
-	rtScratchBufDesc.Height = 1;
-	rtScratchBufDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
-	rtScratchBufDesc.MipLevels = 1;
-	rtScratchBufDesc.SampleDesc.Count = 1;
-	rtScratchBufDesc.SampleDesc.Quality = 0;
-	rtScratchBufDesc.Width = topLevelPrebuildInfo.ScratchDataSizeInBytes;
-
-	D3D12_RESOURCE_DESC rtResultBufDesc = rtScratchBufDesc;
-	rtResultBufDesc.Width = topLevelPrebuildInfo.ResultDataMaxSizeInBytes;
-
-	if (FAILED(m_device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &rtScratchBufDesc,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&m_rtScratchBuffer))))
-		return false;
-
-	if (FAILED(m_device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &rtResultBufDesc,
-		D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE, nullptr, IID_PPV_ARGS(&m_topLevelAccelerationStructure))))
-		return false;
-
-	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDescs;
-
-	UInt32 id = 0;
-	Matrix4 m;
+	// Initialize TLAS
+	m_TLASController = std::make_shared<RayTracing::RTAccelarationStructure>();
+	std::vector<RayTracing::EntityBLASDesc> rtEntities;
 
 	for (auto& entity : m_entities) {
-		D3D12_RAYTRACING_INSTANCE_DESC desc1;
-		Matrix4 m = entity.transform->Matrix();
-		std::memcpy(desc1.Transform, &m, 12 * sizeof(Float));
-		desc1.InstanceID = id;
-		desc1.InstanceContributionToHitGroupIndex = id;
-		desc1.InstanceMask = 1;
-		desc1.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-		desc1.AccelerationStructure = entity.meshController->GetBLAS()->GetGPUVirtualAddress();
-
-		instanceDescs.push_back(desc1);
+		rtEntities.push_back(RayTracing::EntityBLASDesc{
+			.mesh = entity.meshController,
+			.transform = entity.transform,
+		});
 	}
 
-	D3D12_HEAP_PROPERTIES uploadHeapProps
-	{
-	.Type = D3D12_HEAP_TYPE_UPLOAD,
-	.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-	.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
-	.CreationNodeMask = 0,
-	.VisibleNodeMask = 0,
-	};
+	m_commandAllocator->Reset();
+	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
 
-	D3D12_RESOURCE_DESC tlasBufferDesc
-	{
-	tlasBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-	tlasBufferDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-	tlasBufferDesc.Width = sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * instanceDescs.size(),
-	tlasBufferDesc.Height = 1,
-	tlasBufferDesc.DepthOrArraySize = 1,
-	tlasBufferDesc.MipLevels = 1,
-	tlasBufferDesc.Format = DXGI_FORMAT_UNKNOWN,
-	tlasBufferDesc.SampleDesc.Count = 1,
-	tlasBufferDesc.SampleDesc.Quality = 0,
-	tlasBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-	tlasBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE,
-	};
-
-	if (FAILED(m_device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &tlasBufferDesc,
-		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_tlasUpload))))
+	if (m_TLASController->Initialize(m_commandList, rtEntities) == false)
 		return false;
 
-	auto meshData = instanceDescs.data();
-	auto size = tlasBufferDesc.Width;
-	void* uploadAddress;
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = size - 1;
-	m_tlasUpload->Map(0, &range, &uploadAddress);
-	std::memcpy(uploadAddress, meshData, range.End);
-	m_tlasUpload->Unmap(0, &range);
-
-	topLevelBuildDesc.DestAccelerationStructureData = m_topLevelAccelerationStructure->GetGPUVirtualAddress();
-	topLevelBuildDesc.ScratchAccelerationStructureData = m_rtScratchBuffer->GetGPUVirtualAddress();
-	topLevelBuildDesc.Inputs.InstanceDescs = m_tlasUpload->GetGPUVirtualAddress();
+	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		.NumDescriptors = 1,
 		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 	};
-
-	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_tlasHeap)))) {
-		return false;
-	}
-
-	D3D12_SHADER_RESOURCE_VIEW_DESC tlasSRVDesc = {};
-	tlasSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
-	tlasSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	tlasSRVDesc.RaytracingAccelerationStructure.Location = m_topLevelAccelerationStructure->GetGPUVirtualAddress();
-	m_device->CreateShaderResourceView(nullptr, &tlasSRVDesc, m_tlasHeap->GetCPUDescriptorHandleForHeapStart());
-	// Reset Commands
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
-
-	m_commandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
-
-	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 
 	// Ray Tracing Output Buffer
 	// Create the output resource. The dimensions and format should match the swap-chain
@@ -537,7 +440,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	outputDesc.MipLevels = 1;
 	outputDesc.SampleDesc.Count = 1;
 
-	if (FAILED(m_device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE,
+	if (FAILED(m_device->CreateCommittedResource(&DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE,
 		&outputDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&m_outputBuffer)
 	))) {
 		return false;
@@ -640,10 +543,23 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	if (FAILED(m_rtStateObject->QueryInterface(IID_PPV_ARGS(&rtProperties))))
 		return false;
 
-	tlasBufferDesc.Width = shaderTableSize;
+	D3D12_RESOURCE_DESC shaderTableBufferDesc
+	{
+	shaderTableBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
+	shaderTableBufferDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
+	shaderTableBufferDesc.Width = shaderTableSize,
+	shaderTableBufferDesc.Height = 1,
+	shaderTableBufferDesc.DepthOrArraySize = 1,
+	shaderTableBufferDesc.MipLevels = 1,
+	shaderTableBufferDesc.Format = DXGI_FORMAT_UNKNOWN,
+	shaderTableBufferDesc.SampleDesc.Count = 1,
+	shaderTableBufferDesc.SampleDesc.Quality = 0,
+	shaderTableBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
+	shaderTableBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE,
+	};
 
-	if (FAILED(m_device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE,
-		&tlasBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_shaderTableBuffer))))
+	if (FAILED(m_device->CreateCommittedResource(&DescriptorUtilities::CommonUploadHeapProps, D3D12_HEAP_FLAG_NONE,
+		&shaderTableBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_shaderTableBuffer))))
 		return false;
 
 	ComPtr<ID3D12DescriptorHeap> shaderTableHeap;
@@ -678,49 +594,8 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::UpdateTLAS()
 {
-	std::vector<D3D12_RAYTRACING_INSTANCE_DESC> instanceDescs;
-
-	UInt32 id = 0;
-	Matrix4 m;
-
-	for (auto& entity : m_entities) {
-		D3D12_RAYTRACING_INSTANCE_DESC desc1;
-		Matrix4 m = m_camera->ViewMatrix() * entity.transform->Matrix();
-		std::memcpy(desc1.Transform, &m, 12 * sizeof(Float));
-		desc1.InstanceID = id;
-		desc1.InstanceContributionToHitGroupIndex = id;
-		desc1.InstanceMask = 1;
-		desc1.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-		desc1.AccelerationStructure = entity.meshController->GetBLAS()->GetGPUVirtualAddress();
-
-		instanceDescs.push_back(desc1);
-	}
-	auto meshData = instanceDescs.data();
-	void* uploadAddress;
-	m_tlasUpload->Map(0, nullptr, &uploadAddress);
-	std::memcpy(uploadAddress, meshData, sizeof(D3D12_RAYTRACING_INSTANCE_DESC) * m_entities.size());
-	m_tlasUpload->Unmap(0, nullptr);
-
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS& topLevelInputs = topLevelBuildDesc.Inputs;
-	topLevelInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
-	topLevelInputs.Flags = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_BUILD_FLAG_PERFORM_UPDATE;
-	topLevelInputs.NumDescs = m_entities.size();
-	topLevelInputs.pGeometryDescs = nullptr;
-	topLevelInputs.Type = D3D12_RAYTRACING_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL;
-	D3D12_RAYTRACING_ACCELERATION_STRUCTURE_PREBUILD_INFO topLevelPrebuildInfo = {};
-	topLevelBuildDesc.SourceAccelerationStructureData = m_topLevelAccelerationStructure->GetGPUVirtualAddress();
-	topLevelBuildDesc.DestAccelerationStructureData = m_topLevelAccelerationStructure->GetGPUVirtualAddress();
-	topLevelBuildDesc.ScratchAccelerationStructureData = m_rtScratchBuffer->GetGPUVirtualAddress();
-	topLevelBuildDesc.Inputs.InstanceDescs = m_tlasUpload->GetGPUVirtualAddress();
-
-	// Reset Commands
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
-
-	m_commandList->BuildRaytracingAccelerationStructure(&topLevelBuildDesc, 0, nullptr);
-
-	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
+	Matrix4 v = m_camera->ViewMatrix();
+	m_TLASController->UpdateTransforms(m_commandList, v);
 }
 
 QuantumEngine::Rendering::DX12::DX12GraphicContext::DX12GraphicContext(UInt8 bufferCount, const ref<DX12CommandExecuter>& commandExecuter, ref<QuantumEngine::Platform::GraphicWindow>& window)
