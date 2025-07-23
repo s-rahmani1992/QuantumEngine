@@ -116,7 +116,7 @@ void QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Update
 	Matrix4 m;
 
 	for (int i = 0; i < m_transforms.size(); i++) {
-		m = viewMatrix * (m_transforms[i]->Matrix());
+		m = (m_transforms[i]->Matrix());
 		std::memcpy(&m_instanceDescs[i].Transform, &m, 12 * sizeof(Float));
 	}
 

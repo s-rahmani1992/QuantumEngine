@@ -1,6 +1,7 @@
 cbuffer CamProperties : register(b0)
 {
     float4x4 projectMatrix;
+    float3 camPosition;
 };
 
 RaytracingAccelerationStructure gRtScene : register(t0);
@@ -34,9 +35,9 @@ void rayGen()
     float2 screenPos = ((crd / dims) * 2.f - 1.f);
     screenPos.y = -screenPos.y;
     float4 worldPos = mul(float4(screenPos, 1.0f, 1.0f), projectMatrix);
-
+    worldPos.xyz /= worldPos.w;
     RayDesc ray;
-    ray.Origin = float3(0, 0, 0);
+    ray.Origin = camPosition;
     ray.Direction = normalize(worldPos.xyz - ray.Origin);
 
     ray.TMin = 0;

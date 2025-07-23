@@ -160,7 +160,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 	
 	UpdateTLAS();
 	m_commandList->SetComputeRootSignature((m_rtProgram->GetReflectionData()->rootSignature).Get());
-	m_rtMaterial->SetMatrix("projectMatrix", m_camera->InverseProjectionMatrix());
+	m_rtMaterial->SetVector3("camPosition", m_camera->GetTransform()->Position());
+	m_rtMaterial->SetMatrix("projectMatrix", m_camera->GetTransform()->Matrix()* m_camera->InverseProjectionMatrix());
 	m_rtMaterial->RegisterComputeValues(m_commandList);
 	
 	int mShaderTableEntrySize = 64;
