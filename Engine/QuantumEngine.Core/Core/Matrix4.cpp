@@ -83,9 +83,20 @@ QuantumEngine::Matrix4 QuantumEngine::Matrix4::PerspectiveProjection(Float near,
 {
 	float tanT = 1.0f / tanf(FOV * (PI / 360));
 	return Matrix4{
-		(1.0f / aspect) * tanT, 0.0f, 0.0f, 0.0f,
+		(tanT / aspect), 0.0f, 0.0f, 0.0f,
 		0.0f, tanT, 0.0f, 0.0f,
 		0.0f, 0.0f, far / (far - near), (far * near) / (near - far),
 		0.0f, 0.0f, 1.0f, 0.0f,
+	};
+}
+
+QuantumEngine::Matrix4 QuantumEngine::Matrix4::InversePerspectiveProjection(Float near, Float far, Float aspect, Float FOV)
+{
+	float tanT = 1.0f / tanf(FOV * (PI / 360));
+	return Matrix4{
+		aspect / tanT, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f / tanT, 0.0f, 0.0f,
+		0.0f, 0.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, (near - far) / (far * near), 1.0f / near,
 	};
 }

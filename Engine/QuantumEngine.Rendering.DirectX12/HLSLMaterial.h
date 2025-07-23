@@ -8,6 +8,7 @@ using namespace Microsoft::WRL;
 
 namespace QuantumEngine {
 	struct Vector2;
+	struct Vector3;
 	struct Matrix4;
 	class Texture2D;
 }
@@ -18,9 +19,11 @@ namespace QuantumEngine::Rendering::DX12 {
 		HLSLMaterial(const ref<ShaderProgram>& program);
 		bool Initialize();
 		void RegisterValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
+		void RegisterComputeValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
 		void SetColor(const std::string& fieldName, const Color& color);
 		void SetFloat(const std::string& fieldName, const Float& fValue);
 		void SetVector2(const std::string& fieldName, const Vector2& fValue);
+		void SetVector3(const std::string& fieldName, const Vector3& fValue);
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
 		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
 		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
@@ -43,6 +46,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	private:
 		std::map<std::string, RootConstantData<Float>> m_floatValues;
 		std::map<std::string, RootConstantData<Vector2>> m_vector2Values;
+		std::map<std::string, RootConstantData<Vector3>> m_vector3Values;
 		std::map<std::string, RootConstantData<Color>> m_colorValues;
 		std::map<std::string, RootConstantData<Matrix4>> m_matrixValues;
 		std::map<std::string, HeapData> m_heapValues;

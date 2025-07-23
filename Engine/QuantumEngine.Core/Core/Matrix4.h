@@ -15,6 +15,7 @@ namespace QuantumEngine {
 		static Matrix4 Translate(const Vector3& translate);
 		static Matrix4 Rotate(const Vector3& axis, Float angleDeg);
 		static Matrix4 PerspectiveProjection(Float near, Float far, Float acpect, Float FOV);
+		static Matrix4 InversePerspectiveProjection(Float near, Float far, Float acpect, Float FOV);
 		Float operator()(UInt8 x, UInt8 y) { return m_values[4 * x + y]; }
 	private:
 		Float m_values[16];

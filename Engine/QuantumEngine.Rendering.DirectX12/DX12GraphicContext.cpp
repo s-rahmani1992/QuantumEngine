@@ -159,15 +159,10 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
 	
 	UpdateTLAS();
-
-	ID3D12DescriptorHeap* heaps1[] = { m_TLASController->GetDescriptor().Get() };
-	ID3D12DescriptorHeap* heaps2[] = { m_outputHeap.Get() };
-	
 	m_commandList->SetComputeRootSignature((m_rtProgram->GetReflectionData()->rootSignature).Get());
-	m_commandList->SetDescriptorHeaps(1, heaps1);
-	m_commandList->SetComputeRootDescriptorTable(0, m_TLASController->GetDescriptor()->GetGPUDescriptorHandleForHeapStart());
-	m_commandList->SetDescriptorHeaps(1, heaps2);
-	m_commandList->SetComputeRootDescriptorTable(1, m_outputHeap->GetGPUDescriptorHandleForHeapStart());
+	m_rtMaterial->SetMatrix("projectMatrix", m_camera->InverseProjectionMatrix());
+	m_rtMaterial->RegisterComputeValues(m_commandList);
+	
 	int mShaderTableEntrySize = 64;
 	// Run Ray Tracing Pipeline
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
@@ -458,7 +453,8 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	// Ray Tracing Pipeline
 	m_rtProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram);
-
+	m_rtMaterial = std::make_shared<DX12::HLSLMaterial>(m_rtProgram);
+	m_rtMaterial->Initialize();
 	ref<HLSLShader> libShader = std::dynamic_pointer_cast<HLSLShader>(m_rtProgram->GetShader(LIB_SHADER));
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects(5);
 
@@ -588,6 +584,9 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	// Unmap
 	m_shaderTableBuffer->Unmap(0, nullptr);
+
+	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
+	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
 
 	return true;
 }

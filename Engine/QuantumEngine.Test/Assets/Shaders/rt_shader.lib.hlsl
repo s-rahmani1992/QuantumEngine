@@ -1,3 +1,8 @@
+cbuffer CamProperties : register(b0)
+{
+    float4x4 projectMatrix;
+};
+
 RaytracingAccelerationStructure gRtScene : register(t0);
 RWTexture2D<float4> gOutput : register(u0);
 
@@ -21,16 +26,18 @@ void rayGen()
 {
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
+    
 
-    float2 crd = float2(launchIndex.xy);
+    float2 crd = float2(launchIndex.xy) + 0.5;
     float2 dims = float2(launchDim.xy);
 
-    float2 d = ((crd / dims) * 2.f - 1.f);
-    float aspectRatio = dims.x / dims.y;
+    float2 screenPos = ((crd / dims) * 2.f - 1.f);
+    screenPos.y = -screenPos.y;
+    float4 worldPos = mul(float4(screenPos, 1.0f, 1.0f), projectMatrix);
 
     RayDesc ray;
     ray.Origin = float3(0, 0, 0);
-    ray.Direction = normalize(float3(d.x * aspectRatio, -d.y, 1));
+    ray.Direction = normalize(worldPos.xyz - ray.Origin);
 
     ray.TMin = 0;
     ray.TMax = 100000;

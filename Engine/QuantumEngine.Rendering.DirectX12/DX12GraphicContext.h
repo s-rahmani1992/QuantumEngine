@@ -75,6 +75,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12Resource2> m_shaderTableBuffer;
 
 		ref<HLSLShaderProgram> m_rtProgram;
+		ref<HLSLMaterial> m_rtMaterial;
 		ref<RayTracing::RTAccelarationStructure> m_TLASController;
 	};
 }
