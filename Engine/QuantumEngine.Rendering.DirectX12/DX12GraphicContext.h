@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 
+#define GLOBAL_HIT_GROUP_NAME L"GlobalHit"
+
 namespace QuantumEngine {
 	class GameEntity;
 	class Transform;
@@ -43,6 +45,7 @@ namespace QuantumEngine::Rendering::DX12 {
 			ComPtr<ID3D12RootSignature> rootSignature;
 			ref<HLSLMaterial> material;
 			ref<Transform> transform;
+			ref<HLSLMaterial> rtMaterial;
 		};
 
 		void UpdateTLAS();
@@ -77,5 +80,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<HLSLShaderProgram> m_rtProgram;
 		ref<HLSLMaterial> m_rtMaterial;
 		ref<RayTracing::RTAccelarationStructure> m_TLASController;
+		UInt32 m_mShaderTableEntrySize;
 	};
 }

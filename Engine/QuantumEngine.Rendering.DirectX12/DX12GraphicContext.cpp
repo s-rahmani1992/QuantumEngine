@@ -15,6 +15,7 @@
 #include <vector>
 #include "RayTracing/RTAccelarationStructure.h"
 #include "DX12Utilities.h"
+#include <set>
 
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
@@ -164,7 +165,6 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 	m_rtMaterial->SetMatrix("projectMatrix", m_camera->GetTransform()->Matrix()* m_camera->InverseProjectionMatrix());
 	m_rtMaterial->RegisterComputeValues(m_commandList);
 	
-	int mShaderTableEntrySize = 64;
 	// Run Ray Tracing Pipeline
 	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
 	raytraceDesc.Width = m_window->GetWidth();
@@ -174,19 +174,19 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 	// RayGen is the first entry in the shader-table
 	raytraceDesc.RayGenerationShaderRecord.StartAddress =
 		m_shaderTableBuffer->GetGPUVirtualAddress();
-	raytraceDesc.RayGenerationShaderRecord.SizeInBytes = mShaderTableEntrySize;
+	raytraceDesc.RayGenerationShaderRecord.SizeInBytes = m_mShaderTableEntrySize;
 
 	// Miss is the second entry in the shader-table
-	const size_t missOffset = 1 * mShaderTableEntrySize;
+	const size_t missOffset = 1 * m_mShaderTableEntrySize;
 	raytraceDesc.MissShaderTable.StartAddress = m_shaderTableBuffer->GetGPUVirtualAddress() + missOffset;
-	raytraceDesc.MissShaderTable.StrideInBytes = mShaderTableEntrySize;
-	raytraceDesc.MissShaderTable.SizeInBytes = mShaderTableEntrySize * 1; // Only a s single miss-entry 
+	raytraceDesc.MissShaderTable.StrideInBytes = m_mShaderTableEntrySize;
+	raytraceDesc.MissShaderTable.SizeInBytes = m_mShaderTableEntrySize * 1; // Only a s single miss-entry 
 
 	// Hit is the fourth entry in the shader-table
-	const size_t hitOffset = 2 * mShaderTableEntrySize;
+	const size_t hitOffset = 2 * m_mShaderTableEntrySize;
 	raytraceDesc.HitGroupTable.StartAddress = m_shaderTableBuffer->GetGPUVirtualAddress() + hitOffset;
-	raytraceDesc.HitGroupTable.StrideInBytes = mShaderTableEntrySize;
-	raytraceDesc.HitGroupTable.SizeInBytes = mShaderTableEntrySize * 1;
+	raytraceDesc.HitGroupTable.StrideInBytes = m_mShaderTableEntrySize;
+	raytraceDesc.HitGroupTable.SizeInBytes = m_mShaderTableEntrySize * 1;
 
 	// Bind the empty root signature
 	//mpCmdList->SetComputeRootSignature(mpEmptyRootSig.Get());
@@ -392,6 +392,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		.rootSignature = program->rootSignature,
 		.material = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial()),
 		.transform = gameEntity->GetTransform(),
+		.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetRTMaterial()),
 		});
 }
 
@@ -423,7 +424,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	};
 
 	// Ray Tracing Output Buffer
-	// Create the output resource. The dimensions and format should match the swap-chain
+	// Create the output resource. The dimensions should match the swap-chain
 	D3D12_RESOURCE_DESC outputDesc = {};
 	outputDesc.DepthOrArraySize = 1;
 	outputDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
@@ -453,76 +454,163 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	);
 
 	// Ray Tracing Pipeline
+	std::set<ref< HLSLShader>> shaders;
 	m_rtProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram);
 	m_rtMaterial = std::make_shared<DX12::HLSLMaterial>(m_rtProgram);
 	m_rtMaterial->Initialize();
 	ref<HLSLShader> libShader = std::dynamic_pointer_cast<HLSLShader>(m_rtProgram->GetShader(LIB_SHADER));
-	std::vector<D3D12_STATE_SUBOBJECT> subobjects(5);
-
+	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
+	subobjects.reserve(6 + 20 * m_entities.size());
 	// Create DXIL Sub Object
-	D3D12_DXIL_LIBRARY_DESC dxilLibDesc;
+	
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY,
+		.pDesc = libShader->GetDXIL(),
+		});
 
-	auto entries = libShader->GetEntryPoints();
-	std::vector<D3D12_EXPORT_DESC> exportDescs(entries.size());
-
-	std::vector<std::wstring> wNames(entries.size());
-
-	for (uint32_t i = 0; i < entries.size(); i++)
-	{
-		int size_needed = MultiByteToWideChar(CP_UTF8, 0, entries[i].data(), (int)entries[i].size(), nullptr, 0);
-		wNames[i] = std::wstring(size_needed, 0);
-		MultiByteToWideChar(CP_UTF8, 0, entries[i].data(), (int)entries[i].size(), &wNames[i][0], size_needed);
-	}
-
-	for (uint32_t i = 0; i < entries.size(); i++)
-	{
-		exportDescs[i].Name = wNames[i].c_str();
-		exportDescs[i].Flags = D3D12_EXPORT_FLAG_NONE;
-		exportDescs[i].ExportToRename = nullptr;
-	}
-
-	dxilLibDesc.DXILLibrary = D3D12_SHADER_BYTECODE{
-		.pShaderBytecode = libShader->GetByteCode(),
-		.BytecodeLength = libShader->GetCodeSize(),
-	};
-	dxilLibDesc.NumExports = entries.size();
-	dxilLibDesc.pExports = exportDescs.data();
-
-	subobjects[0].Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY;
-	subobjects[0].pDesc = &dxilLibDesc;
-
-	// Create Hit Group
-
-	D3D12_HIT_GROUP_DESC desc = {};
-	desc.IntersectionShaderImport = nullptr;
-	desc.AnyHitShaderImport = nullptr;
-	desc.ClosestHitShaderImport = L"chs";
-	desc.HitGroupExport = L"MyHitGroup";
-	desc.Type = D3D12_HIT_GROUP_TYPE_TRIANGLES;
-
-	subobjects[1].Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP;
-	subobjects[1].pDesc = &desc;
+	// Global Hit Group
+	/*std::wstring globe(GLOBAL_HIT_GROUP_NAME);
+	D3D12_HIT_GROUP_DESC globalHitDesc = libShader->GetHitGroup(globe);
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP,
+		.pDesc = &globalHitDesc,
+		});*/
 
 	// Global Root Signature 
-	subobjects[2].Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE;
-	subobjects[2].pDesc = m_rtProgram->GetReflectionData()->rootSignature.GetAddressOf();
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_GLOBAL_ROOT_SIGNATURE,
+		.pDesc = m_rtProgram->GetReflectionData()->rootSignature.GetAddressOf(),
+		});
+
+	D3D12_STATE_SUBOBJECT* rootPtr = subobjects.data() + subobjects.size() - 1;
 
 	// Shader Config
 	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig;
 	shaderConfig.MaxPayloadSizeInBytes = 3 * sizeof(Float);
 	shaderConfig.MaxAttributeSizeInBytes = 2 * sizeof(Float);
-	subobjects[3].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG;
-	subobjects[3].pDesc = &shaderConfig;
+
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_SHADER_CONFIG,
+		.pDesc = &shaderConfig,
+		});
+
+	D3D12_STATE_SUBOBJECT* shaderConfigPtr = subobjects.data() + subobjects.size() - 1;
 
 	// Pipeline Config
 	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig;
 	pipelineConfig.MaxTraceRecursionDepth = 1;
-	subobjects[4].Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG;
-	subobjects[4].pDesc = &pipelineConfig;
+
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG,
+		.pDesc = &pipelineConfig,
+		});
+
+	D3D12_STATE_SUBOBJECT* pipelineConfigPtr = subobjects.data() + subobjects.size() - 1;
+	
+	LPCWSTR g = GLOBAL_HIT_GROUP_NAME;
+	LPCWSTR missGen[2] = { libShader->GetRayGenExport().c_str(), libShader->GetMissExport().c_str() };
+	
+	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION rootExportDesc;
+	rootExportDesc.pSubobjectToAssociate = rootPtr;
+	rootExportDesc.NumExports = 2;
+	rootExportDesc.pExports = missGen;
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+		.pDesc = &rootExportDesc,
+		});
+	
+	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderConfigExportDesc;
+	shaderConfigExportDesc.pSubobjectToAssociate = shaderConfigPtr;
+	shaderConfigExportDesc.NumExports = 2;
+	shaderConfigExportDesc.pExports = missGen;
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+		.pDesc = &shaderConfigExportDesc,
+		});
+	
+	D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION pipelineConfigExportDesc;
+	pipelineConfigExportDesc.pSubobjectToAssociate = pipelineConfigPtr;
+	pipelineConfigExportDesc.NumExports = 2;
+	pipelineConfigExportDesc.pExports = missGen;
+	subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+		.pDesc = &pipelineConfigExportDesc,
+		});
+
+	//Create Local RootSignature state objects for each entity
+	int entityIndex = 0;
+
+	struct LocalRTData {
+		std::wstring hitExportName;
+		D3D12_HIT_GROUP_DESC hitDesc;
+		D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION hitExportDesc;
+		D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderConfigExportDesc;
+		D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION pipelineConfigExportDesc;
+	};
+
+	std::vector<LocalRTData> entityRTDatas;
+	entityRTDatas.reserve(m_entities.size() + 1); // Prevent vector from reallocation. So the pointer to entry is always valid
+
+	for (auto& entity : m_entities) {
+		if (entity.rtMaterial == nullptr)
+			continue;
+
+		entityRTDatas.push_back(LocalRTData{});
+		LocalRTData& rtRef = entityRTDatas.back();
+		ref<HLSLShader> localLibShader = std::dynamic_pointer_cast<HLSLShader>(entity.rtMaterial->GetProgram()->GetShader(LIB_SHADER));
+		
+		if (shaders.emplace(localLibShader).second) {
+			subobjects.push_back(D3D12_STATE_SUBOBJECT{
+			.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY,
+			.pDesc = localLibShader->GetDXIL(),
+				});
+		}
+
+		// Create HitGroup for local material
+		rtRef.hitExportName = L"Entity_" + std::to_wstring(entityIndex);
+		rtRef.hitDesc = localLibShader->GetHitGroup(rtRef.hitExportName);
+
+		subobjects.push_back(D3D12_STATE_SUBOBJECT{
+			.Type = D3D12_STATE_SUBOBJECT_TYPE_HIT_GROUP,
+			.pDesc = &rtRef.hitDesc,
+			});
+
+		subobjects.push_back(D3D12_STATE_SUBOBJECT{
+		.Type = D3D12_STATE_SUBOBJECT_TYPE_LOCAL_ROOT_SIGNATURE,
+		.pDesc = std::dynamic_pointer_cast<HLSLShaderProgram>(entity.rtMaterial->GetProgram())->GetReflectionData()->rootSignature.GetAddressOf(),
+			});
+
+		LPCWSTR b = rtRef.hitExportName.c_str();
+		rtRef.hitExportDesc.pSubobjectToAssociate = subobjects.data() + subobjects.size() - 1;
+		rtRef.hitExportDesc.NumExports = 1;
+		rtRef.hitExportDesc.pExports = &b;
+		subobjects.push_back(D3D12_STATE_SUBOBJECT{
+			.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+			.pDesc = &rtRef.hitExportDesc,
+		});
+
+		rtRef.shaderConfigExportDesc.pSubobjectToAssociate = shaderConfigPtr;
+		rtRef.shaderConfigExportDesc.NumExports = 1;
+		rtRef.shaderConfigExportDesc.pExports = &b;
+		subobjects.push_back(D3D12_STATE_SUBOBJECT{
+			.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+			.pDesc = &rtRef.shaderConfigExportDesc,
+			});
+
+		rtRef.pipelineConfigExportDesc.pSubobjectToAssociate = pipelineConfigPtr;
+		rtRef.pipelineConfigExportDesc.NumExports = 1;
+		rtRef.pipelineConfigExportDesc.pExports = &b;
+		subobjects.push_back(D3D12_STATE_SUBOBJECT{
+			.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
+			.pDesc = &rtRef.pipelineConfigExportDesc,
+			});
+
+		entityIndex++;
+	}
 
 	// Create the State Object
 	D3D12_STATE_OBJECT_DESC stateObjectDesc;
-	stateObjectDesc.NumSubobjects = 5;
+	stateObjectDesc.NumSubobjects = subobjects.size();
 	stateObjectDesc.pSubobjects = subobjects.data();
 	stateObjectDesc.Type = D3D12_STATE_OBJECT_TYPE_RAYTRACING_PIPELINE;
 
@@ -531,10 +619,10 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	}
 
 	// Create ShaderTable
-	UInt32 mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-	mShaderTableEntrySize += 8; // The hit shader constant-buffer descriptor
-	mShaderTableEntrySize = (((mShaderTableEntrySize + D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
-	const UInt32 shaderTableSize = mShaderTableEntrySize * 3;
+	m_mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
+	m_mShaderTableEntrySize += 8; // The hit shader constant-buffer descriptor
+	m_mShaderTableEntrySize = (((m_mShaderTableEntrySize + D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
+	const UInt32 shaderTableSize = m_mShaderTableEntrySize * 3;
 
 	ComPtr<ID3D12StateObjectProperties> rtProperties;
 	if (FAILED(m_rtStateObject->QueryInterface(IID_PPV_ARGS(&rtProperties))))
@@ -568,17 +656,17 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_shaderTableBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData));
 
 	// Entry 0 - ray-gen program ID and descriptor data
-	std::memcpy(pData, rtProperties->GetShaderIdentifier(L"rayGen"),
+	std::memcpy(pData, rtProperties->GetShaderIdentifier(RAYGEN_NAME),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Entry 1 - primary ray miss
-	pData += mShaderTableEntrySize;
-	std::memcpy(pData, rtProperties->GetShaderIdentifier(L"miss"),
+	pData += m_mShaderTableEntrySize;
+	std::memcpy(pData, rtProperties->GetShaderIdentifier(MISS_NAME),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Entry 2 - hit program
-	pData += mShaderTableEntrySize;
-	std::memcpy(pData, rtProperties->GetShaderIdentifier(L"MyHitGroup"),
+	pData += m_mShaderTableEntrySize;
+	std::memcpy(pData, rtProperties->GetShaderIdentifier(GLOBAL_HIT_GROUP_NAME),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 	/*const uint64_t heapStartHit = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart().ptr;
 	*reinterpret_cast<uint64_t*>(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStartHit;*/

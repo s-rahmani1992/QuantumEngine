@@ -82,6 +82,7 @@
     <ClInclude Include="Core\Camera\PerspectiveCamera.h">
       <Filter>Core\Camera</Filter>
     </ClInclude>
+    <ClInclude Include="StringUtilities.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -120,5 +121,6 @@
     <ClCompile Include="Core\Camera\PerspectiveCamera.cpp">
       <Filter>Core\Camera</Filter>
     </ClCompile>
+    <ClCompile Include="StringUtilities.cpp" />
   </ItemGroup>
 </Project>

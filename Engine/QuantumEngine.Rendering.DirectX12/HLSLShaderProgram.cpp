@@ -3,7 +3,7 @@
 #include "HLSLShaderProgram.h"
 #include <set>
 
-bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<ID3D12Device10>& device)
+bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<ID3D12Device10>& device, bool isLocal)
 {
     UInt32 rootParameterIndex = 0;
     UInt32 staticSamplerIndex = 0;
@@ -114,13 +114,15 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
             }
         }
     }
-
+    D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlag = isLocal ?
+        D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE :
+        D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
     D3D12_ROOT_SIGNATURE_DESC rootDesc{
         .NumParameters = (UInt32)rootParameters.size(),
         .pParameters = rootParameters.size() == 0 ? nullptr : rootParameters.data(),
         .NumStaticSamplers = (UInt32)staticSamplers.size(),
         .pStaticSamplers = staticSamplers.size() == 0 ? nullptr : staticSamplers.data(),
-        .Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT,
+        .Flags = rootSignatureFlag,
     };
 
     ComPtr<ID3DBlob> error;

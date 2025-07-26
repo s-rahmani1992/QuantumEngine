@@ -115,6 +115,7 @@
     <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Rendering\Shader.h" />
     <ClInclude Include="Rendering\ShaderProgram.h" />
+    <ClInclude Include="StringUtilities.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\Camera\Camera.cpp" />
@@ -129,6 +130,7 @@
     <ClCompile Include="Core\Vector3.cpp" />
     <ClCompile Include="Platform\Application.cpp" />
     <ClCompile Include="Platform\GraphicWindow.cpp" />
+    <ClCompile Include="StringUtilities.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

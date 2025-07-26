@@ -66,11 +66,11 @@ ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::DX12::D
 	return assetManager;
 }
 
-ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateShaderProgram(const std::initializer_list<ref<Shader>>& shaders)
+ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateShaderProgram(const std::initializer_list<ref<Shader>>& shaders, bool isLocal)
 {
 	ref<HLSLShaderProgram> program = std::make_shared<HLSLShaderProgram>(shaders);
 
-	if (program->Initialize(m_device) == false)
+	if (program->Initialize(m_device, isLocal) == false)
 		return nullptr;
 
 	return program;

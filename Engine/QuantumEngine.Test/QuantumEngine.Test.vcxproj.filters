@@ -70,5 +70,8 @@
     <Text Include="Assets\Shaders\rt_shader.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
+    <Text Include="Assets\Shaders\rt_color.lib.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
   </ItemGroup>
 </Project>

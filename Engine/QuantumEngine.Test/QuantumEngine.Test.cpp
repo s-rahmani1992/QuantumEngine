@@ -102,8 +102,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader });
-    auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader });
+    ref<Render::Shader> rtColorShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\rt_color.lib.hlsl", DX12::LIB_SHADER, errorStr);
+    if (rtColorShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
+
+    auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader }, false);
+    auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader }, false);
+    auto rtColorProgram = gpuDevice->CreateShaderProgram({ rtColorShader }, true);
+
     // Adding Meshes
     std::vector<Vertex> vertices = {
         Vertex(Vector3(-1.0f, 0.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
@@ -158,16 +167,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     material1->SetMatrix("projectMatrix", project);
     material1->SetTexture2D("mainTexture", tex1);
 
+    ref<DX12::HLSLMaterial> rtMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
+    rtMaterial1->Initialize();
+    rtMaterial1->SetColor("color", Color(0.3f, 0.7f, 0.1f, 1.0f));
+
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
     material2->Initialize();
     material2->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     material2->SetMatrix("projectMatrix", project);
     material2->SetTexture2D("mainTexture", tex2);
 
+    ref<DX12::HLSLMaterial> rtMaterial2 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
+    rtMaterial2->Initialize();
+    rtMaterial2->SetColor("color", Color(0.9f, 0.1f, 0.5f, 1.0f));
+
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
-    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1);
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1, rtMaterial1);
     auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2, rtMaterial2);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
     gpuContext->SetCamera(mainCamera);

@@ -27,7 +27,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
         }
         HLSLProgramReflection* GetReflectionData() { return &m_reflectionData; }
-        bool Initialize(const ComPtr<ID3D12Device10>& device);
+        bool Initialize(const ComPtr<ID3D12Device10>& device, bool isLocal);
     private:
         HLSLProgramReflection m_reflectionData;
     };
