@@ -14,8 +14,10 @@ namespace QuantumEngine::Rendering::DX12 {
 
     struct HLSLProgramReflection {
         ComPtr<ID3D12RootSignature> rootSignature;
-        std::vector<std::pair<UInt32, HLSLRootConstantData>> rootConstants;
-        std::vector<BoundResourceData> boundResourceDatas;
+        std::map<UInt32, HLSLConstantBufferData> constantBufferVariables;
+        std::map<UInt32, BoundResourceData> boundResourceDatas;
+        UInt32 RootParameterCount;
+        UInt32 totalVariableSize;
     };
 
     class HLSLShaderProgram : public ShaderProgram

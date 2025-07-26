@@ -46,12 +46,20 @@ void QuantumEngine::Rendering::DX12::HLSLShader::FillReflection(ComPtr<ID3D12Sha
             ID3D12ShaderReflectionConstantBuffer* cb = shaderReflection->GetConstantBufferByName(boundResource.Name);
             D3D12_SHADER_BUFFER_DESC cbDesc;
             cb->GetDesc(&cbDesc);
+            m_reflection.constantBuffers.push_back(HLSLConstantBufferData{
+                .name = std::string(cbDesc.Name),
+                .registerData = D3D12_ROOT_CONSTANTS{
+                    .ShaderRegister = boundResource.BindPoint,
+                    .RegisterSpace = boundResource.Space,
+                    .Num32BitValues = cbDesc.Size / 4,
+                    },
+                });
 
             for (UINT v = 0; v < cbDesc.Variables; ++v) {
                 ID3D12ShaderReflectionVariable* var = cb->GetVariableByIndex(v);
                 D3D12_SHADER_VARIABLE_DESC varDesc;
                 var->GetDesc(&varDesc);
-                m_reflection.rootConstants.push_back(HLSLRootConstantData{
+                m_reflection.constantBuffers.back().constantBufferVariables.push_back(HLSLRootConstantVariableData{
                     .name = std::string(varDesc.Name),
                     .variableDesc = varDesc,
                     .registerData = D3D12_ROOT_CONSTANTS{
@@ -90,12 +98,20 @@ void QuantumEngine::Rendering::DX12::HLSLShader::FillReflection(ComPtr<ID3D12Lib
                 ID3D12ShaderReflectionConstantBuffer* cb = funcReflection->GetConstantBufferByName(boundResource.Name);
                 D3D12_SHADER_BUFFER_DESC cbDesc;
                 cb->GetDesc(&cbDesc);
+                m_reflection.constantBuffers.push_back(HLSLConstantBufferData{
+                    .name = std::string(cbDesc.Name),
+                    .registerData = D3D12_ROOT_CONSTANTS{
+                        .ShaderRegister = boundResource.BindPoint,
+                        .RegisterSpace = boundResource.Space,
+                        .Num32BitValues = cbDesc.Size / 4,
+                        },
+                    });
 
                 for (UINT v = 0; v < cbDesc.Variables; ++v) {
                     ID3D12ShaderReflectionVariable* var = cb->GetVariableByIndex(v);
                     D3D12_SHADER_VARIABLE_DESC varDesc;
                     var->GetDesc(&varDesc);
-                    m_reflection.rootConstants.push_back(HLSLRootConstantData{
+                    m_reflection.constantBuffers.back().constantBufferVariables.push_back(HLSLRootConstantVariableData{
                         .name = std::string(varDesc.Name),
                         .variableDesc = varDesc,
                         .registerData = D3D12_ROOT_CONSTANTS{
@@ -103,7 +119,7 @@ void QuantumEngine::Rendering::DX12::HLSLShader::FillReflection(ComPtr<ID3D12Lib
                             .RegisterSpace = boundResource.Space,
                             .Num32BitValues = varDesc.Size / 4,
                         },
-                        });
+                    });
                 }
             }
             else {

@@ -13,38 +13,27 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
     std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
     std::vector<D3D12_DESCRIPTOR_RANGE> ranges(20); //TODO calculate number of ranges beforehand
     int rangeIndex = 0;
+    m_reflectionData.totalVariableSize = 0;
 
     for (auto& shader : m_shaders) {
         auto hlslShader = std::dynamic_pointer_cast<HLSLShader>(shader);
         auto reflection = hlslShader->GetReflection();
-        for (auto& shaderRootConstant : reflection->rootConstants) {
-            auto resultItem = keys.emplace(shaderRootConstant.name);
+        for (auto& shaderConstantBuffer : reflection->constantBuffers) {
+            auto resultItem = keys.emplace(shaderConstantBuffer.name);
             
             if (resultItem.second == false)
                 continue;
 
-            int targetIndex = 0;
+            rootParameters.push_back(D3D12_ROOT_PARAMETER{
+                .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+                .Constants = shaderConstantBuffer.registerData,
+                .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
+            });
 
-            for (targetIndex = 0; targetIndex < rootParameters.size(); targetIndex++) {
-                if (rootParameters[targetIndex].Constants.RegisterSpace == shaderRootConstant.registerData.RegisterSpace
-                    && rootParameters[targetIndex].Constants.ShaderRegister == shaderRootConstant.registerData.ShaderRegister)
-                    break;
-            }
+            m_reflectionData.constantBufferVariables.emplace(rootParameterIndex, shaderConstantBuffer);
+            m_reflectionData.totalVariableSize += shaderConstantBuffer.registerData.Num32BitValues * sizeof(Float);
             
-            if (targetIndex != rootParameters.size()) {
-                rootParameters[targetIndex].Constants.Num32BitValues += shaderRootConstant.registerData.Num32BitValues;
-                m_reflectionData.rootConstants.push_back({ targetIndex, shaderRootConstant });
-            }
-            else {
-                rootParameters.push_back(D3D12_ROOT_PARAMETER{
-                    .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
-                    .Constants = shaderRootConstant.registerData,
-                    .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-                    });
-
-                m_reflectionData.rootConstants.push_back({ rootParameterIndex, shaderRootConstant });
-                rootParameterIndex++;
-            }
+            rootParameterIndex++;
         }
 
         for (auto& shaderBoundVariable : reflection->boundVariables) {
@@ -71,7 +60,7 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
                     });
             }
             else {
-                m_reflectionData.boundResourceDatas.push_back(BoundResourceData
+                m_reflectionData.boundResourceDatas.emplace(rootParameterIndex, BoundResourceData
                     {
                         .rootParameterIndex = rootParameterIndex,
                         .name = shaderBoundVariable.first,
@@ -111,9 +100,13 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
                 });
                 rangeIndex++;
                 rootParameterIndex++;
+                m_reflectionData.totalVariableSize += sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
             }
         }
     }
+
+    m_reflectionData.RootParameterCount = (UInt32)rootParameters.size();
+
     D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlag = isLocal ?
         D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE :
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;

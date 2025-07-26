@@ -17,6 +17,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLMaterial : public Material {
 	public:
 		HLSLMaterial(const ref<ShaderProgram>& program);
+		~HLSLMaterial();
 		bool Initialize();
 		void RegisterValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
 		void RegisterComputeValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
@@ -24,32 +25,28 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetFloat(const std::string& fieldName, const Float& fValue);
 		void SetVector2(const std::string& fieldName, const Vector2& fValue);
 		void SetVector3(const std::string& fieldName, const Vector3& fValue);
+		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
 		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
-		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
 	private:
-		template<typename T>
-		struct RootConstantData {
-			UInt32 rootParamIndex;
-			UInt32 offset;
-			UInt32 size;
-			T value;
+		struct constantBufferData {
+		UInt32 rootParamIndex;
+		Byte* location;
+		UInt32 size;
 		};
 
 		struct HeapData {
 			UInt32 rootParamIndex;
-			ComPtr<ID3D12DescriptorHeap> gpuHandle;
+			ComPtr<ID3D12DescriptorHeap> descriptor;
+			D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle;
 		};
 
 		std::map<std::string, D3D12_SHADER_VARIABLE_DESC> ExtractConstantBuffers(const ComPtr<ID3D12ShaderReflection>& reflector);
-		void UpdateHeaps();
+		void SetRootConstant(const std::string& fieldName, void* data, UInt32 size);
 	private:
-		std::map<std::string, RootConstantData<Float>> m_floatValues;
-		std::map<std::string, RootConstantData<Vector2>> m_vector2Values;
-		std::map<std::string, RootConstantData<Vector3>> m_vector3Values;
-		std::map<std::string, RootConstantData<Color>> m_colorValues;
-		std::map<std::string, RootConstantData<Matrix4>> m_matrixValues;
 		std::map<std::string, HeapData> m_heapValues;
-		std::vector<ID3D12DescriptorHeap*> m_allHeaps;
+		std::map<std::string, Byte*> m_rootConstantVariableLocations;
+		std::vector<constantBufferData> m_constantRegisterValues;
+		Byte* m_variableData;
 	};
 }

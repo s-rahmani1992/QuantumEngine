@@ -9,56 +9,51 @@
 #include "Core/Texture2D.h"
 
 QuantumEngine::Rendering::DX12::HLSLMaterial::HLSLMaterial(const ref<ShaderProgram>& program)
-    :Material(program)
+    :Material(program), m_variableData(nullptr)
 {
+}
+
+QuantumEngine::Rendering::DX12::HLSLMaterial::~HLSLMaterial()
+{
+    if (m_variableData != nullptr)
+        delete[] m_variableData;
 }
 
 bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
 {
     auto reflection = std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData();
     
-    for (auto& p : reflection->rootConstants) {
-        if (p.second.registerData.Num32BitValues == 1) // it's float
-            m_floatValues.insert_or_assign(p.second.name, RootConstantData<Float>{
-                .rootParamIndex = p.first,
-                .offset = p.second.variableDesc.StartOffset / 4,
-                .size = 1,
-                .value = 0.0f,
-            });
+    m_variableData = new Byte[reflection->totalVariableSize];
+    Byte* startPoint = m_variableData;
 
-        else if (p.second.registerData.Num32BitValues == 2) // it's vector2
-            m_vector2Values.insert_or_assign(p.second.name, RootConstantData<Vector2>{
-                .rootParamIndex = p.first,
-                .offset = p.second.variableDesc.StartOffset / 4,
-                .size = 2,
-                .value = Vector2(),
-            });
-        else if (p.second.registerData.Num32BitValues == 3) // it's vector3
-            m_vector3Values.insert_or_assign(p.second.name, RootConstantData<Vector3>{
-                .rootParamIndex = p.first,
-                .offset = p.second.variableDesc.StartOffset / 4,
-                .size = 3,
-                .value = Vector3(),
-            });
-        else if (p.second.registerData.Num32BitValues == 4) // it's color
-            m_colorValues.insert_or_assign(p.second.name, RootConstantData<Color>{
-                .rootParamIndex = p.first,
-                .offset = p.second.variableDesc.StartOffset / 4,
-                .size = 4,
-                .value = Color(),
-            });
+    for (int i = 0; i < reflection->RootParameterCount; i++) {
+        auto cBufferIt = reflection->constantBufferVariables.find(i);
+        if (cBufferIt != reflection->constantBufferVariables.end()) {
+            m_constantRegisterValues.push_back(constantBufferData{
+                .rootParamIndex = (*cBufferIt).first,
+                .location = startPoint,
+                .size = (UInt32)((*cBufferIt).second.registerData.Num32BitValues),
+                });
 
-        else if (p.second.registerData.Num32BitValues == 16) // it's color
-            m_matrixValues.insert_or_assign(p.second.name, RootConstantData<Matrix4>{
-            .rootParamIndex = p.first,
-                .offset = p.second.variableDesc.StartOffset / 4,
-                .size = 16,
-                .value = Matrix4(),
-        });
-    }
+            for (auto& cVar : (*cBufferIt).second.constantBufferVariables) {
+                m_rootConstantVariableLocations.emplace(cVar.name, startPoint);
+                startPoint += cVar.variableDesc.Size;
+            }
 
-    for (auto& p : reflection->boundResourceDatas) {
-        m_heapValues.insert_or_assign(p.name, HeapData{ .rootParamIndex = p.rootParameterIndex });
+            continue;
+        }
+
+        auto heapIt = reflection->boundResourceDatas.find(i);
+        if (heapIt != reflection->boundResourceDatas.end()) {
+            m_heapValues.emplace((*heapIt).second.name, HeapData{
+                .rootParamIndex = (*heapIt).first,
+                .gpuHandle = (D3D12_GPU_DESCRIPTOR_HANDLE*)startPoint, 
+                });
+            startPoint += sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
+            continue;
+        }
+
+        return false;
     }
 
 	return true;
@@ -87,86 +82,60 @@ std::map<std::string, D3D12_SHADER_VARIABLE_DESC> QuantumEngine::Rendering::DX12
     return constantBuffers;
 }
 
-void QuantumEngine::Rendering::DX12::HLSLMaterial::UpdateHeaps()
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetRootConstant(const std::string& fieldName, void* data, UInt32 size)
 {
-    m_allHeaps.clear();
+    auto field = m_rootConstantVariableLocations.find(fieldName);
 
-    for (auto& tValue : m_heapValues)
-        m_allHeaps.push_back(tValue.second.gpuHandle.Get());
+    if (field != m_rootConstantVariableLocations.end()) {
+        std::memcpy((*field).second, data, size);
+    }
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12GraphicsCommandList7>& commandList)
 {
-    for (auto& colorField : m_colorValues)
-        commandList->SetGraphicsRoot32BitConstants(colorField.second.rootParamIndex, 4, colorField.second.value.GetColorArray(), colorField.second.offset);
-    for (auto& floatField : m_floatValues)
-        commandList->SetGraphicsRoot32BitConstants(floatField.second.rootParamIndex, 1, &(floatField.second.value), floatField.second.offset);
-    for (auto& vector2Field : m_vector2Values)
-        commandList->SetGraphicsRoot32BitConstants(vector2Field.second.rootParamIndex, 2, &vector2Field.second.value, vector2Field.second.offset);
-    for (auto& vector3Field : m_vector3Values)
-        commandList->SetGraphicsRoot32BitConstants(vector3Field.second.rootParamIndex, 3, &vector3Field.second.value, vector3Field.second.offset);
-    for (auto& matrixField : m_matrixValues)
-        commandList->SetGraphicsRoot32BitConstants(matrixField.second.rootParamIndex, 16, &matrixField.second.value, matrixField.second.offset);
+    for(auto& rField : m_constantRegisterValues)
+        commandList->SetGraphicsRoot32BitConstants(rField.rootParamIndex, rField.size, rField.location, 0);
 
     for (auto& heapField : m_heapValues) {
-        commandList->SetDescriptorHeaps(1, heapField.second.gpuHandle.GetAddressOf());
-        commandList->SetGraphicsRootDescriptorTable(heapField.second.rootParamIndex, heapField.second.gpuHandle->GetGPUDescriptorHandleForHeapStart());
+        commandList->SetDescriptorHeaps(1, heapField.second.descriptor.GetAddressOf());
+        commandList->SetGraphicsRootDescriptorTable(heapField.second.rootParamIndex, *heapField.second.gpuHandle);
     }
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterComputeValues(ComPtr<ID3D12GraphicsCommandList7>& commandList)
 {
-    for (auto& colorField : m_colorValues)
-        commandList->SetComputeRoot32BitConstants(colorField.second.rootParamIndex, 4, colorField.second.value.GetColorArray(), colorField.second.offset);
-    for (auto& floatField : m_floatValues)
-        commandList->SetComputeRoot32BitConstants(floatField.second.rootParamIndex, 1, &(floatField.second.value), floatField.second.offset);
-    for (auto& vector2Field : m_vector2Values)
-        commandList->SetComputeRoot32BitConstants(vector2Field.second.rootParamIndex, 2, &vector2Field.second.value, vector2Field.second.offset);
-    for (auto& vector3Field : m_vector3Values)
-        commandList->SetComputeRoot32BitConstants(vector3Field.second.rootParamIndex, 3, &vector3Field.second.value, vector3Field.second.offset);
-    for (auto& matrixField : m_matrixValues)
-        commandList->SetComputeRoot32BitConstants(matrixField.second.rootParamIndex, 16, &matrixField.second.value, matrixField.second.offset);
+    for (auto& rField : m_constantRegisterValues)
+        commandList->SetComputeRoot32BitConstants(rField.rootParamIndex, rField.size, rField.location, 0);
 
     for (auto& heapField : m_heapValues) {
-        commandList->SetDescriptorHeaps(1, heapField.second.gpuHandle.GetAddressOf());
-        commandList->SetComputeRootDescriptorTable(heapField.second.rootParamIndex, heapField.second.gpuHandle->GetGPUDescriptorHandleForHeapStart());
+        commandList->SetDescriptorHeaps(1, heapField.second.descriptor.GetAddressOf());
+        commandList->SetComputeRootDescriptorTable(heapField.second.rootParamIndex, *heapField.second.gpuHandle);
     }
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetColor(const std::string& fieldName, const Color& color)
 {
-    auto field = m_colorValues.find(fieldName);
-
-    if (field != m_colorValues.end()) {
-        (*field).second.value = color;
-    }
+    SetRootConstant(fieldName, (void*)&color, sizeof(Color));
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetFloat(const std::string& fieldName, const Float& fValue)
 {
-    auto field = m_floatValues.find(fieldName);
-
-    if (field != m_floatValues.end()) {
-        (*field).second.value = fValue;
-    }
+    SetRootConstant(fieldName, (void*)&fValue, sizeof(Float));
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetVector2(const std::string& fieldName, const Vector2& fValue)
 {
-    auto field = m_vector2Values.find(fieldName);
-
-    if (field != m_vector2Values.end()) {
-        (*field).second.value = fValue;
-    }
+    SetRootConstant(fieldName, (void*)&fValue, sizeof(Vector2));
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetVector3(const std::string& fieldName, const Vector3& fValue)
 {
-    auto field = m_vector3Values.find(fieldName);
+    SetRootConstant(fieldName, (void*)&fValue, sizeof(Vector3));
+}
 
-    if (field != m_vector3Values.end()) {
-        (*field).second.value = fValue;
-    }
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetMatrix(const std::string& fieldName, const Matrix4& matrixValue)
+{
+    SetRootConstant(fieldName, (void*)&matrixValue, sizeof(Matrix4));
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue)
@@ -179,16 +148,7 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::
     auto field = m_heapValues.find(fieldName);
 
     if (field != m_heapValues.end()) {
-        (*field).second.gpuHandle = descriptorHeap;
-        UpdateHeaps();
-    }
-}
-
-void QuantumEngine::Rendering::DX12::HLSLMaterial::SetMatrix(const std::string& fieldName, const Matrix4& matrixValue)
-{
-    auto field = m_matrixValues.find(fieldName);
-
-    if (field != m_matrixValues.end()) {
-        (*field).second.value = matrixValue;
+        *((*field).second.gpuHandle) = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+        (*field).second.descriptor = descriptorHeap;
     }
 }

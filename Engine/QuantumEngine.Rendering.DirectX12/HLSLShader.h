@@ -19,14 +19,20 @@ namespace QuantumEngine::Rendering::DX12 {
 		LIB_SHADER = 2,
 	};
 
-	struct HLSLRootConstantData {
+	struct HLSLRootConstantVariableData {
 		std::string name;
 		D3D12_SHADER_VARIABLE_DESC variableDesc;
 		D3D12_ROOT_CONSTANTS registerData;
 	};
 
+	struct HLSLConstantBufferData {
+		std::string name;
+		D3D12_ROOT_CONSTANTS registerData;
+		std::vector<HLSLRootConstantVariableData> constantBufferVariables;
+	};
+
 	struct HLSLShaderReflection {
-		std::vector<HLSLRootConstantData> rootConstants;
+		std::vector<HLSLConstantBufferData> constantBuffers;
 		std::vector<std::pair<std::string, D3D12_SHADER_INPUT_BIND_DESC>> boundVariables;
 	};
 
