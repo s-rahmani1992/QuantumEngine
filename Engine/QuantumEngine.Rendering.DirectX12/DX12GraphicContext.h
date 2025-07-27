@@ -80,6 +80,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<HLSLShaderProgram> m_rtProgram;
 		ref<HLSLMaterial> m_rtMaterial;
 		ref<RayTracing::RTAccelarationStructure> m_TLASController;
-		UInt32 m_mShaderTableEntrySize;
+		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
 	};
 }

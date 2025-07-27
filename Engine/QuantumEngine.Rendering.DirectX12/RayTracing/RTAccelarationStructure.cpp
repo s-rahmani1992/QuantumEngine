@@ -58,6 +58,7 @@ bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initia
 
 		m_instanceDescs.push_back(desc1);
 		m_transforms.push_back(entity.transform);
+		id++;
 	}
 
 	D3D12_RESOURCE_DESC tlasBufferDesc

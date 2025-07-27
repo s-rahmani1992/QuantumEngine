@@ -28,6 +28,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
 		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
+		void CopyVariableData(void* dest);
 	private:
 		struct constantBufferData {
 		UInt32 rootParamIndex;

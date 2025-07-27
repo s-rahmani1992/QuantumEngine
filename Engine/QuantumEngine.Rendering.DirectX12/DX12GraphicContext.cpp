@@ -17,6 +17,8 @@
 #include "DX12Utilities.h"
 #include <set>
 
+#define SBT_SHADER_RECORD_ALIGHT(x) ((x + D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
+#define SBT_SECTION_ALIGHT(x) ((x + D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -166,34 +168,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 	m_rtMaterial->RegisterComputeValues(m_commandList);
 	
 	// Run Ray Tracing Pipeline
-	D3D12_DISPATCH_RAYS_DESC raytraceDesc = {};
-	raytraceDesc.Width = m_window->GetWidth();
-	raytraceDesc.Height = m_window->GetHeight();
-	raytraceDesc.Depth = 1;
-
-	// RayGen is the first entry in the shader-table
-	raytraceDesc.RayGenerationShaderRecord.StartAddress =
-		m_shaderTableBuffer->GetGPUVirtualAddress();
-	raytraceDesc.RayGenerationShaderRecord.SizeInBytes = m_mShaderTableEntrySize;
-
-	// Miss is the second entry in the shader-table
-	const size_t missOffset = 1 * m_mShaderTableEntrySize;
-	raytraceDesc.MissShaderTable.StartAddress = m_shaderTableBuffer->GetGPUVirtualAddress() + missOffset;
-	raytraceDesc.MissShaderTable.StrideInBytes = m_mShaderTableEntrySize;
-	raytraceDesc.MissShaderTable.SizeInBytes = m_mShaderTableEntrySize * 1; // Only a s single miss-entry 
-
-	// Hit is the fourth entry in the shader-table
-	const size_t hitOffset = 2 * m_mShaderTableEntrySize;
-	raytraceDesc.HitGroupTable.StartAddress = m_shaderTableBuffer->GetGPUVirtualAddress() + hitOffset;
-	raytraceDesc.HitGroupTable.StrideInBytes = m_mShaderTableEntrySize;
-	raytraceDesc.HitGroupTable.SizeInBytes = m_mShaderTableEntrySize * 1;
-
-	// Bind the empty root signature
-	//mpCmdList->SetComputeRootSignature(mpEmptyRootSig.Get());
-
-	// Dispatch
 	m_commandList->SetPipelineState1(m_rtStateObject.Get());
-	m_commandList->DispatchRays(&raytraceDesc);
+	m_commandList->DispatchRays(&m_raytraceDesc);
 
 	//Set Render Target
 	auto m_current_buffer_index = m_swapChain->GetCurrentBackBufferIndex();
@@ -458,6 +434,10 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_rtProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram);
 	m_rtMaterial = std::make_shared<DX12::HLSLMaterial>(m_rtProgram);
 	m_rtMaterial->Initialize();
+
+	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
+	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
+
 	ref<HLSLShader> libShader = std::dynamic_pointer_cast<HLSLShader>(m_rtProgram->GetShader(LIB_SHADER));
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
 	subobjects.reserve(6 + 20 * m_entities.size());
@@ -619,10 +599,33 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	}
 
 	// Create ShaderTable
-	m_mShaderTableEntrySize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES;
-	m_mShaderTableEntrySize += 8; // The hit shader constant-buffer descriptor
-	m_mShaderTableEntrySize = (((m_mShaderTableEntrySize + D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT);
-	const UInt32 shaderTableSize = m_mShaderTableEntrySize * 3;
+	UInt32 rayGenResordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + m_rtProgram->GetReflectionData()->totalVariableSize;
+	rayGenResordSize = SBT_SHADER_RECORD_ALIGHT(rayGenResordSize);
+	UInt32 rayGenSectionSize = SBT_SECTION_ALIGHT(rayGenResordSize);
+	
+	UInt32 missResordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + m_rtProgram->GetReflectionData()->totalVariableSize;
+	missResordSize = SBT_SHADER_RECORD_ALIGHT(missResordSize);
+	UInt32 missSectionSize = SBT_SECTION_ALIGHT(missResordSize);
+	
+	UInt32 hitRecordSize = 0;
+	UInt32 rtEntityCount = 0;
+
+	for (auto& entity : m_entities) {
+		if (entity.rtMaterial == nullptr)
+			continue;
+
+		auto localRTProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(entity.rtMaterial->GetProgram());
+		UInt32 hitGroupSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + localRTProgram->GetReflectionData()->totalVariableSize;
+		hitGroupSize = SBT_SHADER_RECORD_ALIGHT(hitGroupSize);
+
+		if (hitGroupSize > hitRecordSize)
+			hitRecordSize = hitGroupSize;
+
+		rtEntityCount++;
+	}
+
+	UInt32 hitSectionSize = rtEntityCount * hitRecordSize;
+	hitSectionSize = SBT_SECTION_ALIGHT(hitSectionSize);
 
 	ComPtr<ID3D12StateObjectProperties> rtProperties;
 	if (FAILED(m_rtStateObject->QueryInterface(IID_PPV_ARGS(&rtProperties))))
@@ -632,7 +635,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	{
 	shaderTableBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
 	shaderTableBufferDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-	shaderTableBufferDesc.Width = shaderTableSize,
+	shaderTableBufferDesc.Width = rayGenSectionSize + missSectionSize + hitSectionSize,
 	shaderTableBufferDesc.Height = 1,
 	shaderTableBufferDesc.DepthOrArraySize = 1,
 	shaderTableBufferDesc.MipLevels = 1,
@@ -656,26 +659,59 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_shaderTableBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData));
 
 	// Entry 0 - ray-gen program ID and descriptor data
-	std::memcpy(pData, rtProperties->GetShaderIdentifier(RAYGEN_NAME),
+	std::memcpy(pData, rtProperties->GetShaderIdentifier(libShader->GetRayGenExport().c_str()),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+	m_rtMaterial->CopyVariableData(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Entry 1 - primary ray miss
-	pData += m_mShaderTableEntrySize;
-	std::memcpy(pData, rtProperties->GetShaderIdentifier(MISS_NAME),
+	pData += rayGenSectionSize;
+	std::memcpy(pData, rtProperties->GetShaderIdentifier(libShader->GetMissExport().c_str()),
 		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+	m_rtMaterial->CopyVariableData(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 	// Entry 2 - hit program
-	pData += m_mShaderTableEntrySize;
-	std::memcpy(pData, rtProperties->GetShaderIdentifier(GLOBAL_HIT_GROUP_NAME),
-		D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
-	/*const uint64_t heapStartHit = mpSrvUavHeap->GetGPUDescriptorHandleForHeapStart().ptr;
-	*reinterpret_cast<uint64_t*>(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES) = heapStartHit;*/
+	pData += missSectionSize;
+	entityIndex = 0;
+
+	for (auto& entity : m_entities) {
+		if (entity.rtMaterial == nullptr)
+			continue;
+
+		std::memcpy(pData, rtProperties->GetShaderIdentifier((L"Entity_" + std::to_wstring(entityIndex)).c_str()),
+			D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+		entity.rtMaterial->CopyVariableData(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+		pData += hitRecordSize;
+		entityIndex++;
+	}
 
 	// Unmap
 	m_shaderTableBuffer->Unmap(0, nullptr);
 
-	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
-	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
+	m_raytraceDesc.Width = m_window->GetWidth();
+	m_raytraceDesc.Height = m_window->GetHeight();
+	m_raytraceDesc.Depth = 1;
+
+	D3D12_GPU_VIRTUAL_ADDRESS startAddress = m_shaderTableBuffer->GetGPUVirtualAddress();
+	// RayGen is the first entry in the shader-table
+	m_raytraceDesc.RayGenerationShaderRecord.StartAddress = startAddress;
+	m_raytraceDesc.RayGenerationShaderRecord.SizeInBytes = rayGenResordSize;
+
+	// Miss is the second entry in the shader-table
+	startAddress += rayGenSectionSize;
+	m_raytraceDesc.MissShaderTable.StartAddress = startAddress;
+	m_raytraceDesc.MissShaderTable.StrideInBytes = missResordSize;
+	m_raytraceDesc.MissShaderTable.SizeInBytes = missResordSize; // Only a s single miss-entry 
+
+	// Hit is the fourth entry in the shader-table
+	startAddress += missSectionSize;
+	m_raytraceDesc.HitGroupTable.StartAddress = startAddress;
+	m_raytraceDesc.HitGroupTable.StrideInBytes = hitRecordSize;
+	m_raytraceDesc.HitGroupTable.SizeInBytes = hitSectionSize;
+
+	m_raytraceDesc.CallableShaderTable.StartAddress = 0;
+	m_raytraceDesc.CallableShaderTable.StrideInBytes = 0;
+	m_raytraceDesc.CallableShaderTable.SizeInBytes = 0;
 
 	return true;
 }

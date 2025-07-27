@@ -152,3 +152,8 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::
         (*field).second.descriptor = descriptorHeap;
     }
 }
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::CopyVariableData(void* dest)
+{
+    std::memcpy(dest, m_variableData, std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData()->totalVariableSize);
+}
