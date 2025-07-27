@@ -98,6 +98,47 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 	m_indexView.SizeInBytes = sizeof(UInt32) * m_mesh->GetIndexCount();
 	m_indexView.Format = DXGI_FORMAT_R32_UINT;
 
+	D3D12_DESCRIPTOR_HEAP_DESC meshHeapDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		.NumDescriptors = 1,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+	};
+
+	if (FAILED(device->CreateDescriptorHeap(&meshHeapDesc, IID_PPV_ARGS(&m_vertexHeap)))) {
+		return false;
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC vertexView{
+	.Format = DXGI_FORMAT_UNKNOWN,
+	.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+	.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+	.Buffer = D3D12_BUFFER_SRV{
+		.FirstElement = 0,
+		.NumElements = m_mesh->GetVertexCount(),
+		.StructureByteStride = sizeof(Vertex),
+		.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+		},
+	};
+
+	device->CreateShaderResourceView(m_vertexBuffer.Get(), &vertexView, m_vertexHeap->GetCPUDescriptorHandleForHeapStart());
+
+	if (FAILED(device->CreateDescriptorHeap(&meshHeapDesc, IID_PPV_ARGS(&m_indexHeap)))) {
+		return false;
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC indexView{
+	.Format = DXGI_FORMAT_UNKNOWN,
+	.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+	.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+	.Buffer = D3D12_BUFFER_SRV{
+		.FirstElement = 0,
+		.NumElements = m_mesh->GetIndexCount(),
+		.StructureByteStride = sizeof(UInt32),
+		.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+		},
+	};
+
+	device->CreateShaderResourceView(m_indexBuffer.Get(), &indexView, m_indexHeap->GetCPUDescriptorHandleForHeapStart());
 	//Ray Tracing
 
 	D3D12_RAYTRACING_GEOMETRY_DESC rtMeshDesc{

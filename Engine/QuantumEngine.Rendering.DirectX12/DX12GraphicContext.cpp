@@ -379,10 +379,16 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	std::vector<RayTracing::EntityBLASDesc> rtEntities;
 
 	for (auto& entity : m_entities) {
+		if (entity.rtMaterial == nullptr)
+			continue;
+
 		rtEntities.push_back(RayTracing::EntityBLASDesc{
 			.mesh = entity.meshController,
 			.transform = entity.transform,
 		});
+
+		entity.rtMaterial->SetDescriptorHeap("g_indices", entity.meshController->GetIndexHeap());
+		entity.rtMaterial->SetDescriptorHeap("g_vertices", entity.meshController->GetVertexHeap());
 	}
 
 	m_commandAllocator->Reset();

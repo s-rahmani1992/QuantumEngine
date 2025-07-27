@@ -170,6 +170,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<DX12::HLSLMaterial> rtMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
     rtMaterial1->Initialize();
     rtMaterial1->SetColor("color", Color(0.9f, 0.7f, 0.1f, 1.0f));
+    rtMaterial1->SetTexture2D("mainTexture", tex1);
 
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
     material2->Initialize();
@@ -180,6 +181,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<DX12::HLSLMaterial> rtMaterial2 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
     rtMaterial2->Initialize();
     rtMaterial2->SetColor("color", Color(0.9f, 0.1f, 0.5f, 1.0f));
+    rtMaterial2->SetTexture2D("mainTexture", tex2);
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1, rtMaterial1);

@@ -17,6 +17,8 @@ namespace QuantumEngine::Rendering::DX12 {
 		inline D3D12_VERTEX_BUFFER_VIEW* GetVertexView() { return &m_bufferView; }
 		inline D3D12_INDEX_BUFFER_VIEW* GetIndexView() { return &m_indexView; }
 		inline ref<Mesh> GetMesh() { return m_mesh; }
+		inline ComPtr<ID3D12DescriptorHeap> GetIndexHeap() { return m_indexHeap; }
+		inline ComPtr<ID3D12DescriptorHeap> GetVertexHeap() { return m_vertexHeap; }
 		bool Initialize(const ComPtr<ID3D12Device10>& device);
 		void UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList);
 		ComPtr<ID3D12Resource2> GetBLAS() { return m_bottomLevelAccelationData; }
@@ -31,5 +33,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		D3D12_INPUT_LAYOUT_DESC m_layoutDesc;
 		D3D12_VERTEX_BUFFER_VIEW m_bufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexView;
+		ComPtr<ID3D12DescriptorHeap> m_indexHeap;
+		ComPtr<ID3D12DescriptorHeap> m_vertexHeap;
 	};
 }

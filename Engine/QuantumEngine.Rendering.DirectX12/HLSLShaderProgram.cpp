@@ -73,6 +73,7 @@ bool QuantumEngine::Rendering::DX12::HLSLShaderProgram::Initialize(const ComPtr<
                 {
                 case D3D_SIT_RTACCELERATIONSTRUCTURE:
                 case D3D_SIT_TEXTURE:
+                case D3D_SIT_STRUCTURED:
                     rangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
                     break;
                 case D3D11_SIT_UAV_RWTYPED:
