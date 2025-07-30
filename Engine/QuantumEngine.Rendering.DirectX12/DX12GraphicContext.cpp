@@ -157,95 +157,8 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 {
-	// Reset Commands
-	m_commandAllocator->Reset();
-	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
-	
-	UpdateTLAS();
-	m_commandList->SetComputeRootSignature((m_rtProgram->GetReflectionData()->rootSignature).Get());
-	m_rtMaterial->SetVector3("camPosition", m_camera->GetTransform()->Position());
-	m_rtMaterial->SetMatrix("projectMatrix", m_camera->GetTransform()->Matrix()* m_camera->InverseProjectionMatrix());
-	m_rtMaterial->RegisterComputeValues(m_commandList);
-	
-	// Run Ray Tracing Pipeline
-	m_commandList->SetPipelineState1(m_rtStateObject.Get());
-	m_commandList->DispatchRays(&m_raytraceDesc);
-
-	//Set Render Target
-	auto m_current_buffer_index = m_swapChain->GetCurrentBackBufferIndex();
-
-	D3D12_RESOURCE_BARRIER beginBarrier
-	{
-	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
-		{
-		.pResource = m_buffers[m_current_buffer_index].Get(),
-		.Subresource = 0,
-		.StateBefore = D3D12_RESOURCE_STATE_PRESENT,
-		.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
-		},	
-	};
-	m_commandList->ResourceBarrier(1, &beginBarrier);
-
-	m_commandList->ClearDepthStencilView(m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart(),
-		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
-	
-	float clearColor[] = { 0.1f, 0.7f, 0.3f, 1.0f };
-	auto dsvHandle = m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart();
-	m_commandList->ClearRenderTargetView(m_rtvHandles[m_current_buffer_index], clearColor, 0, nullptr);
-	m_commandList->OMSetRenderTargets(1, &m_rtvHandles[m_current_buffer_index], false, &dsvHandle);
-	//draw
-
-	for (auto& entity : m_entities) {
-		//Pipeline
-		m_commandList->SetGraphicsRootSignature(entity.rootSignature.Get());
-		m_commandList->SetPipelineState(entity.pipeline.Get());
-		//Input Assembler
-		m_commandList->IASetVertexBuffers(0, 1, entity.meshController->GetVertexView());
-		m_commandList->IASetIndexBuffer(entity.meshController->GetIndexView());
-		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-		//Viewport
-		D3D12_VIEWPORT viewPort{};
-		viewPort.Height = m_window->GetHeight();
-		viewPort.Width = m_window->GetWidth();
-		viewPort.TopLeftX = viewPort.TopLeftY = 0;
-		viewPort.MinDepth = 0.0f;
-		viewPort.MaxDepth = 1.0f;
-		m_commandList->RSSetViewports(1, &viewPort);
-
-		//Rect Scissor
-		RECT scissorRect{};
-		scissorRect.left = scissorRect.top = 0;
-		scissorRect.right = m_window->GetWidth();
-		scissorRect.bottom = m_window->GetHeight();
-		m_commandList->RSSetScissorRects(1, &scissorRect);
-
-		entity.material->RegisterValues(m_commandList);
-		entity.material->SetMatrix("worldMatrix", entity.transform->Matrix());
-		
-		m_commandList->DrawIndexedInstanced(entity.meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);
-	}
-
-	//draw
-
-	D3D12_RESOURCE_BARRIER endBarrier
-	{
-	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
-		{
-		.pResource = m_buffers[m_current_buffer_index].Get(),
-		.Subresource = 0,
-		.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET,
-		.StateAfter = D3D12_RESOURCE_STATE_PRESENT,
-		},
-	};
-	m_commandList->ResourceBarrier(1, &endBarrier);
-
-	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
-	m_swapChain->Present(1, 0);
+	RenderRasterization();
+	//RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
@@ -726,6 +639,187 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::UpdateTLAS()
 {
 	Matrix4 v = m_camera->ViewMatrix();
 	m_TLASController->UpdateTransforms(m_commandList, v);
+}
+
+void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRasterization()
+{
+	// Reset Commands
+	m_commandAllocator->Reset();
+	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+
+	//Set Render Target
+	auto m_current_buffer_index = m_swapChain->GetCurrentBackBufferIndex();
+
+	D3D12_RESOURCE_BARRIER beginBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_buffers[m_current_buffer_index].Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_PRESENT,
+		.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
+		},
+	};
+	m_commandList->ResourceBarrier(1, &beginBarrier);
+
+	m_commandList->ClearDepthStencilView(m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart(),
+		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
+
+	float clearColor[] = { 0.1f, 0.7f, 0.3f, 1.0f };
+	auto dsvHandle = m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart();
+	m_commandList->ClearRenderTargetView(m_rtvHandles[m_current_buffer_index], clearColor, 0, nullptr);
+	m_commandList->OMSetRenderTargets(1, &m_rtvHandles[m_current_buffer_index], false, &dsvHandle);
+	//draw
+
+	for (auto& entity : m_entities) {
+		//Pipeline
+		m_commandList->SetGraphicsRootSignature(entity.rootSignature.Get());
+		m_commandList->SetPipelineState(entity.pipeline.Get());
+		//Input Assembler
+		m_commandList->IASetVertexBuffers(0, 1, entity.meshController->GetVertexView());
+		m_commandList->IASetIndexBuffer(entity.meshController->GetIndexView());
+		m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		//Viewport
+		D3D12_VIEWPORT viewPort{};
+		viewPort.Height = m_window->GetHeight();
+		viewPort.Width = m_window->GetWidth();
+		viewPort.TopLeftX = viewPort.TopLeftY = 0;
+		viewPort.MinDepth = 0.0f;
+		viewPort.MaxDepth = 1.0f;
+		m_commandList->RSSetViewports(1, &viewPort);
+
+		//Rect Scissor
+		RECT scissorRect{};
+		scissorRect.left = scissorRect.top = 0;
+		scissorRect.right = m_window->GetWidth();
+		scissorRect.bottom = m_window->GetHeight();
+		m_commandList->RSSetScissorRects(1, &scissorRect);
+
+		entity.material->RegisterValues(m_commandList);
+		entity.material->SetMatrix("worldMatrix", entity.transform->Matrix());
+
+		m_commandList->DrawIndexedInstanced(entity.meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);
+	}
+
+	//draw
+
+	D3D12_RESOURCE_BARRIER endBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_buffers[m_current_buffer_index].Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET,
+		.StateAfter = D3D12_RESOURCE_STATE_PRESENT,
+		},
+	};
+	m_commandList->ResourceBarrier(1, &endBarrier);
+
+	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
+	m_swapChain->Present(1, 0);
+}
+
+void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRayTracing()
+{
+	// Reset Commands
+	m_commandAllocator->Reset();
+	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+
+	UpdateTLAS();
+	m_commandList->SetComputeRootSignature((m_rtProgram->GetReflectionData()->rootSignature).Get());
+	m_commandList->SetPipelineState1(m_rtStateObject.Get());
+	m_rtMaterial->SetVector3("camPosition", m_camera->GetTransform()->Position());
+	m_rtMaterial->SetMatrix("projectMatrix", m_camera->GetTransform()->Matrix() * m_camera->InverseProjectionMatrix());
+	m_rtMaterial->RegisterComputeValues(m_commandList);
+	// Run Ray Tracing Pipeline
+	m_commandList->DispatchRays(&m_raytraceDesc);
+
+	//Set Render Target
+	auto m_current_buffer_index = m_swapChain->GetCurrentBackBufferIndex();
+
+	D3D12_RESOURCE_BARRIER copyRTBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_buffers[m_current_buffer_index].Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_PRESENT,
+		.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST,
+		},
+	};
+
+	m_commandList->ResourceBarrier(1, &copyRTBarrier);
+
+	D3D12_RESOURCE_BARRIER outputRTBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_outputBuffer.Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE,
+		},
+	};
+
+	m_commandList->ResourceBarrier(1, &outputRTBarrier);
+	m_commandList->CopyResource(m_buffers[m_current_buffer_index].Get(), m_outputBuffer.Get());
+
+	D3D12_RESOURCE_BARRIER beginBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_buffers[m_current_buffer_index].Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_PRESENT,
+		.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
+		},
+	};
+	
+	float clearColor[] = { 0.1f, 0.7f, 0.3f, 1.0f };
+	auto dsvHandle = m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart();
+	
+	//draw
+
+	D3D12_RESOURCE_BARRIER endBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_buffers[m_current_buffer_index].Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST,
+		.StateAfter = D3D12_RESOURCE_STATE_PRESENT,
+		},
+	};
+	m_commandList->ResourceBarrier(1, &endBarrier);
+
+	D3D12_RESOURCE_BARRIER outputEndRTBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_outputBuffer.Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE,
+		.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		},
+	};
+	m_commandList->ResourceBarrier(1, &outputEndRTBarrier);
+	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
+	m_swapChain->Present(1, 0);
 }
 
 QuantumEngine::Rendering::DX12::DX12GraphicContext::DX12GraphicContext(UInt8 bufferCount, const ref<DX12CommandExecuter>& commandExecuter, ref<QuantumEngine::Platform::GraphicWindow>& window)

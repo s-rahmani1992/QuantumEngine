@@ -211,13 +211,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
     material1->Initialize();
-    material1->SetColor("color", Color(0.3f, 0.8f, 0.8f, 1.0f));
+    material1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     material1->SetMatrix("projectMatrix", project);
     material1->SetTexture2D("mainTexture", tex1);
 
     ref<DX12::HLSLMaterial> rtMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
     rtMaterial1->Initialize();
-    rtMaterial1->SetColor("color", Color(0.9f, 0.7f, 0.1f, 1.0f));
+    rtMaterial1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     rtMaterial1->SetTexture2D("mainTexture", tex1);
 
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
@@ -228,7 +228,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     ref<DX12::HLSLMaterial> rtMaterial2 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
     rtMaterial2->Initialize();
-    rtMaterial2->SetColor("color", Color(0.9f, 0.1f, 0.5f, 1.0f));
+    rtMaterial2->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     rtMaterial2->SetTexture2D("mainTexture", tex2);
 
     ref<DX12::HLSLMaterial> skyboxMaterial = std::make_shared<DX12::HLSLMaterial>(program);
@@ -237,20 +237,30 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     skyboxMaterial->SetMatrix("projectMatrix", project);
     skyboxMaterial->SetTexture2D("mainTexture", skyBoxTex);
 
+    ref<DX12::HLSLMaterial> skyboxRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
+    skyboxRTMaterial->Initialize();
+    skyboxRTMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    skyboxRTMaterial->SetTexture2D("mainTexture", skyBoxTex);
+
     ref<DX12::HLSLMaterial> planeMaterial = std::make_shared<DX12::HLSLMaterial>(program);
     planeMaterial->Initialize();
     planeMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     planeMaterial->SetMatrix("projectMatrix", project);
     planeMaterial->SetTexture2D("mainTexture", waterTex);
 
+    ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
+    planeRTMaterial->Initialize();
+    planeRTMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    planeRTMaterial->SetTexture2D("mainTexture", waterTex);
+
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, material1, rtMaterial1);
     auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, 3.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, cubeMesh, material2, rtMaterial2);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, rtMaterial1);
+    auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
     auto waterTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto waterEntity = std::make_shared<QuantumEngine::GameEntity>(waterTransform, planeMesh, planeMaterial, rtMaterial1);
+    auto waterEntity = std::make_shared<QuantumEngine::GameEntity>(waterTransform, planeMesh, planeMaterial, planeRTMaterial);
 
     
     gpuContext->AddGameEntity(entity1);

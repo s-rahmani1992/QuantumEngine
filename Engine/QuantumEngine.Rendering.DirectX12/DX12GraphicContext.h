@@ -49,6 +49,8 @@ namespace QuantumEngine::Rendering::DX12 {
 		};
 
 		void UpdateTLAS();
+		void RenderRasterization();
+		void RenderRayTracing();
 
 		UInt8 m_bufferCount;
 		ComPtr<ID3D12Device10> m_device;
