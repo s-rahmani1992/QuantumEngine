@@ -284,7 +284,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	//Rasterizer
 	pipelineStateDesc.RasterizerState;
 	pipelineStateDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;
-	pipelineStateDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+	pipelineStateDesc.RasterizerState.CullMode = D3D12_CULL_MODE_FRONT;
 	pipelineStateDesc.RasterizerState.FrontCounterClockwise = FALSE;
 	pipelineStateDesc.RasterizerState.DepthBias = 0;
 	pipelineStateDesc.RasterizerState.DepthBiasClamp = 0.0f;

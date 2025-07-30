@@ -72,12 +72,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Importing Textures
     ref<QuantumEngine::Texture2D> tex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\player.png", errorStr);
     ref<QuantumEngine::Texture2D> tex2 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\bg.jpg", errorStr);
+    ref<QuantumEngine::Texture2D> skyBoxTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\skybox.jpg", errorStr);
+    ref<QuantumEngine::Texture2D> waterTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\water.jpeg", errorStr);
+
     assetManager->UploadTextureToGPU(tex1);
     assetManager->UploadTextureToGPU(tex2);
+    assetManager->UploadTextureToGPU(skyBoxTex);
+    assetManager->UploadTextureToGPU(waterTex);
 
     // Creating the camera
-    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 100.0f, (float)win->GetWidth() / win->GetHeight(), 45);
+    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 2.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
+    ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
     CameraController camController(mainCamera);
 
     // Compiling Shaders
@@ -114,7 +119,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto rtColorProgram = gpuDevice->CreateShaderProgram({ rtColorShader }, true);
 
     // Adding Meshes
-    std::vector<Vertex> vertices = {
+    std::vector<Vertex> pyramidVertices = {
         Vertex(Vector3(-1.0f, 0.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
         Vertex(Vector3(1.0f, 0.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
         Vertex(Vector3(1.0f, 0.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
@@ -122,20 +127,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         Vertex(Vector3(0.0f, 2.0f, 0.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
     };
 
-    std::vector<UInt32> indices = {
-        1, 0, 4,
-        2, 1, 4,
-        3, 2, 4,
-        0, 3, 4,
+    std::vector<UInt32> pyramidIndices = {
+        1, 4, 0,
+        2, 4, 1,
+        3, 4, 2,
+        0, 4, 3,
         0, 3, 2,
         0, 2, 1,
     };
 
-    std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>(vertices, indices);
+    std::shared_ptr<Mesh> pyramidMesh = std::make_shared<Mesh>(pyramidVertices, pyramidIndices);
 
-    assetManager->UploadMeshToGPU(mesh);
+    assetManager->UploadMeshToGPU(pyramidMesh);
 
-    std::vector<Vertex> vertices1 = {
+    std::vector<Vertex> cubeVertices = {
         Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
         Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
         Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
@@ -146,18 +151,61 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         Vertex(Vector3(-1.0f, 1.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
     };
 
-    std::vector<UInt32> indices1 = { 
+    std::vector<UInt32> cubeIndices = { 
+        0, 1, 2, 0, 2, 3,
+        4, 6, 5, 4, 7, 6,
+        2, 5, 6, 2, 1, 5,
+        0, 7, 4, 0, 3, 7,
+        3, 6, 7, 3, 2, 6,
+        1, 4, 5, 1, 0, 4,
+    };
+
+    std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
+
+    assetManager->UploadMeshToGPU(cubeMesh);
+    
+    std::vector<Vertex> skyBoxVertices = {
+        Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(1.0f, 2.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(0.75f, 2.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(0.75f, 1.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 1.0f, -1.0f), Vector2(1.0f, 1.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, -1.0f, 1.0f), Vector2(0.25f, 2.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, -1.0f, 1.0f), Vector2(0.5f, 2.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 1.0f, 1.0f), Vector2(0.5f, 1.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 1.0f, 1.0f), Vector2(0.25f, 1.0f / 3), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 1.0f, -1.0f), Vector2(0.25f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(0.25f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.5f, 1.0f), Vector3(0.0f)),
+    };
+
+    std::vector<UInt32> skyBoxIndices = {
         0, 2, 1, 0, 3, 2,
         4, 5, 6, 4, 6, 7,
         2, 6, 5, 2, 5, 1,
         0, 4, 7, 0, 7, 3,
-        3, 7, 6, 3, 6, 2,
-        1, 5, 4, 1, 4, 0,
+        6, 8, 7, 6, 9, 8,
+        4, 10, 5, 4, 11, 10,
     };
 
-    std::shared_ptr<Mesh> mesh1 = std::make_shared<Mesh>(vertices1, indices1);
+    std::shared_ptr<Mesh> skyBoxMesh = std::make_shared<Mesh>(skyBoxVertices, skyBoxIndices);
 
-    assetManager->UploadMeshToGPU(mesh1);
+    assetManager->UploadMeshToGPU(skyBoxMesh);
+
+    std::vector<Vertex> planeVertices = {
+        Vertex(Vector3(-1.0f, 0, -1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(1.0f, 0, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(1.0f, 0, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(-1.0f, 0, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f, 1.0f, 0.0f)),
+    };
+
+    std::vector<UInt32> planeIndices = {
+        0, 1, 2, 0, 2, 3,
+    };
+
+    std::shared_ptr<Mesh> planeMesh = std::make_shared<Mesh>(planeVertices, planeIndices);
+
+    assetManager->UploadMeshToGPU(planeMesh);
 
     Matrix4 project = mainCamera->ProjectionMatrix();
 
@@ -183,12 +231,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     rtMaterial2->SetColor("color", Color(0.9f, 0.1f, 0.5f, 1.0f));
     rtMaterial2->SetTexture2D("mainTexture", tex2);
 
-    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
-    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, mesh, material1, rtMaterial1);
-    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, -0.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, mesh1, material2, rtMaterial2);
+    ref<DX12::HLSLMaterial> skyboxMaterial = std::make_shared<DX12::HLSLMaterial>(program);
+    skyboxMaterial->Initialize();
+    skyboxMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    skyboxMaterial->SetMatrix("projectMatrix", project);
+    skyboxMaterial->SetTexture2D("mainTexture", skyBoxTex);
+
+    ref<DX12::HLSLMaterial> planeMaterial = std::make_shared<DX12::HLSLMaterial>(program);
+    planeMaterial->Initialize();
+    planeMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    planeMaterial->SetMatrix("projectMatrix", project);
+    planeMaterial->SetTexture2D("mainTexture", waterTex);
+
+    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, material1, rtMaterial1);
+    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, 3.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, cubeMesh, material2, rtMaterial2);
+    auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, rtMaterial1);
+    auto waterTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto waterEntity = std::make_shared<QuantumEngine::GameEntity>(waterTransform, planeMesh, planeMaterial, rtMaterial1);
+
+    
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
+    gpuContext->AddGameEntity(skyBoxEntity);
+    gpuContext->AddGameEntity(waterEntity);
     gpuContext->SetCamera(mainCamera);
     gpuContext->PrepareRayTracingData(rtProgram);
 
@@ -207,6 +275,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         camController.Update(deltaTime);
         material1->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
         material2->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
+        skyboxMaterial->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
+        planeMaterial->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
         gpuContext->Render();
 
         deltaTime = secondsPerCount * (currentCount - lastCount);
