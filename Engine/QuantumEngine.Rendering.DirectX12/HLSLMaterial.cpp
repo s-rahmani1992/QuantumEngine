@@ -9,7 +9,7 @@
 #include "Core/Texture2D.h"
 
 QuantumEngine::Rendering::DX12::HLSLMaterial::HLSLMaterial(const ref<ShaderProgram>& program)
-    :Material(program), m_variableData(nullptr)
+    :Material(program), m_variableData(nullptr), m_variableHeap(nullptr)
 {
 }
 
@@ -22,7 +22,7 @@ QuantumEngine::Rendering::DX12::HLSLMaterial::~HLSLMaterial()
 bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
 {
     auto reflection = std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData();
-    
+    reflection->rootSignature->GetDevice(IID_PPV_ARGS(&m_device));
     m_variableData = new Byte[reflection->totalVariableSize];
     Byte* startPoint = m_variableData;
 
@@ -47,7 +47,7 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
         if (heapIt != reflection->boundResourceDatas.end()) {
             m_heapValues.emplace((*heapIt).second.name, HeapData{
                 .rootParamIndex = (*heapIt).first,
-                .gpuHandle = (D3D12_GPU_DESCRIPTOR_HANDLE*)startPoint, 
+                .heapLocation = (D3D12_GPU_DESCRIPTOR_HANDLE*)startPoint,
                 });
             startPoint += sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
             continue;
@@ -96,9 +96,10 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12G
     for(auto& rField : m_constantRegisterValues)
         commandList->SetGraphicsRoot32BitConstants(rField.rootParamIndex, rField.size, rField.location, 0);
 
+    commandList->SetDescriptorHeaps(m_heapValues.size(), m_variableHeap.GetAddressOf());
+
     for (auto& heapField : m_heapValues) {
-        commandList->SetDescriptorHeaps(1, heapField.second.descriptor.GetAddressOf());
-        commandList->SetGraphicsRootDescriptorTable(heapField.second.rootParamIndex, *heapField.second.gpuHandle);
+        commandList->SetGraphicsRootDescriptorTable(heapField.second.rootParamIndex, heapField.second.gpuHandle);
     }
 }
 
@@ -108,8 +109,7 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterComputeValues(ComPtr<
         commandList->SetComputeRoot32BitConstants(rField.rootParamIndex, rField.size, rField.location, 0);
 
     for (auto& heapField : m_heapValues) {
-        commandList->SetDescriptorHeaps(1, heapField.second.descriptor.GetAddressOf());
-        commandList->SetComputeRootDescriptorTable(heapField.second.rootParamIndex, *heapField.second.gpuHandle);
+        commandList->SetComputeRootDescriptorTable(heapField.second.rootParamIndex, heapField.second.gpuHandle);
     }
 }
 
@@ -148,12 +148,47 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::
     auto field = m_heapValues.find(fieldName);
 
     if (field != m_heapValues.end()) {
-        *((*field).second.gpuHandle) = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
         (*field).second.descriptor = descriptorHeap;
+
+        if(m_variableHeap != nullptr)
+            m_device->CopyDescriptorsSimple(1, (*field).second.cpuHandle, descriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::CopyVariableData(void* dest)
 {
     std::memcpy(dest, m_variableData, std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData()->totalVariableSize);
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::PrepareDescriptor()
+{
+    if (m_heapValues.size() == 0)
+        return;
+
+    D3D12_DESCRIPTOR_HEAP_DESC meshHeapDesc{
+        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+        .NumDescriptors = (UINT)m_heapValues.size(),
+        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+    };
+
+    m_device->CreateDescriptorHeap(&meshHeapDesc, IID_PPV_ARGS(&m_variableHeap));
+    BindDescriptor(m_variableHeap, 0);
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset)
+{
+    auto incrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+    D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+    D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+    cpuHandle.ptr += offset * incrementSize;
+    gpuHandle.ptr += offset * incrementSize;
+
+    for (auto& heap : m_heapValues) {
+        m_device->CopyDescriptorsSimple(1, cpuHandle, heap.second.descriptor->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+        *heap.second.heapLocation = gpuHandle;
+        heap.second.cpuHandle = cpuHandle;
+        heap.second.gpuHandle = gpuHandle;
+        cpuHandle.ptr += incrementSize;
+        gpuHandle.ptr += incrementSize;
+    }
 }

@@ -157,8 +157,8 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 {
-	RenderRasterization();
-	//RenderRayTracing();
+	//RenderRasterization();
+	RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
@@ -176,6 +176,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//Shader Part
+	std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial())->PrepareDescriptor();
 	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(gameEntity->GetMaterial()->GetProgram()->GetShader(VERTEX_SHADER));
 	auto pixelShader = gameEntity->GetMaterial()->GetProgram()->GetShader(PIXEL_SHADER);
 	pipelineStateDesc.VS.BytecodeLength = vertexShader->GetCodeSize();
@@ -290,15 +291,17 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	// Initialize TLAS
 	m_TLASController = std::make_shared<RayTracing::RTAccelarationStructure>();
 	std::vector<RayTracing::EntityBLASDesc> rtEntities;
-
+	
+	UInt32 rtHeapsize = 0;
 	for (auto& entity : m_entities) {
 		if (entity.rtMaterial == nullptr)
 			continue;
 
+		rtHeapsize += entity.rtMaterial->GetBoundResourceCount();
 		rtEntities.push_back(RayTracing::EntityBLASDesc{
 			.mesh = entity.meshController,
 			.transform = entity.transform,
-		});
+			});
 
 		entity.rtMaterial->SetDescriptorHeap("g_indices", entity.meshController->GetIndexHeap());
 		entity.rtMaterial->SetDescriptorHeap("g_vertices", entity.meshController->GetVertexHeap());
@@ -315,7 +318,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 	};
 
 	// Ray Tracing Output Buffer
@@ -333,7 +336,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	outputDesc.SampleDesc.Count = 1;
 
 	if (FAILED(m_device->CreateCommittedResource(&DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE,
-		&outputDesc, D3D12_RESOURCE_STATE_COPY_SOURCE, nullptr, IID_PPV_ARGS(&m_outputBuffer)
+		&outputDesc, D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_outputBuffer)
 	))) {
 		return false;
 	}
@@ -341,6 +344,24 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_outputHeap)))) {
 		return false;
 	}
+
+	m_commandAllocator->Reset();
+	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+	D3D12_RESOURCE_BARRIER outputEndRTBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_outputBuffer.Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_COMMON,
+		.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		},
+	};
+	m_commandList->ResourceBarrier(1, &outputEndRTBarrier);
+
+	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC uavOutputDesc = {};
 	uavOutputDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
@@ -356,6 +377,14 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
 	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
+	rtHeapsize += m_rtMaterial->GetBoundResourceCount();
+
+	for (auto& entity : m_entities) {
+		if (entity.rtMaterial == nullptr)
+			continue;
+
+		entity.rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
+	}
 
 	ref<HLSLShader> libShader = std::dynamic_pointer_cast<HLSLShader>(m_rtProgram->GetShader(LIB_SHADER));
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
@@ -397,7 +426,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	// Pipeline Config
 	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig;
-	pipelineConfig.MaxTraceRecursionDepth = 1;
+	pipelineConfig.MaxTraceRecursionDepth = 2;
 
 	subobjects.push_back(D3D12_STATE_SUBOBJECT{
 		.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG,
@@ -445,6 +474,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 		D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION hitExportDesc;
 		D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION shaderConfigExportDesc;
 		D3D12_SUBOBJECT_TO_EXPORTS_ASSOCIATION pipelineConfigExportDesc;
+		LPCWSTR hitExportPtr[1];
 	};
 
 	std::vector<LocalRTData> entityRTDatas;
@@ -467,6 +497,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 		// Create HitGroup for local material
 		rtRef.hitExportName = L"Entity_" + std::to_wstring(entityIndex);
+		rtRef.hitExportPtr[0] = rtRef.hitExportName.c_str();
 		rtRef.hitDesc = localLibShader->GetHitGroup(rtRef.hitExportName);
 
 		subobjects.push_back(D3D12_STATE_SUBOBJECT{
@@ -479,10 +510,9 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 		.pDesc = std::dynamic_pointer_cast<HLSLShaderProgram>(entity.rtMaterial->GetProgram())->GetReflectionData()->rootSignature.GetAddressOf(),
 			});
 
-		LPCWSTR b = rtRef.hitExportName.c_str();
 		rtRef.hitExportDesc.pSubobjectToAssociate = subobjects.data() + subobjects.size() - 1;
 		rtRef.hitExportDesc.NumExports = 1;
-		rtRef.hitExportDesc.pExports = &b;
+		rtRef.hitExportDesc.pExports = rtRef.hitExportPtr;
 		subobjects.push_back(D3D12_STATE_SUBOBJECT{
 			.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
 			.pDesc = &rtRef.hitExportDesc,
@@ -490,7 +520,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 		rtRef.shaderConfigExportDesc.pSubobjectToAssociate = shaderConfigPtr;
 		rtRef.shaderConfigExportDesc.NumExports = 1;
-		rtRef.shaderConfigExportDesc.pExports = &b;
+		rtRef.shaderConfigExportDesc.pExports = rtRef.hitExportPtr;
 		subobjects.push_back(D3D12_STATE_SUBOBJECT{
 			.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
 			.pDesc = &rtRef.shaderConfigExportDesc,
@@ -498,7 +528,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 		rtRef.pipelineConfigExportDesc.pSubobjectToAssociate = pipelineConfigPtr;
 		rtRef.pipelineConfigExportDesc.NumExports = 1;
-		rtRef.pipelineConfigExportDesc.pExports = &b;
+		rtRef.pipelineConfigExportDesc.pExports = rtRef.hitExportPtr;
 		subobjects.push_back(D3D12_STATE_SUBOBJECT{
 			.Type = D3D12_STATE_SUBOBJECT_TYPE_SUBOBJECT_TO_EXPORTS_ASSOCIATION,
 			.pDesc = &rtRef.pipelineConfigExportDesc,
@@ -515,6 +545,26 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	if (FAILED(m_device->CreateStateObject(&stateObjectDesc, IID_PPV_ARGS(&m_rtStateObject)))) {
 		return false;
+	}
+
+	D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		.NumDescriptors = rtHeapsize,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+	};
+
+	m_device->CreateDescriptorHeap(&rtHeapDesc, IID_PPV_ARGS(&m_rtHeap));
+	UInt32 offset = 0;
+
+	m_rtMaterial->BindDescriptor(m_rtHeap, offset);
+	offset += m_rtMaterial->GetBoundResourceCount();
+
+	for (auto& entity : m_entities) {
+		if (entity.rtMaterial == nullptr)
+			continue;
+
+		entity.rtMaterial->BindDescriptor(m_rtHeap, offset);
+		offset += entity.rtMaterial->GetBoundResourceCount();
 	}
 
 	// Create ShaderTable
@@ -626,7 +676,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	startAddress += missSectionSize;
 	m_raytraceDesc.HitGroupTable.StartAddress = startAddress;
 	m_raytraceDesc.HitGroupTable.StrideInBytes = hitRecordSize;
-	m_raytraceDesc.HitGroupTable.SizeInBytes = hitSectionSize;
+	m_raytraceDesc.HitGroupTable.SizeInBytes = rtEntityCount * hitRecordSize;
 
 	m_raytraceDesc.CallableShaderTable.StartAddress = 0;
 	m_raytraceDesc.CallableShaderTable.StrideInBytes = 0;
@@ -735,6 +785,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRayTracing()
 	m_commandList->SetPipelineState1(m_rtStateObject.Get());
 	m_rtMaterial->SetVector3("camPosition", m_camera->GetTransform()->Position());
 	m_rtMaterial->SetMatrix("projectMatrix", m_camera->GetTransform()->Matrix() * m_camera->InverseProjectionMatrix());
+	
+	m_commandList->SetDescriptorHeaps(1, m_rtHeap.GetAddressOf());
 	m_rtMaterial->RegisterComputeValues(m_commandList);
 	// Run Ray Tracing Pipeline
 	m_commandList->DispatchRays(&m_raytraceDesc);
@@ -773,19 +825,6 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRayTracing()
 	m_commandList->ResourceBarrier(1, &outputRTBarrier);
 	m_commandList->CopyResource(m_buffers[m_current_buffer_index].Get(), m_outputBuffer.Get());
 
-	D3D12_RESOURCE_BARRIER beginBarrier
-	{
-	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
-		{
-		.pResource = m_buffers[m_current_buffer_index].Get(),
-		.Subresource = 0,
-		.StateBefore = D3D12_RESOURCE_STATE_PRESENT,
-		.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
-		},
-	};
-	
 	float clearColor[] = { 0.1f, 0.7f, 0.3f, 1.0f };
 	auto dsvHandle = m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart();
 	

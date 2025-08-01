@@ -83,5 +83,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<HLSLMaterial> m_rtMaterial;
 		ref<RayTracing::RTAccelarationStructure> m_TLASController;
 		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
+		ComPtr<ID3D12DescriptorHeap> m_rtHeap;
 	};
 }

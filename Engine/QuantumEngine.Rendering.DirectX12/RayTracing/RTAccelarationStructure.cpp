@@ -97,7 +97,7 @@ bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initia
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
 	};
 
 	if (FAILED(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_tlasHeap)))) {

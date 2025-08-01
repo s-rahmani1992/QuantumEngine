@@ -81,7 +81,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     assetManager->UploadTextureToGPU(waterTex);
 
     // Creating the camera
-    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 2.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
+    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 2.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
     ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
     CameraController camController(mainCamera);
 
@@ -113,10 +113,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
+    ref<Render::Shader> rtSolidColorShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\rt_solid_color.lib.hlsl", DX12::LIB_SHADER, errorStr);
+    if (rtSolidColorShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
 
     auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader }, false);
     auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader }, false);
     auto rtColorProgram = gpuDevice->CreateShaderProgram({ rtColorShader }, true);
+    auto rtSolidColorProgram = gpuDevice->CreateShaderProgram({ rtSolidColorShader }, true);
 
     // Adding Meshes
     std::vector<Vertex> pyramidVertices = {
@@ -248,9 +254,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     planeMaterial->SetMatrix("projectMatrix", project);
     planeMaterial->SetTexture2D("mainTexture", waterTex);
 
-    ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
+    ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSolidColorProgram);
     planeRTMaterial->Initialize();
-    planeRTMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    planeRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
     planeRTMaterial->SetTexture2D("mainTexture", waterTex);
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);

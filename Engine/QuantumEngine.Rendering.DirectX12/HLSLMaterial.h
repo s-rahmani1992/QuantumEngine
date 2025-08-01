@@ -29,6 +29,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
 		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
 		void CopyVariableData(void* dest);
+		void PrepareDescriptor();
+		void BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset);
+		inline UInt32 GetBoundResourceCount() { return m_heapValues.size(); }
 	private:
 		struct constantBufferData {
 		UInt32 rootParamIndex;
@@ -39,7 +42,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		struct HeapData {
 			UInt32 rootParamIndex;
 			ComPtr<ID3D12DescriptorHeap> descriptor;
-			D3D12_GPU_DESCRIPTOR_HANDLE* gpuHandle;
+			D3D12_GPU_DESCRIPTOR_HANDLE* heapLocation;
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
+			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
 		};
 
 		std::map<std::string, D3D12_SHADER_VARIABLE_DESC> ExtractConstantBuffers(const ComPtr<ID3D12ShaderReflection>& reflector);
@@ -49,5 +54,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::map<std::string, Byte*> m_rootConstantVariableLocations;
 		std::vector<constantBufferData> m_constantRegisterValues;
 		Byte* m_variableData;
+		ComPtr<ID3D12DescriptorHeap> m_variableHeap;
+		ComPtr<ID3D12Device10> m_device;
 	};
 }
