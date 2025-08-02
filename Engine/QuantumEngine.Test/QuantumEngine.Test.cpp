@@ -119,10 +119,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
+    ref<Render::Shader> rtWaterShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\rt_water.lib.hlsl", DX12::LIB_SHADER, errorStr);
+    if (rtWaterShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
     auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader }, false);
     auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader }, false);
     auto rtColorProgram = gpuDevice->CreateShaderProgram({ rtColorShader }, true);
     auto rtSolidColorProgram = gpuDevice->CreateShaderProgram({ rtSolidColorShader }, true);
+    auto rtWaterProgram = gpuDevice->CreateShaderProgram({ rtWaterShader }, true);
 
     // Adding Meshes
     std::vector<Vertex> pyramidVertices = {
@@ -254,7 +261,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     planeMaterial->SetMatrix("projectMatrix", project);
     planeMaterial->SetTexture2D("mainTexture", waterTex);
 
-    ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSolidColorProgram);
+    ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtWaterProgram);
     planeRTMaterial->Initialize();
     planeRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
     planeRTMaterial->SetTexture2D("mainTexture", waterTex);
