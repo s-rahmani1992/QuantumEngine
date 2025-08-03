@@ -22,6 +22,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void RegisterValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
 		void RegisterComputeValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
 		void SetColor(const std::string& fieldName, const Color& color);
+		void SetUInt32(const std::string& fieldName, const UInt32& fValue);
 		void SetFloat(const std::string& fieldName, const Float& fValue);
 		void SetVector2(const std::string& fieldName, const Vector2& fValue);
 		void SetVector3(const std::string& fieldName, const Vector3& fValue);

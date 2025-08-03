@@ -10,6 +10,12 @@ cbuffer MaterialProps : register(b0, space1)
     float4 color;
 };
 
+cbuffer MissProps : register(b1, space1)
+{
+    uint missIndex;
+    float3 h; //dummy field to keep the register multiple of 4
+};
+
 RaytracingAccelerationStructure gRtScene : register(t3, space1);
 
 Texture2D mainTexture : register(t0, space1);
@@ -41,9 +47,14 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     ray.TMax = 100000;
 
     RayPayload innerPayload;
-    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, innerPayload);
-
+    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, missIndex, ray, innerPayload);
 
     float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);
     payload.color = 0.5 * (innerPayload.color.xyz + texColor.xyz);
+}
+
+[shader("miss")]
+void miss(inout RayPayload payload)
+{
+    payload.color = float3(2.4, 2.6, 2.2);
 }

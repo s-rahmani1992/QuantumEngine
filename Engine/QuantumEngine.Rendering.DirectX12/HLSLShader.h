@@ -45,7 +45,13 @@ namespace QuantumEngine::Rendering::DX12 {
 		inline D3D12_DXIL_LIBRARY_DESC* GetDXIL() { return &m_dxilData; }
 		D3D12_HIT_GROUP_DESC GetHitGroup(const std::wstring& exportName);
 		std::wstring& GetRayGenExport() { return m_entryPoints[RAYGEN_NAME]; }
-		std::wstring& GetMissExport() { return m_entryPoints[MISS_NAME]; }
+		std::wstring& GetMissExport() { 
+			auto it = m_entryPoints.find(MISS_NAME);
+			if (it != m_entryPoints.end())
+				return (*it).second;
+			
+			return m_empty;
+		}
 	private:
 		void FillReflection(ComPtr<ID3D12ShaderReflection>& shaderReflection);
 		void FillReflection(ComPtr<ID3D12LibraryReflection>& libraryReflection);
@@ -57,5 +63,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::map<std::wstring, std::wstring> m_entryPoints;
 		D3D12_DXIL_LIBRARY_DESC m_dxilData;
 		std::vector<D3D12_EXPORT_DESC> m_exportDescs;
+		std::wstring m_empty;
 	};
 }

@@ -118,6 +118,11 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetColor(const std::string& f
     SetRootConstant(fieldName, (void*)&color, sizeof(Color));
 }
 
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetUInt32(const std::string& fieldName, const UInt32& fValue)
+{
+    SetRootConstant(fieldName, (void*)&fValue, sizeof(UInt32));
+}
+
 void QuantumEngine::Rendering::DX12::HLSLMaterial::SetFloat(const std::string& fieldName, const Float& fValue)
 {
     SetRootConstant(fieldName, (void*)&fValue, sizeof(Float));
