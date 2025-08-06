@@ -5,6 +5,17 @@ struct Vertex
     float3 normal;
 };
 
+struct TransformData {
+    float4x4 modelMatrix;
+    float4x4 rotationMatrix;
+    float4x4 modelViewMatrix;
+};
+
+cbuffer ObjectTransformData : register(b2)
+{
+    TransformData transformData;
+};
+
 cbuffer MaterialProps : register(b0, space1)
 {
     float4 color;
@@ -38,6 +49,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     Vertex v3 = g_vertices[g_indices[baseIndex + 2]];
     float3 rayDirection = WorldRayDirection();
     float3 normal = v1.normal + attribs.barycentrics.x * (v2.normal - v1.normal) + attribs.barycentrics.y * (v3.normal - v1.normal);
+    normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
     float2 uv = v1.uv + attribs.barycentrics.x * (v2.uv - v1.uv) + attribs.barycentrics.y * (v3.uv - v1.uv);
     RayDesc ray;
     ray.Origin = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();

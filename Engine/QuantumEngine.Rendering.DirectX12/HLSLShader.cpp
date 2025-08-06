@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "HLSLShader.h"
 #include "StringUtilities.h"
+#include <Core/Matrix4.h>
 
 UInt32 QuantumEngine::Rendering::DX12::HLSLShader::m_shaderCounter = 0;
 
@@ -46,6 +47,12 @@ void QuantumEngine::Rendering::DX12::HLSLShader::FillReflection(ComPtr<ID3D12Sha
             ID3D12ShaderReflectionConstantBuffer* cb = shaderReflection->GetConstantBufferByName(boundResource.Name);
             D3D12_SHADER_BUFFER_DESC cbDesc;
             cb->GetDesc(&cbDesc);
+
+            if (cbDesc.Size / cbDesc.Variables > sizeof(Matrix4)) { //TODO Find better condition for constant buffer checking
+                m_reflection.boundVariables.push_back({ std::string(boundResource.Name), boundResource });
+                continue;
+            }
+
             m_reflection.constantBuffers.push_back(HLSLConstantBufferData{
                 .name = std::string(cbDesc.Name),
                 .registerData = D3D12_ROOT_CONSTANTS{
@@ -98,6 +105,12 @@ void QuantumEngine::Rendering::DX12::HLSLShader::FillReflection(ComPtr<ID3D12Lib
                 ID3D12ShaderReflectionConstantBuffer* cb = funcReflection->GetConstantBufferByName(boundResource.Name);
                 D3D12_SHADER_BUFFER_DESC cbDesc;
                 cb->GetDesc(&cbDesc);
+
+                if (cbDesc.Size / cbDesc.Variables > sizeof(Matrix4)) { //TODO Find better condition for constant buffer checking
+                    m_reflection.boundVariables.push_back({ std::string(boundResource.Name), boundResource });
+                    continue;
+                }
+
                 m_reflection.constantBuffers.push_back(HLSLConstantBufferData{
                     .name = std::string(cbDesc.Name),
                     .registerData = D3D12_ROOT_CONSTANTS{

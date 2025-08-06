@@ -15,7 +15,8 @@ namespace QuantumEngine {
 		inline Vector3 Forward() const { return m_forward; }
 		inline Vector3 Up() const { return m_up; }
 		inline Vector3 Right() const { return m_right; }
-		inline Matrix4 Matrix() const { return m_matrix; }
+		inline Matrix4 Matrix() const { return m_matrix; }		
+		inline Matrix4 RotateMatrix() const { return Matrix4::Rotate(m_axis, m_angle); }
 		void SetPosition(const Vector3& position) {
 			m_position = position; 
 			UpdateMatrix();

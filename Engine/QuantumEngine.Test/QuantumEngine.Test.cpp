@@ -272,15 +272,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, cubeMesh, material2, rtMaterial2);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
-    auto waterTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto waterTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
     auto waterEntity = std::make_shared<QuantumEngine::GameEntity>(waterTransform, planeMesh, planeMaterial, planeRTMaterial);
 
-    
+
+    gpuContext->SetCamera(mainCamera);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
     gpuContext->AddGameEntity(skyBoxEntity);
     gpuContext->AddGameEntity(waterEntity);
-    gpuContext->SetCamera(mainCamera);
     gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
@@ -296,10 +296,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
         win->Update(deltaTime);
         camController.Update(deltaTime);
-        material1->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
-        material2->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
-        skyboxMaterial->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
-        planeMaterial->SetMatrix("viewMatrix", mainCamera->ViewMatrix());
         gpuContext->Render();
 
         deltaTime = secondsPerCount * (currentCount - lastCount);

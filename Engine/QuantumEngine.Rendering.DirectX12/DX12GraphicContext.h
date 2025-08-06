@@ -4,6 +4,7 @@
 #include "BasicTypes.h"
 #include <vector>
 #include <map>
+#include "Core/Matrix4.h"
 
 #define GLOBAL_HIT_GROUP_NAME L"GlobalHit"
 
@@ -38,6 +39,13 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual void AddGameEntity(ref<GameEntity>& gameEntity) override;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) override;
 	private:
+		struct TransformGPU {
+		public:
+			Matrix4 modelMatrix;
+			Matrix4 rotationMatrix;
+			Matrix4 modelViewMatrix;
+		};
+
 		struct DX12GameEntityGPU {
 		public:
 			ComPtr<ID3D12PipelineState> pipeline;
@@ -45,7 +53,9 @@ namespace QuantumEngine::Rendering::DX12 {
 			ComPtr<ID3D12RootSignature> rootSignature;
 			ref<HLSLMaterial> material;
 			ref<Transform> transform;
-			ref<HLSLMaterial> rtMaterial;
+			ref<HLSLMaterial> rtMaterial; 
+			ComPtr<ID3D12Resource2> transformResource;
+			ComPtr<ID3D12DescriptorHeap> transformHeap;
 		};
 
 		void UpdateTLAS();
@@ -84,5 +94,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<RayTracing::RTAccelarationStructure> m_TLASController;
 		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
 		ComPtr<ID3D12DescriptorHeap> m_rtHeap;
+		TransformGPU m_transformData;
 	};
 }

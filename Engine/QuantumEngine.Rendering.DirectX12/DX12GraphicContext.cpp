@@ -17,9 +17,6 @@
 #include "DX12Utilities.h"
 #include <set>
 
-#define SBT_SHADER_RECORD_ALIGHT(x) ((x + D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_RECORD_BYTE_ALIGNMENT
-#define SBT_SECTION_ALIGHT(x) ((x + D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT - 1) / D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT) * D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT
-
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
 	m_device = device;
@@ -157,6 +154,16 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 {
+	for (auto& entity : m_entities) {
+		m_transformData.modelMatrix = entity.transform->Matrix();
+		m_transformData.modelViewMatrix = m_camera->ViewMatrix() * entity.transform->Matrix();
+		m_transformData.rotationMatrix = entity.transform->RotateMatrix();
+		void* data;
+		entity.transformResource->Map(0, nullptr, &data);
+		std::memcpy(data, &m_transformData, sizeof(TransformGPU));
+		entity.transformResource->Unmap(0, nullptr);
+	}
+
 	//RenderRasterization();
 	RenderRayTracing();
 }
@@ -176,7 +183,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//Shader Part
-	std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial())->PrepareDescriptor();
+	auto hlslMat = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial());
+	
 	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(gameEntity->GetMaterial()->GetProgram()->GetShader(VERTEX_SHADER));
 	auto pixelShader = gameEntity->GetMaterial()->GetProgram()->GetShader(PIXEL_SHADER);
 	pipelineStateDesc.VS.BytecodeLength = vertexShader->GetCodeSize();
@@ -276,6 +284,34 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 	//Creating pipeline
 	ComPtr<ID3D12PipelineState> pso;
 	m_device->CreateGraphicsPipelineState(&pipelineStateDesc, IID_PPV_ARGS(&pso));
+
+	ComPtr<ID3D12Resource2> transformResource;
+	ComPtr<ID3D12DescriptorHeap> transformHeap;
+
+	auto transformResourceDesc = ResourceUtilities::GetCommonBufferResourceDesc(CONSTANT_BUFFER_ALIGHT(sizeof(TransformGPU)), D3D12_RESOURCE_FLAG_NONE);
+
+	if (FAILED(m_device->CreateCommittedResource(&DescriptorUtilities::CommonUploadHeapProps, D3D12_HEAP_FLAG_NONE,
+		&transformResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&transformResource))))
+	{
+		return;
+	}
+
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		.NumDescriptors = 1,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+	};
+
+	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&transformHeap)))) {
+		return;
+	}
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
+	transformViewDesc.BufferLocation = transformResource->GetGPUVirtualAddress();
+	transformViewDesc.SizeInBytes = transformResourceDesc.Width;
+
+	m_device->CreateConstantBufferView(&transformViewDesc, transformHeap->GetCPUDescriptorHandleForHeapStart());
+
 	m_entities.push_back(DX12GameEntityGPU{
 		.pipeline = pso,
 		.meshController = meshController,
@@ -283,7 +319,12 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		.material = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial()),
 		.transform = gameEntity->GetTransform(),
 		.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetRTMaterial()),
+		.transformResource = transformResource,
+		.transformHeap = transformHeap,
 		});
+
+	hlslMat->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
+	hlslMat->PrepareDescriptor();
 }
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(const ref<ShaderProgram>& rtProgram)
@@ -303,6 +344,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 			.transform = entity.transform,
 			});
 
+		entity.rtMaterial->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, entity.transformHeap);
 		entity.rtMaterial->SetDescriptorHeap("g_indices", entity.meshController->GetIndexHeap());
 		entity.rtMaterial->SetDescriptorHeap("g_vertices", entity.meshController->GetVertexHeap());
 	}
