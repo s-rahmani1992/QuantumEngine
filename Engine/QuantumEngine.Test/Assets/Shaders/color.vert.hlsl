@@ -15,23 +15,29 @@ struct TransformData {
     float4x4 modelMatrix;
     float4x4 rotationMatrix;
     float4x4 modelViewMatrix;
-};          
+};  
+
+struct CameraData {
+    float4x4 projectionMatrix;
+    float4x4 inverseProjectionMatrix;
+    float4x4 modelMatrix;
+    float3 position;
+};
 
 cbuffer ObjectTransformData : register(b0)
 {
     TransformData transformData;
 };
 
-cbuffer viewTransform : register(b1)
+cbuffer CameraData : register(b1)
 {
-    float4x4 viewMatrix;
-    float4x4 projectMatrix;
+    CameraData cameraData;
 };
 
 VS_OUTPUT main(VS_INPUT vertexIn)
 {
     VS_OUTPUT vsOut;
-    vsOut.pos = mul(float4(vertexIn.pos, 1.0f), mul(transformData.modelViewMatrix, projectMatrix));
+    vsOut.pos = mul(float4(vertexIn.pos, 1.0f), mul(transformData.modelViewMatrix, cameraData.projectionMatrix));
     vsOut.texCoord = vertexIn.texCoord;
     return vsOut;
 }

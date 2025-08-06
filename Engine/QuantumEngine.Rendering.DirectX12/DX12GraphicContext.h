@@ -4,7 +4,6 @@
 #include "BasicTypes.h"
 #include <vector>
 #include <map>
-#include "Core/Matrix4.h"
 
 #define GLOBAL_HIT_GROUP_NAME L"GlobalHit"
 
@@ -95,5 +94,8 @@ namespace QuantumEngine::Rendering::DX12 {
 		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
 		ComPtr<ID3D12DescriptorHeap> m_rtHeap;
 		TransformGPU m_transformData;
+
+		ComPtr<ID3D12Resource2> m_cameraBuffer;
+		ComPtr<ID3D12DescriptorHeap> m_cameraHeap;
 	};
 }

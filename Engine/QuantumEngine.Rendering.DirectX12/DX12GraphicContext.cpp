@@ -149,14 +149,47 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr
 		&depthViewDesc,
 		m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart());
 
+	auto cameraResourceDesc = ResourceUtilities::GetCommonBufferResourceDesc(CONSTANT_BUFFER_ALIGHT(sizeof(CameraGPU)), D3D12_RESOURCE_FLAG_NONE);
+
+	if (FAILED(m_device->CreateCommittedResource(&DescriptorUtilities::CommonUploadHeapProps, D3D12_HEAP_FLAG_NONE,
+		&cameraResourceDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_cameraBuffer))))
+	{
+		return false;
+	}
+
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		.NumDescriptors = 1,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+	};
+
+	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_cameraHeap)))) {
+		return false;
+	}
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
+	transformViewDesc.BufferLocation = m_cameraBuffer->GetGPUVirtualAddress();
+	transformViewDesc.SizeInBytes = cameraResourceDesc.Width;
+
+	m_device->CreateConstantBufferView(&transformViewDesc, m_cameraHeap->GetCPUDescriptorHandleForHeapStart());
+
 	return true;
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 {
+	m_camData.inverseProjectionMatrix = m_camera->GetTransform()->Matrix() * m_camera->InverseProjectionMatrix();
+	m_camData.viewMatrix = m_camera->ViewMatrix();
+	m_camData.position = m_camera->GetTransform()->Position();
+
+	void* camData;
+	m_cameraBuffer->Map(0, nullptr, &camData);
+	std::memcpy(camData, &m_camData, sizeof(CameraGPU));
+	m_cameraBuffer->Unmap(0, nullptr);
+
 	for (auto& entity : m_entities) {
 		m_transformData.modelMatrix = entity.transform->Matrix();
-		m_transformData.modelViewMatrix = m_camera->ViewMatrix() * entity.transform->Matrix();
+		m_transformData.modelViewMatrix = m_camData.viewMatrix * m_transformData.modelMatrix;
 		m_transformData.rotationMatrix = entity.transform->RotateMatrix();
 		void* data;
 		entity.transformResource->Map(0, nullptr, &data);
@@ -324,6 +357,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		});
 
 	hlslMat->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
+	hlslMat->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
 	hlslMat->PrepareDescriptor();
 }
 
@@ -345,6 +379,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 			});
 
 		entity.rtMaterial->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, entity.transformHeap);
+		entity.rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
 		entity.rtMaterial->SetDescriptorHeap("g_indices", entity.meshController->GetIndexHeap());
 		entity.rtMaterial->SetDescriptorHeap("g_vertices", entity.meshController->GetVertexHeap());
 	}
@@ -417,6 +452,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_rtMaterial = std::make_shared<DX12::HLSLMaterial>(m_rtProgram);
 	m_rtMaterial->Initialize();
 
+	m_rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
 	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
 	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
 	rtHeapsize += m_rtMaterial->GetBoundResourceCount();
@@ -865,8 +901,6 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRayTracing()
 	UpdateTLAS();
 	m_commandList->SetComputeRootSignature((m_rtProgram->GetReflectionData()->rootSignature).Get());
 	m_commandList->SetPipelineState1(m_rtStateObject.Get());
-	m_rtMaterial->SetVector3("camPosition", m_camera->GetTransform()->Position());
-	m_rtMaterial->SetMatrix("projectMatrix", m_camera->GetTransform()->Matrix() * m_camera->InverseProjectionMatrix());
 	
 	m_commandList->SetDescriptorHeaps(1, m_rtHeap.GetAddressOf());
 	m_rtMaterial->RegisterComputeValues(m_commandList);

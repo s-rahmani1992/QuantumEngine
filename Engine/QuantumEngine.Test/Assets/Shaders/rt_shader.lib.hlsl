@@ -1,7 +1,13 @@
-cbuffer CamProperties : register(b0)
+struct CameraData {
+    float4x4 projectionMatrix;
+    float4x4 inverseProjectionMatrix;
+    float4x4 modelMatrix;
+    float3 position;
+};
+
+cbuffer CameraData : register(b0)
 {
-    float4x4 projectMatrix;
-    float3 camPosition;
+    CameraData cameraData;
 };
 
 RaytracingAccelerationStructure gRtScene : register(t0);
@@ -34,10 +40,10 @@ void rayGen()
 
     float2 screenPos = ((crd / dims) * 2.f - 1.f);
     screenPos.y = -screenPos.y;
-    float4 worldPos = mul(float4(screenPos, 1.0f, 1.0f), projectMatrix);
+    float4 worldPos = mul(float4(screenPos, 1.0f, 1.0f), cameraData.inverseProjectionMatrix);
     worldPos.xyz /= worldPos.w;
     RayDesc ray;
-    ray.Origin = camPosition;
+    ray.Origin = cameraData.position;
     ray.Direction = normalize(worldPos.xyz - ray.Origin);
 
     ray.TMin = 0;
