@@ -1,4 +1,0 @@
-#define MyRS1 \
-"RootFlags( ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT), "  \
-"RootConstants(num32BitConstants=3, b0, visibility=ALL), "  \
-"RootConstants(num32BitConstants=4, b1, visibility=ALL)"

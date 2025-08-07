@@ -1,9 +1,4 @@
-struct CameraData {
-    float4x4 projectionMatrix;
-    float4x4 inverseProjectionMatrix;
-    float4x4 modelMatrix;
-    float3 position;
-};
+#include "TransformStructs.hlsli"
 
 cbuffer CameraData : register(b0)
 {

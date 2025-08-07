@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <comdef.h>
+#include <filesystem>
 
 using namespace Microsoft::WRL;
 
@@ -84,6 +85,11 @@ ref<QuantumEngine::Rendering::Shader> QuantumEngine::Rendering::DX12::HLSLShader
     // -T for the target profile (eg. 'ps_6_6')
     arguments.push_back((WCHAR*)L"-T");
     arguments.push_back((WCHAR*)targetProfile.c_str());
+
+    auto path = std::filesystem::path(fileName);
+    std::wstring shaderDir = path.parent_path().c_str(); /* extract directory from fileName */;
+    arguments.push_back((WCHAR*)L"-I");
+    arguments.push_back((WCHAR*)shaderDir.c_str());
     
     // Strip reflection data and pdbs (see later)
     arguments.push_back((WCHAR*)L"-Qstrip_debug");
@@ -92,6 +98,8 @@ ref<QuantumEngine::Rendering::Shader> QuantumEngine::Rendering::DX12::HLSLShader
 
     arguments.push_back((WCHAR*)DXC_ARG_WARNINGS_ARE_ERRORS); //-WX
     arguments.push_back((WCHAR*)DXC_ARG_DEBUG); //-Zi
+
+
 
     ComPtr<IDxcResult> compileResult;
     result = dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)arguments.data(), arguments.size(), includeHandler.Get(), IID_PPV_ARGS(&compileResult));

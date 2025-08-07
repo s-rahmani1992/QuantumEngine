@@ -56,11 +56,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Shaders\colorRootSig.hlsli">
-      <Filter>Assets</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="Assets\Shaders\color.vert.hlsl">
       <Filter>Assets</Filter>
     </Text>
@@ -77,6 +72,9 @@
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\rt_water.lib.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\TransformStructs.hlsli">
       <Filter>Assets</Filter>
     </Text>
   </ItemGroup>

@@ -136,7 +136,9 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Assets\Shaders\colorRootSig.hlsli" />
+    <Text Include="Assets\Shaders\TransformStructs.hlsli">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\Shaders\rt_shader.lib.hlsl">

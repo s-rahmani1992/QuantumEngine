@@ -1,3 +1,4 @@
+#include "TransformStructs.hlsli"
 
 struct VS_INPUT
 {
@@ -9,19 +10,6 @@ struct VS_OUTPUT
 {
     float4 pos : SV_POSITION;
     float2 texCoord : TEXCOORD;
-};
-
-struct TransformData {
-    float4x4 modelMatrix;
-    float4x4 rotationMatrix;
-    float4x4 modelViewMatrix;
-};  
-
-struct CameraData {
-    float4x4 projectionMatrix;
-    float4x4 inverseProjectionMatrix;
-    float4x4 modelMatrix;
-    float3 position;
 };
 
 cbuffer ObjectTransformData : register(b0)

@@ -1,14 +1,10 @@
+#include "TransformStructs.hlsli"
+
 struct Vertex
 {
     float3 pos;
     float2 uv;
     float3 normal;
-};
-
-struct TransformData {
-    float4x4 modelMatrix;
-    float4x4 rotationMatrix;
-    float4x4 modelViewMatrix;
 };
 
 cbuffer ObjectTransformData : register(b2)
