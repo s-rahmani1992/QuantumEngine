@@ -98,6 +98,7 @@
     <ClInclude Include="Core\Color.h" />
     <ClInclude Include="Core\GameEntity.h" />
     <ClInclude Include="Core\GUIDUtility.h" />
+    <ClInclude Include="Core\Light\Lights.h" />
     <ClInclude Include="Core\Matrix4.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Texture2D.h" />

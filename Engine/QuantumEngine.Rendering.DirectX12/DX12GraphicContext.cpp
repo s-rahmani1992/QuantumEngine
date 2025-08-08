@@ -358,6 +358,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 
 	hlslMat->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
 	hlslMat->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
+	hlslMat->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
 	hlslMat->PrepareDescriptor();
 }
 
@@ -380,6 +381,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 		entity.rtMaterial->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, entity.transformHeap);
 		entity.rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
+		entity.rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
 		entity.rtMaterial->SetDescriptorHeap("g_indices", entity.meshController->GetIndexHeap());
 		entity.rtMaterial->SetDescriptorHeap("g_vertices", entity.meshController->GetVertexHeap());
 	}
@@ -453,6 +455,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_rtMaterial->Initialize();
 
 	m_rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
+	m_rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
 	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
 	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
 	rtHeapsize += m_rtMaterial->GetBoundResourceCount();
@@ -801,6 +804,11 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_raytraceDesc.CallableShaderTable.SizeInBytes = 0;
 
 	return true;
+}
+
+void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterLight(const SceneLightData& lights)
+{
+	m_lightManager.Initialize(lights, m_device);
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::UpdateTLAS()

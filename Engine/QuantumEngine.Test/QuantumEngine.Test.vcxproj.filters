@@ -77,5 +77,8 @@
     <Text Include="Assets\Shaders\TransformStructs.hlsli">
       <Filter>Assets</Filter>
     </Text>
+    <Text Include="Assets\Shaders\LightStructs.hlsli">
+      <Filter>Assets</Filter>
+    </Text>
   </ItemGroup>
 </Project>

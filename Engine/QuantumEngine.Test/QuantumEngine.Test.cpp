@@ -21,6 +21,7 @@
 #include "Core/Transform.h"
 #include "Core/Camera/PerspectiveCamera.h"
 #include "CameraController.h"
+#include "Core/Light/Lights.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -133,11 +134,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     // Adding Meshes
     std::vector<Vertex> pyramidVertices = {
-        Vertex(Vector3(-1.0f, 0.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(1.0f, 0.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(1.0f, 0.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(-1.0f, 0.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(0.0f, 2.0f, 0.0f), Vector2(0.5f, 0.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, 0.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(-1.0f, -2.0f, -1.0f).Normalize()),
+        Vertex(Vector3(1.0f, 0.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(1.0f, -2.0f, -1.0f).Normalize()),
+        Vertex(Vector3(1.0f, 0.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(1.0f, -2.0f, 1.0f).Normalize()),
+        Vertex(Vector3(-1.0f, 0.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(-1.0f, -2.0f, 1.0f).Normalize()),
+        Vertex(Vector3(0.0f, 2.0f, 0.0f), Vector2(0.5f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
     };
 
     std::vector<UInt32> pyramidIndices = {
@@ -154,14 +155,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     assetManager->UploadMeshToGPU(pyramidMesh);
 
     std::vector<Vertex> cubeVertices = {
-        Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
-        Vertex(Vector3(-1.0f, 1.0f, -1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f)),
-        Vertex(Vector3(-1.0f, -1.0f, 1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f)),
-        Vertex(Vector3(1.0f, -1.0f, 1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f)),
-        Vertex(Vector3(1.0f, 1.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f)),
-        Vertex(Vector3(-1.0f, 1.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f)),
+        Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(-1.0f, -1.0f, -1.0f).Normalize()),
+        Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(1.0f, -1.0f, -1.0f).Normalize()),
+        Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(1.0f, 0.0f), Vector3(1.0f, 1.0f, -1.0f).Normalize()),
+        Vertex(Vector3(-1.0f, 1.0f, -1.0f), Vector2(0.0f, 0.0f), Vector3(-1.0f, 1.0f, -1.0f).Normalize()),
+        Vertex(Vector3(-1.0f, -1.0f, 1.0f), Vector2(1.0f, 0.0f), Vector3(-1.0f, -1.0f, 1.0f).Normalize()),
+        Vertex(Vector3(1.0f, -1.0f, 1.0f), Vector2(0.0f, 0.0f), Vector3(1.0f, -1.0f, 1.0f).Normalize()),
+        Vertex(Vector3(1.0f, 1.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f).Normalize()),
+        Vertex(Vector3(-1.0f, 1.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(-1.0f, 1.0f, 1.0f).Normalize()),
     };
 
     std::vector<UInt32> cubeIndices = { 
@@ -270,6 +271,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
     auto waterTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
     auto waterEntity = std::make_shared<QuantumEngine::GameEntity>(waterTransform, planeMesh, planeMaterial, planeRTMaterial);
+    SceneLightData lightData;
+
+    lightData.directionalLights.push_back(DirectionalLight{
+        .color = Color(1.0f, 1.0f, 1.0f, 1.0f),
+        .direction = Vector3(2.0f, -6.0f, 0.0f),
+        .ambient = 0.1f,
+        .diffuse = 0.3f,
+        .specular = 0.0f,
+        });
+
+    lightData.pointLights.push_back(PointLight{
+        .color = Color(1.0f, 1.0f, 1.0f, 1.0f),
+        .position = Vector3(-0.2f, 1.4f, 3.0f),
+        .ambient = 0.0f,
+        .attenuation = Attenuation{
+            .c0 = 0.0f,
+            .c1 = 1.0f,
+            .c2 = 0.0f,
+        },
+        .diffuse = 20.2f,
+        .specular = 0.3f,
+        .radius = 9.0f,
+        });
+
+    gpuContext->RegisterLight(lightData);
 
     gpuContext->SetCamera(mainCamera);
     gpuContext->AddGameEntity(entity1);

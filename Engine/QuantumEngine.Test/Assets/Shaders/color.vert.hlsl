@@ -4,12 +4,15 @@ struct VS_INPUT
 {
     float3 pos : POSITION;
     float2 texCoord : TEXCOORD;
+    float3 norm : NORMAL;
 };
 
 struct VS_OUTPUT
 {
     float4 pos : SV_POSITION;
     float2 texCoord : TEXCOORD;
+    float3 norm : NORMAL;
+    float3 lightPos : POSITION;
 };
 
 cbuffer ObjectTransformData : register(b0)
@@ -27,5 +30,7 @@ VS_OUTPUT main(VS_INPUT vertexIn)
     VS_OUTPUT vsOut;
     vsOut.pos = mul(float4(vertexIn.pos, 1.0f), mul(transformData.modelViewMatrix, cameraData.projectionMatrix));
     vsOut.texCoord = vertexIn.texCoord;
+    vsOut.norm = mul(float4(vertexIn.norm, 1.0f), transformData.rotationMatrix).xyz;
+    vsOut.lightPos = mul(float4(vertexIn.pos, 1.0f), transformData.modelMatrix).xyz;
     return vsOut;
 }

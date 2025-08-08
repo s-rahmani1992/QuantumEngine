@@ -151,6 +151,7 @@
     <ClInclude Include="DX12CommandExecuter.h" />
     <ClInclude Include="DX12GPUDeviceManager.h" />
     <ClInclude Include="DX12GraphicContext.h" />
+    <ClInclude Include="DX12LightManager.h" />
     <ClInclude Include="DX12MeshController.h" />
     <ClInclude Include="DX12Texture2DController.h" />
     <ClInclude Include="DX12Utilities.h" />
@@ -167,6 +168,7 @@
     <ClCompile Include="DX12CommandExecuter.cpp" />
     <ClCompile Include="DX12GPUDeviceManager.cpp" />
     <ClCompile Include="DX12GraphicContext.cpp" />
+    <ClCompile Include="DX12LightManager.cpp" />
     <ClCompile Include="DX12MeshController.cpp" />
     <ClCompile Include="DX12Texture2DController.cpp" />
     <ClCompile Include="DX12Utilities.cpp" />

@@ -4,6 +4,7 @@
 #include "BasicTypes.h"
 #include <vector>
 #include <map>
+#include "DX12LightManager.h"
 
 #define GLOBAL_HIT_GROUP_NAME L"GlobalHit"
 
@@ -37,6 +38,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) override;
 		virtual void AddGameEntity(ref<GameEntity>& gameEntity) override;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) override;
+		virtual void RegisterLight(const SceneLightData& lights) override;
 	private:
 		struct TransformGPU {
 		public:
@@ -97,5 +99,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		ComPtr<ID3D12Resource2> m_cameraBuffer;
 		ComPtr<ID3D12DescriptorHeap> m_cameraHeap;
+
+		DX12LightManager m_lightManager;
 	};
 }

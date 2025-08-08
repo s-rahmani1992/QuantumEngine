@@ -13,6 +13,9 @@
     <Filter Include="Core\Camera">
       <UniqueIdentifier>{00f7222f-d0ef-4e54-a9e4-de9e6a7a8514}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Light">
+      <UniqueIdentifier>{8995c29f-1989-4ebd-a07e-ebb4b9424aa4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Platform\GraphicWindow.h">
@@ -83,6 +86,9 @@
       <Filter>Core\Camera</Filter>
     </ClInclude>
     <ClInclude Include="StringUtilities.h" />
+    <ClInclude Include="Core\Light\Lights.h">
+      <Filter>Core\Light</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
