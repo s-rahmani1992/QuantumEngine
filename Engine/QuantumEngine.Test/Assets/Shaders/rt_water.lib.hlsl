@@ -1,11 +1,5 @@
 #include "TransformStructs.hlsli"
-
-struct Vertex
-{
-    float3 pos;
-    float2 uv;
-    float3 normal;
-};
+#include "RTStructs.hlsli"
 
 cbuffer ObjectTransformData : register(b2)
 {
@@ -15,6 +9,8 @@ cbuffer ObjectTransformData : register(b2)
 cbuffer MaterialProps : register(b0, space1)
 {
     float4 color;
+    uint castShadow;
+    float3 dummy;
 };
 
 cbuffer MissProps : register(b1, space1)
@@ -31,14 +27,15 @@ sampler mainSampler : register(s0, space1);
 StructuredBuffer<uint> g_indices : register(t1, space1);
 StructuredBuffer<Vertex> g_vertices : register(t2, space1);
 
-struct RayPayload
-{
-    float3 color;
-};
-
 [shader("closesthit")]
-void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    if (payload.targetMode == 2) // It's for shadow
+    {
+        payload.hit = castShadow > 0 ? 0.7f : 0.0f;
+        return;
+    }
+    
     uint baseIndex = PrimitiveIndex() * 3;
     Vertex v1 = g_vertices[g_indices[baseIndex]];
     Vertex v2 = g_vertices[g_indices[baseIndex + 1]];
@@ -54,7 +51,9 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
     ray.TMin = 0.1;
     ray.TMax = 100000;
 
-    RayPayload innerPayload;
+    GeneralPayload innerPayload;
+    innerPayload.targetMode = 1;
+    innerPayload.recursionCount = payload.recursionCount + 1;
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, missIndex, ray, innerPayload);
 
     float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);
@@ -62,7 +61,7 @@ void chs(inout RayPayload payload, in BuiltInTriangleIntersectionAttributes attr
 }
 
 [shader("miss")]
-void miss(inout RayPayload payload)
+void miss(inout GeneralPayload payload)
 {
     payload.color = float3(2.4, 2.6, 2.2);
 }

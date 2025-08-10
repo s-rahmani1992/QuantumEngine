@@ -75,11 +75,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<QuantumEngine::Texture2D> tex2 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\bg.jpg", errorStr);
     ref<QuantumEngine::Texture2D> skyBoxTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\skybox.jpg", errorStr);
     ref<QuantumEngine::Texture2D> waterTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\water.jpeg", errorStr);
+    ref<QuantumEngine::Texture2D> groundTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\ground.jpg", errorStr);
 
     assetManager->UploadTextureToGPU(tex1);
     assetManager->UploadTextureToGPU(tex2);
     assetManager->UploadTextureToGPU(skyBoxTex);
     assetManager->UploadTextureToGPU(waterTex);
+    assetManager->UploadTextureToGPU(groundTex);
 
     // Creating the camera
     auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 2.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
@@ -266,12 +268,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<DX12::HLSLMaterial> planeMaterial = std::make_shared<DX12::HLSLMaterial>(program);
     planeMaterial->Initialize();
     planeMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
-    planeMaterial->SetTexture2D("mainTexture", waterTex);
+    planeMaterial->SetTexture2D("mainTexture", groundTex);
 
     ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtGroundProgram);
     planeRTMaterial->Initialize();
     planeRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
-    planeRTMaterial->SetTexture2D("mainTexture", waterTex);
+    planeRTMaterial->SetTexture2D("mainTexture", groundTex);
+
+    ref<DX12::HLSLMaterial> mirrorMaterial = std::make_shared<DX12::HLSLMaterial>(program);
+    mirrorMaterial->Initialize();
+    mirrorMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    mirrorMaterial->SetTexture2D("mainTexture", waterTex);
+
+    ref<DX12::HLSLMaterial> mirrorRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtWaterProgram);
+    mirrorRTMaterial->Initialize();
+    mirrorRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
+    mirrorRTMaterial->SetTexture2D("mainTexture", waterTex);
+    mirrorRTMaterial->SetUInt32("castShadow", 0);
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, material1, rtMaterial1);
@@ -279,8 +292,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, cubeMesh, material2, rtMaterial2);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
-    auto waterTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
-    auto waterEntity = std::make_shared<QuantumEngine::GameEntity>(waterTransform, planeMesh, planeMaterial, planeRTMaterial);
+    auto groundTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto groundEntity = std::make_shared<QuantumEngine::GameEntity>(groundTransform, planeMesh, planeMaterial, planeRTMaterial);
+    auto mirrorTransform = std::make_shared<Transform>(Vector3(-3.0f, 5.0f, 0.0f), Vector3(5.0f), Vector3(0.0f, 0.0f, 1.0f), 90);
+    auto mirrorEntity = std::make_shared<QuantumEngine::GameEntity>(mirrorTransform, planeMesh, mirrorMaterial, mirrorRTMaterial);
     SceneLightData lightData;
 
     lightData.directionalLights.push_back(DirectionalLight{
@@ -311,7 +326,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
     gpuContext->AddGameEntity(skyBoxEntity);
-    gpuContext->AddGameEntity(waterEntity);
+    gpuContext->AddGameEntity(groundEntity);
+    gpuContext->AddGameEntity(mirrorEntity);
     gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;

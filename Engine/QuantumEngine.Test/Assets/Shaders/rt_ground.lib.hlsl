@@ -50,7 +50,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
     {
         GeneralPayload innerPayload;
         innerPayload.targetMode = 2;
-        
+        innerPayload.recursionCount = payload.recursionCount + 1;
         RayDesc ray;
         ray.Origin = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
         ray.Direction = -lightData.directionalLights[i].direction;
@@ -70,6 +70,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         
         GeneralPayload innerPayload;
         innerPayload.targetMode = 2;
+        innerPayload.recursionCount = payload.recursionCount + 1;
         
         RayDesc ray;
         ray.Origin = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();

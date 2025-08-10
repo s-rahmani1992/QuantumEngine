@@ -507,7 +507,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	// Pipeline Config
 	D3D12_RAYTRACING_PIPELINE_CONFIG pipelineConfig;
-	pipelineConfig.MaxTraceRecursionDepth = 2;
+	pipelineConfig.MaxTraceRecursionDepth = 3;
 
 	subobjects.push_back(D3D12_STATE_SUBOBJECT{
 		.Type = D3D12_STATE_SUBOBJECT_TYPE_RAYTRACING_PIPELINE_CONFIG,
