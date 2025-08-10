@@ -495,7 +495,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 
 	// Shader Config
 	D3D12_RAYTRACING_SHADER_CONFIG shaderConfig;
-	shaderConfig.MaxPayloadSizeInBytes = 3 * sizeof(Float);
+	shaderConfig.MaxPayloadSizeInBytes = 6 * sizeof(Float);
 	shaderConfig.MaxAttributeSizeInBytes = 2 * sizeof(Float);
 
 	subobjects.push_back(D3D12_STATE_SUBOBJECT{

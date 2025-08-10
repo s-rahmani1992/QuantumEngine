@@ -1,4 +1,5 @@
 #include "TransformStructs.hlsli"
+#include "RTStructs.hlsli"
 
 cbuffer CameraData : register(b0)
 {
@@ -17,11 +18,6 @@ float3 linearToSrgb(float3 c)
     float3 srgb = 0.662002687 * sq1 + 0.684122060 * sq2 - 0.323583601 * sq3 - 0.0225411470 * c;
     return srgb;
 }
-
-struct RayPayload
-{
-    float3 color;
-};
 
 [shader("raygeneration")]
 void rayGen()
@@ -44,14 +40,16 @@ void rayGen()
     ray.TMin = 0;
     ray.TMax = 100000;
 
-    RayPayload payload;
-    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payload);
-    float3 col = linearToSrgb(payload.color);
+    GeneralPayload payLoad;
+    payLoad.recursionCount = 1;
+    payLoad.targetMode = 0;
+    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payLoad);
+    float3 col = linearToSrgb(payLoad.color);
     gOutput[launchIndex.xy] = float4(col, 1);
 }
 
 [shader("miss")]
-void miss(inout RayPayload payload)
+void miss(inout GeneralPayload payload)
 {
     payload.color = float3(0.4, 0.6, 0.2);
 }
