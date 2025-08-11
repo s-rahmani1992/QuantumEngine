@@ -111,6 +111,7 @@
     <ClInclude Include="Platform\GraphicWindow.h" />
     <ClInclude Include="Rendering\GPUAssetManager.h" />
     <ClInclude Include="Rendering\GPUDeviceManager.h" />
+    <ClInclude Include="Rendering\GPUMeshController.h" />
     <ClInclude Include="Rendering\GPUTexture2DController.h" />
     <ClInclude Include="Rendering\GraphicContext.h" />
     <ClInclude Include="Rendering\Material.h" />

@@ -89,6 +89,9 @@
     <ClInclude Include="Core\Light\Lights.h">
       <Filter>Core\Light</Filter>
     </ClInclude>
+    <ClInclude Include="Rendering\GPUMeshController.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">

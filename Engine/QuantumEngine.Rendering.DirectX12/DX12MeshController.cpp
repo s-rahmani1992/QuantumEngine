@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "DX12MeshController.h"
 #include "Core/Mesh.h"
+#include "DX12Utilities.h"
 
 QuantumEngine::Rendering::DX12::DX12MeshController::DX12MeshController(const ref<Mesh>& mesh)
 	:m_mesh(mesh)
@@ -24,21 +25,9 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 	.VisibleNodeMask = 0,
 	};
 
-	D3D12_RESOURCE_DESC bufferDesc
-	{
-	bufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-	bufferDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-	bufferDesc.Width = sizeof(Vertex) * m_mesh->GetVertexCount(),
-	bufferDesc.Height = 1,
-	bufferDesc.DepthOrArraySize = 1,
-	bufferDesc.MipLevels = 1,
-	bufferDesc.Format = DXGI_FORMAT_UNKNOWN,
-	bufferDesc.SampleDesc.Count = 1,
-	bufferDesc.SampleDesc.Quality = 0,
-	bufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-	bufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE,
-	};
-
+	D3D12_RESOURCE_DESC bufferDesc = ResourceUtilities::GetCommonBufferResourceDesc(
+		sizeof(Vertex) * m_mesh->GetVertexCount(), D3D12_RESOURCE_FLAG_NONE);
+	
 	D3D12_HEAP_PROPERTIES bufferHeapProps{};
 	bufferHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
 	bufferHeapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
@@ -46,36 +35,16 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 	bufferHeapProps.CreationNodeMask = 0;
 	bufferHeapProps.VisibleNodeMask = 0;
 
-	if(FAILED(device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
-		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_uploadVertexBuffer))))
-		return false;
-
-	if(FAILED(device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+	if(FAILED(device->CreateCommittedResource(&DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
 		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_vertexBuffer))))
 		return false;
 
 	//Create upload and index buffers
 	
-	D3D12_RESOURCE_DESC indexDesc
-	{
-	indexDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-	indexDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-	indexDesc.Width = sizeof(UInt32) * m_mesh->GetIndexCount(),
-	indexDesc.Height = 1,
-	indexDesc.DepthOrArraySize = 1,
-	indexDesc.MipLevels = 1,
-	indexDesc.Format = DXGI_FORMAT_UNKNOWN,
-	indexDesc.SampleDesc.Count = 1,
-	indexDesc.SampleDesc.Quality = 0,
-	indexDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-	indexDesc.Flags = D3D12_RESOURCE_FLAG_NONE,
-	};
-
-	if (FAILED(device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &indexDesc,
-		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_uploadIndexBuffer))))
-		return false;
-
-	if (FAILED(device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &indexDesc,
+	D3D12_RESOURCE_DESC indexDesc = ResourceUtilities::GetCommonBufferResourceDesc(
+		sizeof(UInt32) * m_mesh->GetIndexCount(), D3D12_RESOURCE_FLAG_NONE);
+	
+	if (FAILED(device->CreateCommittedResource(&DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &indexDesc,
 		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_indexBuffer))))
 		return false;
 
@@ -203,26 +172,6 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 
 void QuantumEngine::Rendering::DX12::DX12MeshController::UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList)
 {
-	auto meshData = m_mesh->GetVertexData();
-	auto size = sizeof(Vertex) * m_mesh->GetVertexCount();
-	void* uploadAddress;
-	D3D12_RANGE range;
-	range.Begin = 0;
-	range.End = size - 1;
-	m_uploadVertexBuffer->Map(0, &range, &uploadAddress);
-	std::memcpy(uploadAddress, meshData, range.End);
-	m_uploadVertexBuffer->Unmap(0, &range);
-	uploadCommandList->CopyBufferRegion(m_vertexBuffer.Get(), 0, m_uploadVertexBuffer.Get(), 0, size);
-
-	auto indexData = m_mesh->GetIndexData();
-	size = sizeof(UInt32) * m_mesh->GetIndexCount();
-	range.Begin = 0;
-	range.End = size - 1;
-	m_uploadIndexBuffer->Map(0, &range, &uploadAddress);
-	std::memcpy(uploadAddress, indexData, range.End);
-	m_uploadIndexBuffer->Unmap(0, &range);
-	uploadCommandList->CopyBufferRegion(m_indexBuffer.Get(), 0, m_uploadIndexBuffer.Get(), 0, size);
-
 	D3D12_RAYTRACING_GEOMETRY_DESC rtMeshDesc{
 		.Type = D3D12_RAYTRACING_GEOMETRY_TYPE_TRIANGLES,
 		.Flags = D3D12_RAYTRACING_GEOMETRY_FLAG_OPAQUE,
@@ -246,12 +195,6 @@ void QuantumEngine::Rendering::DX12::DX12MeshController::UploadToGPU(ComPtr<ID3D
 		.NumDescs = 1,
 		.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY,
 		.pGeometryDescs = &rtMeshDesc,
-	};
-
-	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC rtAccelerationDesc{
-		.DestAccelerationStructureData = m_bottomLevelAccelationData->GetGPUVirtualAddress(),
-		.Inputs = rtInput,
-		.SourceAccelerationStructureData = m_rtScratchBuffer->GetGPUVirtualAddress(),
 	};
 
 	D3D12_RESOURCE_BARRIER b1;
@@ -294,4 +237,15 @@ void QuantumEngine::Rendering::DX12::DX12MeshController::UploadToGPU(ComPtr<ID3D
 	uavBarrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
 	uavBarrier.UAV.pResource = m_bottomLevelAccelationData.Get();
 	uploadCommandList->ResourceBarrier(1, &uavBarrier);
+}
+
+void QuantumEngine::Rendering::DX12::DX12MeshController::CopyToGPU(const ComPtr<ID3D12Resource2>& uploadBuffer, ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList, UInt32 offset, Byte* mapData)
+{
+	UInt32 vertexSize = sizeof(Vertex) * m_mesh->GetVertexCount();
+	UInt32 indexSize = sizeof(UInt32) * m_mesh->GetIndexCount();
+	
+	m_mesh->CopyVertexData(mapData);
+	uploadCommandList->CopyBufferRegion(m_vertexBuffer.Get(), 0, uploadBuffer.Get(), offset, vertexSize);
+	m_mesh->CopyIndexData(mapData + vertexSize);
+	uploadCommandList->CopyBufferRegion(m_indexBuffer.Get(), 0, uploadBuffer.Get(), offset + vertexSize, indexSize);
 }

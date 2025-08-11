@@ -197,8 +197,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		entity.transformResource->Unmap(0, nullptr);
 	}
 
-	//RenderRasterization();
-	RenderRayTracing();
+	RenderRasterization();
+	//RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
@@ -210,7 +210,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 {
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc;
 	//Input part
-	auto meshController = m_assetManager->GetMeshController(gameEntity->GetMesh());
+	auto meshController = std::dynamic_pointer_cast<DX12MeshController>(gameEntity->GetMesh()->GetGPUHandle());
 	pipelineStateDesc.InputLayout = *(meshController->GetLayoutDesc());
 	pipelineStateDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;

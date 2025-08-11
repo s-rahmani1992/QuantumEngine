@@ -161,8 +161,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> pyramidMesh = std::make_shared<Mesh>(pyramidVertices, pyramidIndices);
 
-    assetManager->UploadMeshToGPU(pyramidMesh);
-
     std::vector<Vertex> cubeVertices = {
         Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(-1.0f, -1.0f, -1.0f).Normalize()),
         Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(1.0f, -1.0f, -1.0f).Normalize()),
@@ -185,8 +183,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
 
-    assetManager->UploadMeshToGPU(cubeMesh);
-    
     std::vector<Vertex> skyBoxVertices = {
         Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(1.0f, 2.0f / 3), Vector3(0.0f)),
         Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(0.75f, 2.0f / 3), Vector3(0.0f)),
@@ -213,8 +209,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> skyBoxMesh = std::make_shared<Mesh>(skyBoxVertices, skyBoxIndices);
 
-    assetManager->UploadMeshToGPU(skyBoxMesh);
-
     std::vector<Vertex> planeVertices = {
         Vertex(Vector3(-1.0f, 0, -1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
         Vertex(Vector3(1.0f, 0, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
@@ -228,8 +222,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> planeMesh = std::make_shared<Mesh>(planeVertices, planeIndices);
 
-    assetManager->UploadMeshToGPU(planeMesh);
-
+	assetManager->UploadMeshesToGPU({ cubeMesh, pyramidMesh, skyBoxMesh, planeMesh });
+    
     Matrix4 project = mainCamera->ProjectionMatrix();
 
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
@@ -328,7 +322,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->AddGameEntity(skyBoxEntity);
     gpuContext->AddGameEntity(groundEntity);
     gpuContext->AddGameEntity(mirrorEntity);
-    gpuContext->PrepareRayTracingData(rtProgram);
+    //gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
     QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);

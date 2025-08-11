@@ -4,26 +4,12 @@
 #include "DX12Texture2DController.h"
 #include "DX12CommandExecuter.h"
 #include "Core/Texture2D.h"
+#include "Core/Mesh.h"
+#include "DX12Utilities.h"
 
 void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadMeshToGPU(const ref<Mesh>& mesh)
 {
-	if (m_meshes.find(mesh) != m_meshes.end()) { // mesh has already been uploaded
-		return;
-	}
-
-	auto meshController = std::make_shared<DX12MeshController>(mesh);
-
-	if (meshController->Initialize(m_device) == false)
-		return;
-
-	// Reset Commands
-	m_uploadCommandAllocator->Reset();
-	m_uploadCommandList->Reset(m_uploadCommandAllocator.Get(), nullptr);
-
-	// Execute Upload Commands
-	meshController->UploadToGPU(m_uploadCommandList);
-	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
-	m_meshes.insert({ mesh, meshController });
+	UploadMeshesToGPU({ mesh });
 }
 
 void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadTextureToGPU(const ref<Texture2D>& texture)
@@ -46,6 +32,59 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadTextureToGPU(const 
 	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
 	texture->SetGPUHandle(texture2DController);
 	m_textures.insert({ texture, texture2DController });
+}
+
+void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadMeshesToGPU(const std::vector<ref<Mesh>>& meshes)
+{
+	UInt32 totalSize = 0;
+	std::set<ref<Mesh>> meshesToUpload;
+
+	for (auto& mesh : meshes) {
+		if (mesh->IsUploadedToGPU()) // mesh has already been uploaded
+			continue;
+
+		auto it = meshesToUpload.emplace(mesh);
+
+		if (it.second == false) // mesh is already listed for upload
+			continue;
+
+		totalSize += mesh->GetTotalSize();
+	}
+
+	auto uploadDesc = ResourceUtilities::GetCommonBufferResourceDesc(totalSize, D3D12_RESOURCE_FLAG_NONE);
+	ComPtr<ID3D12Resource2> uploadBuffer;
+
+	if (FAILED(m_device->CreateCommittedResource(&DescriptorUtilities::CommonUploadHeapProps,
+		D3D12_HEAP_FLAG_NONE, &uploadDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&uploadBuffer))))
+	{
+		return;
+	}
+	
+	m_uploadCommandAllocator->Reset();
+	m_uploadCommandList->Reset(m_uploadCommandAllocator.Get(), nullptr);
+
+	UInt32 offset = 0;
+	Byte* mappedData = nullptr;
+	D3D12_RANGE range{ 0, totalSize - 1 };
+	auto t = uploadBuffer->Map(0, &range, reinterpret_cast<void**>(&mappedData));
+
+	for(auto& mesh : meshesToUpload) {
+		auto meshController = std::make_shared<DX12MeshController>(mesh);
+
+		if (meshController->Initialize(m_device) == false) { // if initialization fails, skip this mesh
+			continue;
+		}
+
+		meshController->CopyToGPU(uploadBuffer, m_uploadCommandList, offset, mappedData);
+		mesh->SetGPUHandle(meshController);
+		offset += mesh->GetTotalSize();
+		mappedData += mesh->GetTotalSize();
+	}
+	uploadBuffer->Unmap(0, &range);
+	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
 }
 
 bool QuantumEngine::Rendering::DX12::DX12AssetManager::Initialize(ComPtr<ID3D12Device10>& device)

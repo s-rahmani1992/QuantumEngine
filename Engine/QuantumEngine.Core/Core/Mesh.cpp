@@ -6,3 +6,13 @@ QuantumEngine::Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector
 {
 
 }
+
+void QuantumEngine::Mesh::CopyIndexData(Byte* dest)
+{
+	std::memcpy(dest, m_indices.data(), m_indices.size() * sizeof(UInt32));
+}
+
+void QuantumEngine::Mesh::CopyVertexData(Byte* dest)
+{
+	std::memcpy(dest, m_vertices.data(), m_vertices.size() * sizeof(Vertex));
+}

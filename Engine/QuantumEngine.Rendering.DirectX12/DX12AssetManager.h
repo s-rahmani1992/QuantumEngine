@@ -2,6 +2,7 @@
 
 #include "Rendering/GPUAssetManager.h"
 #include <map>
+#include <set>
 
 namespace QuantumEngine {
 	class Mesh;
@@ -20,14 +21,14 @@ namespace QuantumEngine::Rendering::DX12 {
 	public:
 		virtual void UploadMeshToGPU(const ref<Mesh>& mesh) override;
 		virtual void UploadTextureToGPU(const ref<Texture2D>& texture) override;
+		virtual void UploadMeshesToGPU(const std::vector<ref<Mesh>>& meshes) override;
 		bool Initialize(ComPtr<ID3D12Device10>& device);
-		ref<DX12MeshController> GetMeshController(const ref<Mesh>& mesh) { return m_meshes.at(mesh); }
 	private:
 		ComPtr<ID3D12Device10> m_device;
 		ComPtr<ID3D12CommandAllocator> m_uploadCommandAllocator;
 		ComPtr<ID3D12GraphicsCommandList7> m_uploadCommandList;
 		ref<DX12CommandExecuter> m_meshUploadCommandExecuter;
-		std::map<ref<Mesh>, ref<DX12MeshController>> m_meshes;
+		std::set<ref<Mesh>> m_uploadedMeshes;
 		std::map<ref<Texture2D>, ref<DX12Texture2DController>> m_textures;
 	};
 }
