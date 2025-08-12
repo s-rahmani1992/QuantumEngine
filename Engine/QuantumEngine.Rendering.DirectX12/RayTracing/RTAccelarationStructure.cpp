@@ -8,7 +8,19 @@
 bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<EntityBLASDesc>& entities)
 {
 	ComPtr<ID3D12Device10> device;
-	commandList->GetDevice(IID_PPV_ARGS(&device));
+
+	if (FAILED(commandList->GetDevice(IID_PPV_ARGS(&device))))
+		return false;
+
+	scratchBuffers = std::vector<ComPtr<ID3D12Resource2>>(entities.size());
+	UInt32 index = 0;
+
+	for(auto& entity : entities) {
+		auto r = entity.mesh->CreateBLASResource(commandList, scratchBuffers[index]);
+		m_entities.push_back({ entity.transform, r });
+		index++;
+	}
+
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_DESC topLevelBuildDesc = {};
 	D3D12_BUILD_RAYTRACING_ACCELERATION_STRUCTURE_INPUTS& topLevelInputs = topLevelBuildDesc.Inputs;
 	topLevelInputs.DescsLayout = D3D12_ELEMENTS_LAYOUT_ARRAY;
@@ -46,7 +58,7 @@ bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initia
 	UInt32 id = 0;
 	Matrix4 m;
 
-	for (auto& entity : entities) {
+	for (auto& entity : m_entities) {
 		D3D12_RAYTRACING_INSTANCE_DESC desc1;
 		m = entity.transform->Matrix();
 		std::memcpy(desc1.Transform, &m, 12 * sizeof(Float));
@@ -54,10 +66,9 @@ bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initia
 		desc1.InstanceContributionToHitGroupIndex = id;
 		desc1.InstanceMask = 1;
 		desc1.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
-		desc1.AccelerationStructure = entity.mesh->GetBLAS()->GetGPUVirtualAddress();
+		desc1.AccelerationStructure = entity.BLASResource->GetGPUVirtualAddress();
 
 		m_instanceDescs.push_back(desc1);
-		m_transforms.push_back(entity.transform);
 		id++;
 	}
 
@@ -116,8 +127,8 @@ void QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Update
 {
 	Matrix4 m;
 
-	for (int i = 0; i < m_transforms.size(); i++) {
-		m = (m_transforms[i]->Matrix());
+	for (int i = 0; i < m_entities.size(); i++) {
+		m = (m_entities[i].transform->Matrix());
 		std::memcpy(&m_instanceDescs[i].Transform, &m, 12 * sizeof(Float));
 	}
 

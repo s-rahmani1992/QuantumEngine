@@ -322,7 +322,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->AddGameEntity(skyBoxEntity);
     gpuContext->AddGameEntity(groundEntity);
     gpuContext->AddGameEntity(mirrorEntity);
-    //gpuContext->PrepareRayTracingData(rtProgram);
+    gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
     QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);

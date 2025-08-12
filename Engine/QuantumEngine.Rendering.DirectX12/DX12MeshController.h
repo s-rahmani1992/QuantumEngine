@@ -21,15 +21,13 @@ namespace QuantumEngine::Rendering::DX12 {
 		inline ComPtr<ID3D12DescriptorHeap> GetIndexHeap() { return m_indexHeap; }
 		inline ComPtr<ID3D12DescriptorHeap> GetVertexHeap() { return m_vertexHeap; }
 		bool Initialize(const ComPtr<ID3D12Device10>& device);
-		void UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList);
 		void CopyToGPU(const ComPtr<ID3D12Resource2>& uploadBuffer, ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList, UInt32 offset, Byte* mapData);
-		ComPtr<ID3D12Resource2> GetBLAS() { return m_bottomLevelAccelationData; }
+		ComPtr<ID3D12Resource2> CreateBLASResource(const ComPtr<ID3D12GraphicsCommandList7>& commandList, ComPtr<ID3D12Resource2>& scratchBuffer);
 	private:
+		D3D12_RAYTRACING_GEOMETRY_DESC GetRTGeometryDesc() const;
 		ref<Mesh> m_mesh;
 		ComPtr<ID3D12Resource2> m_vertexBuffer;
 		ComPtr<ID3D12Resource2> m_indexBuffer;
-		ComPtr<ID3D12Resource2> m_rtScratchBuffer;
-		ComPtr<ID3D12Resource2> m_bottomLevelAccelationData;
 		D3D12_INPUT_LAYOUT_DESC m_layoutDesc;
 		D3D12_VERTEX_BUFFER_VIEW m_bufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexView;

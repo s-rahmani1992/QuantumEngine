@@ -26,11 +26,16 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		void UpdateTransforms(const ComPtr<ID3D12GraphicsCommandList7>& commandList, Matrix4& viewMatrix);
 		inline ComPtr<ID3D12DescriptorHeap> GetDescriptor() { return m_tlasHeap; }
 	private:
+		struct EntityBLAS {
+			ref<Transform> transform;
+			ComPtr<ID3D12Resource2> BLASResource;
+		};
 		std::vector<D3D12_RAYTRACING_INSTANCE_DESC> m_instanceDescs;
-		std::vector<ref<Transform>> m_transforms;
+		std::vector<EntityBLAS> m_entities;
 		ComPtr<ID3D12Resource2> m_topLevelAccelerationStructure;
 		ComPtr<ID3D12DescriptorHeap> m_tlasHeap;
 		ComPtr<ID3D12Resource2> m_tlasUpload;
 		ComPtr<ID3D12Resource2> m_rtScratchBuffer;
+		std::vector<ComPtr<ID3D12Resource2>> scratchBuffers; //TODO : Remove the scratch buffers from here, they should be temporary
 	};
 }

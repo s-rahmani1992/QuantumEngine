@@ -197,8 +197,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		entity.transformResource->Unmap(0, nullptr);
 	}
 
-	RenderRasterization();
-	//RenderRayTracing();
+	//RenderRasterization();
+	RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
