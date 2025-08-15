@@ -89,6 +89,12 @@
     <ClInclude Include="Core\Light\Lights.h">
       <Filter>Core\Light</Filter>
     </ClInclude>
+    <ClInclude Include="Core\AssimpModel3DImporter.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Model3DAsset.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -128,5 +134,11 @@
       <Filter>Core\Camera</Filter>
     </ClCompile>
     <ClCompile Include="StringUtilities.cpp" />
+    <ClCompile Include="Core\AssimpModel3DImporter.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Model3DAsset.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
