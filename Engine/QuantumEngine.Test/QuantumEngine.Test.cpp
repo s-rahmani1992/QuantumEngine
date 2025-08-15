@@ -22,6 +22,9 @@
 #include "Core/Camera/PerspectiveCamera.h"
 #include "CameraController.h"
 #include "Core/Light/Lights.h"
+#include "Core/AssimpModel3DImporter.h"
+#include "Core/Model3DAsset.h"
+#include "StringUtilities.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -76,12 +79,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<QuantumEngine::Texture2D> skyBoxTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\skybox.jpg", errorStr);
     ref<QuantumEngine::Texture2D> waterTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\water.jpeg", errorStr);
     ref<QuantumEngine::Texture2D> groundTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\ground.jpg", errorStr);
+    ref<QuantumEngine::Texture2D> carTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\RetroCarAlbedo.png", errorStr);
 
     assetManager->UploadTextureToGPU(tex1);
     assetManager->UploadTextureToGPU(tex2);
     assetManager->UploadTextureToGPU(skyBoxTex);
     assetManager->UploadTextureToGPU(waterTex);
     assetManager->UploadTextureToGPU(groundTex);
+    assetManager->UploadTextureToGPU(carTex);
 
     // Creating the camera
     auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 2.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
@@ -140,6 +145,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto rtSolidColorProgram = gpuDevice->CreateShaderProgram({ rtSolidColorShader }, true);
     auto rtWaterProgram = gpuDevice->CreateShaderProgram({ rtWaterShader }, true);
     auto rtGroundProgram = gpuDevice->CreateShaderProgram({ rtGroundShader }, true);
+
+    auto model = AssimpModel3DImporter::Import(WCharToString((root + L"\\Assets\\Models\\RetroCar.fbx").c_str()), ModelImportProperties{.axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f)}, errorStr);
+    if(model == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Importing Model: \n") + errorStr).c_str(), "Model Import Error", 0);
+        return 0;
+	}
+
+	auto carMesh = model->GetMesh("Cube.002");
 
     // Adding Meshes
     std::vector<Vertex> pyramidVertices = {
@@ -222,7 +235,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> planeMesh = std::make_shared<Mesh>(planeVertices, planeIndices);
 
-	assetManager->UploadMeshesToGPU({ cubeMesh, pyramidMesh, skyBoxMesh, planeMesh });
+	assetManager->UploadMeshesToGPU({ carMesh, cubeMesh, pyramidMesh, skyBoxMesh, planeMesh });
     
     Matrix4 project = mainCamera->ProjectionMatrix();
 
@@ -247,6 +260,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     rtMaterial2->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     rtMaterial2->SetTexture2D("mainTexture", tex2);
     rtMaterial2->SetUInt32("castShadow", 1);
+
+    ref<DX12::HLSLMaterial> material3 = std::make_shared<DX12::HLSLMaterial>(program);
+    material3->Initialize();
+    material3->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    material3->SetTexture2D("mainTexture", carTex);
+
+    ref<DX12::HLSLMaterial> rtMaterial3 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
+    rtMaterial3->Initialize();
+    rtMaterial3->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    rtMaterial3->SetTexture2D("mainTexture", carTex);
+    rtMaterial3->SetUInt32("castShadow", 1);
 
     ref<DX12::HLSLMaterial> skyboxMaterial = std::make_shared<DX12::HLSLMaterial>(program);
     skyboxMaterial->Initialize();
@@ -284,6 +308,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, material1, rtMaterial1);
     auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, 2.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, cubeMesh, material2, rtMaterial2);
+    auto transform3 = std::make_shared<Transform>(Vector3(5.2f, 1.0f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, carMesh, material3, rtMaterial3);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
     auto groundTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
@@ -319,6 +345,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->SetCamera(mainCamera);
     gpuContext->AddGameEntity(entity1);
     gpuContext->AddGameEntity(entity2);
+    gpuContext->AddGameEntity(entity3);
     gpuContext->AddGameEntity(skyBoxEntity);
     gpuContext->AddGameEntity(groundEntity);
     gpuContext->AddGameEntity(mirrorEntity);

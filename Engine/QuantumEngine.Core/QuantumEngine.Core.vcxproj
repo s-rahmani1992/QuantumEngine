@@ -61,12 +61,22 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(ProjectDir)ExternalPackages\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <Lib>
+      <AdditionalDependencies>assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>$(ProjectDir)ExternalPackages\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>XCOPY "$(ProjectDir)ExternalDLLs\Assimp\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -82,6 +92,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalIncludeDirectories>$(ProjectDir)ExternalPackages\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -90,9 +101,19 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <Lib>
+      <AdditionalDependencies>assimp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Lib>
+    <Lib>
+      <AdditionalLibraryDirectories>$(ProjectDir)ExternalPackages\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+    <PostBuildEvent>
+      <Command>XCOPY "$(ProjectDir)ExternalDLLs\Assimp\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BasicTypes.h" />
+    <ClInclude Include="Core\AssimpModel3DImporter.h" />
     <ClInclude Include="Core\Camera\Camera.h" />
     <ClInclude Include="Core\Camera\PerspectiveCamera.h" />
     <ClInclude Include="Core\Color.h" />
@@ -101,6 +122,7 @@
     <ClInclude Include="Core\Light\Lights.h" />
     <ClInclude Include="Core\Matrix4.h" />
     <ClInclude Include="Core\Mesh.h" />
+    <ClInclude Include="Core\Model3DAsset.h" />
     <ClInclude Include="Core\Texture2D.h" />
     <ClInclude Include="Core\Texture2DImporter.h" />
     <ClInclude Include="Core\Transform.h" />
@@ -120,11 +142,13 @@
     <ClInclude Include="StringUtilities.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\AssimpModel3DImporter.cpp" />
     <ClCompile Include="Core\Camera\Camera.cpp" />
     <ClCompile Include="Core\Camera\PerspectiveCamera.cpp" />
     <ClCompile Include="Core\Color.cpp" />
     <ClCompile Include="Core\Matrix4.cpp" />
     <ClCompile Include="Core\Mesh.cpp" />
+    <ClCompile Include="Core\Model3DAsset.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
     <ClCompile Include="Core\Texture2DImporter.cpp" />
     <ClCompile Include="Core\Transform.cpp" />

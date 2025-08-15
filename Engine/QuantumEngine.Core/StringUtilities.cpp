@@ -7,3 +7,11 @@ std::wstring CharToString(const char* cstr) {
 	MultiByteToWideChar(CP_UTF8, 0, cstr, (int)strlen(cstr), wcstr.data(), size_needed);
 	return wcstr;
 }
+
+std::string WCharToString(const wchar_t* wcstr)
+{
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, wcstr, -1, nullptr, 0, nullptr, nullptr);
+	std::string str(size_needed - 1, 0); // exclude null terminator
+	WideCharToMultiByte(CP_UTF8, 0, wcstr, -1, str.data(), size_needed, nullptr, nullptr);
+	return str;
+}
