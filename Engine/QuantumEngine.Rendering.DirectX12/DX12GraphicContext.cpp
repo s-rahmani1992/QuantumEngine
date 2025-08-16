@@ -320,6 +320,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 
 	ComPtr<ID3D12Resource2> transformResource;
 	ComPtr<ID3D12DescriptorHeap> transformHeap;
+	ComPtr<ID3D12DescriptorHeap> gpuTransformHeap;
 
 	auto transformResourceDesc = ResourceUtilities::GetCommonBufferResourceDesc(CONSTANT_BUFFER_ALIGHT(sizeof(TransformGPU)), D3D12_RESOURCE_FLAG_NONE);
 
@@ -339,11 +340,18 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		return;
 	}
 
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+
+	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&gpuTransformHeap)))) {
+		return;
+	}
+
 	D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
 	transformViewDesc.BufferLocation = transformResource->GetGPUVirtualAddress();
 	transformViewDesc.SizeInBytes = transformResourceDesc.Width;
 
 	m_device->CreateConstantBufferView(&transformViewDesc, transformHeap->GetCPUDescriptorHandleForHeapStart());
+	m_device->CreateConstantBufferView(&transformViewDesc, gpuTransformHeap->GetCPUDescriptorHandleForHeapStart());
 
 	m_entities.push_back(DX12GameEntityGPU{
 		.pipeline = pso,
@@ -354,6 +362,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::AddGameEntity(ref<GameE
 		.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetRTMaterial()),
 		.transformResource = transformResource,
 		.transformHeap = transformHeap,
+		.gpuTransformHeap = gpuTransformHeap,
 		});
 
 	hlslMat->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
@@ -875,8 +884,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRasterization()
 		m_commandList->RSSetScissorRects(1, &scissorRect);
 
 		entity.material->RegisterValues(m_commandList);
-		entity.material->SetMatrix("worldMatrix", entity.transform->Matrix());
-
+		entity.material->RegisterTransformDescriptor(m_commandList, entity.gpuTransformHeap.Get());
 		m_commandList->DrawIndexedInstanced(entity.meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);
 	}
 

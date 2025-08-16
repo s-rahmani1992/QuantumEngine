@@ -57,6 +57,7 @@ namespace QuantumEngine::Rendering::DX12 {
 			ref<HLSLMaterial> rtMaterial; 
 			ComPtr<ID3D12Resource2> transformResource;
 			ComPtr<ID3D12DescriptorHeap> transformHeap;
+			ComPtr<ID3D12DescriptorHeap> gpuTransformHeap;
 		};
 
 		void UpdateTLAS();

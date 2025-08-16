@@ -7,6 +7,7 @@
 #include "Core/Matrix4.h"
 #include "DX12Texture2DController.h"
 #include "Core/Texture2D.h"
+#include "DX12Utilities.h"
 
 QuantumEngine::Rendering::DX12::HLSLMaterial::HLSLMaterial(const ref<ShaderProgram>& program)
     :Material(program), m_variableData(nullptr), m_variableHeap(nullptr)
@@ -45,6 +46,10 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
 
         auto heapIt = reflection->boundResourceDatas.find(i);
         if (heapIt != reflection->boundResourceDatas.end()) {
+            if ((*heapIt).second.name == HLSL_OBJECT_TRANSFORM_DATA_NAME) {
+				m_transformHeapData.rootParamIndex = (*heapIt).first;
+            }
+
             m_heapValues.emplace((*heapIt).second.name, HeapData{
                 .rootParamIndex = (*heapIt).first,
                 .heapLocation = (D3D12_GPU_DESCRIPTOR_HANDLE*)startPoint,
@@ -198,4 +203,10 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::BindDescriptor(const ComPtr<I
         cpuHandle.ptr += incrementSize;
         gpuHandle.ptr += incrementSize;
     }
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ComPtr<ID3D12DescriptorHeap>& transformHeap)
+{
+	commandList->SetDescriptorHeaps(1, transformHeap.GetAddressOf());
+	commandList->SetGraphicsRootDescriptorTable(m_transformHeapData.rootParamIndex, transformHeap->GetGPUDescriptorHandleForHeapStart());
 }

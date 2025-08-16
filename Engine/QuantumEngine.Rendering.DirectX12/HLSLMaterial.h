@@ -32,6 +32,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void CopyVariableData(void* dest);
 		void PrepareDescriptor();
 		void BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset);
+		void RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ComPtr<ID3D12DescriptorHeap>& transformHeap);
 		inline UInt32 GetBoundResourceCount() { return m_heapValues.size(); }
 	private:
 		struct constantBufferData {
@@ -54,6 +55,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::map<std::string, HeapData> m_heapValues;
 		std::map<std::string, Byte*> m_rootConstantVariableLocations;
 		std::vector<constantBufferData> m_constantRegisterValues;
+		HeapData m_transformHeapData;
 		Byte* m_variableData;
 		ComPtr<ID3D12DescriptorHeap> m_variableHeap;
 		ComPtr<ID3D12Device10> m_device;
