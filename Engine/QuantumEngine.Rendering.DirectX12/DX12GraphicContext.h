@@ -24,10 +24,24 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12AssetManager;
 	class HLSLMaterial;
 	class HLSLShaderProgram;
+	class DX12GameEntityPipeline;
 
 	namespace RayTracing {
 		class RTAccelarationStructure;
 	}
+
+	struct DX12EntityGPUData {
+	public:
+		ref<GameEntity> gameEntity;
+		ComPtr<ID3D12Resource2> transformResource;
+	};
+
+	struct TransformGPU {
+	public:
+		Matrix4 modelMatrix;
+		Matrix4 rotationMatrix;
+		Matrix4 modelViewMatrix;
+	};
 
 	class DX12GraphicContext : public GraphicContext
 	{
@@ -39,19 +53,12 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual void AddGameEntity(ref<GameEntity>& gameEntity) override;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) override;
 		virtual void RegisterLight(const SceneLightData& lights) override;
+		void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities);
 	private:
-		struct TransformGPU {
-		public:
-			Matrix4 modelMatrix;
-			Matrix4 rotationMatrix;
-			Matrix4 modelViewMatrix;
-		};
 
 		struct DX12GameEntityGPU {
 		public:
-			ComPtr<ID3D12PipelineState> pipeline;
 			ref<DX12MeshController> meshController;
-			ComPtr<ID3D12RootSignature> rootSignature;
 			ref<HLSLMaterial> material;
 			ref<Transform> transform;
 			ref<HLSLMaterial> rtMaterial; 
@@ -102,5 +109,8 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12DescriptorHeap> m_cameraHeap;
 
 		DX12LightManager m_lightManager;
+
+		std::vector<DX12EntityGPUData> m_entityGPUData;
+		std::vector<ref<DX12GameEntityPipeline>> m_rasterizationPipelines;
 	};
 }
