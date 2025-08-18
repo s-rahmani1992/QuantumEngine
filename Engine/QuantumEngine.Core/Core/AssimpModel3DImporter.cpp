@@ -12,7 +12,7 @@ ref<QuantumEngine::Model3DAsset> QuantumEngine::AssimpModel3DImporter::Import(co
 {
 	Assimp::Importer Importer;
 
-	auto pScene = Importer.ReadFile(fileName.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs);
+	auto pScene = Importer.ReadFile(fileName.c_str(), aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_FlipWindingOrder);
 
 	if (pScene == nullptr) {
 		error = "Error Importing 3D Asset File. Error: " + std::string(Importer.GetErrorString());
