@@ -1,0 +1,49 @@
+#pragma once
+#include "pch.h"
+#include "BasicTypes.h"
+#include <memory>
+#include <vector>
+
+namespace QuantumEngine {
+	class GameEntity;
+	class Transform;
+	class GPUAssetManager;
+	class ShaderProgram;
+	struct SceneLightData;
+	class Camera;
+}
+
+using namespace Microsoft::WRL;
+
+namespace QuantumEngine::Rendering::DX12 {
+	namespace RayTracing {
+		class RTAccelarationStructure;
+		struct EntityBLASDesc;
+	}
+
+	struct DX12EntityGPUData;
+	class HLSLMaterial;
+	class HLSLShaderProgram;
+
+	class DX12RayTracingPipeline
+	{
+	public:
+		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12EntityGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial);
+		void RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera);
+		ComPtr<ID3D12Resource2> GetOutputBuffer() const { return m_outputBuffer; }
+	private:
+		ComPtr<ID3D12Device10> m_device;
+		ComPtr<ID3D12Resource2> m_outputBuffer;
+		ComPtr<ID3D12DescriptorHeap> m_outputHeap;
+
+		ref<RayTracing::RTAccelarationStructure> m_TLASController;
+		ComPtr<ID3D12StateObject> m_rtStateObject;
+		ComPtr<ID3D12Resource2> m_shaderTableBuffer;
+
+		ref<HLSLShaderProgram> m_rtProgram;
+		ref<HLSLMaterial> m_rtMaterial;
+		ComPtr<ID3D12DescriptorHeap> m_rtHeap;
+
+		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
+	};
+}

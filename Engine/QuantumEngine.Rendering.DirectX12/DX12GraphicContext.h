@@ -25,6 +25,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLMaterial;
 	class HLSLShaderProgram;
 	class DX12GameEntityPipeline;
+	class DX12RayTracingPipeline;
 
 	namespace RayTracing {
 		class RTAccelarationStructure;
@@ -50,24 +51,10 @@ namespace QuantumEngine::Rendering::DX12 {
 		bool Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory);
 		virtual void Render() override;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) override;
-		virtual void AddGameEntity(ref<GameEntity>& gameEntity) override;
+		virtual void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities) override;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) override;
 		virtual void RegisterLight(const SceneLightData& lights) override;
-		void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities);
 	private:
-
-		struct DX12GameEntityGPU {
-		public:
-			ref<DX12MeshController> meshController;
-			ref<HLSLMaterial> material;
-			ref<Transform> transform;
-			ref<HLSLMaterial> rtMaterial; 
-			ComPtr<ID3D12Resource2> transformResource;
-			ComPtr<ID3D12DescriptorHeap> transformHeap;
-			ComPtr<ID3D12DescriptorHeap> gpuTransformHeap;
-		};
-
-		void UpdateTLAS();
 		void RenderRasterization();
 		void RenderRayTracing();
 
@@ -89,22 +76,11 @@ namespace QuantumEngine::Rendering::DX12 {
 	
 		ref<DX12AssetManager> m_assetManager;
 
-		std::vector<DX12GameEntityGPU> m_entities;
 		const DXGI_FORMAT m_depthFormat = DXGI_FORMAT_D32_FLOAT;
 
-		ComPtr<ID3D12Resource2> m_outputBuffer;
-		ComPtr<ID3D12DescriptorHeap> m_outputHeap;
-
-		ComPtr<ID3D12StateObject> m_rtStateObject; 
-		ComPtr<ID3D12Resource2> m_shaderTableBuffer;
-
-		ref<HLSLShaderProgram> m_rtProgram;
-		ref<HLSLMaterial> m_rtMaterial;
-		ref<RayTracing::RTAccelarationStructure> m_TLASController;
-		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
-		ComPtr<ID3D12DescriptorHeap> m_rtHeap;
 		TransformGPU m_transformData;
 
+		ref<HLSLMaterial> m_rtMaterial;
 		ComPtr<ID3D12Resource2> m_cameraBuffer;
 		ComPtr<ID3D12DescriptorHeap> m_cameraHeap;
 
@@ -112,5 +88,6 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		std::vector<DX12EntityGPUData> m_entityGPUData;
 		std::vector<ref<DX12GameEntityPipeline>> m_rasterizationPipelines;
+		ref<DX12RayTracingPipeline> m_rayTracingPipeline;
 	};
 }

@@ -25,7 +25,6 @@
 #include "Core/AssimpModel3DImporter.h"
 #include "Core/Model3DAsset.h"
 #include "StringUtilities.h"
-#include "DX12GraphicContext.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -345,10 +344,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     gpuContext->SetCamera(mainCamera);
 
-    std::dynamic_pointer_cast<DX12::DX12GraphicContext>(gpuContext)->PrepareGameEntities(
-        std::vector<ref<GameEntity>>({ entity1, entity2, entity3, skyBoxEntity, groundEntity, mirrorEntity }));
+    gpuContext->PrepareGameEntities({ entity1, entity2, entity3, skyBoxEntity, groundEntity, mirrorEntity });
     
-    //gpuContext->PrepareRayTracingData(rtProgram);
+    gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
     QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);

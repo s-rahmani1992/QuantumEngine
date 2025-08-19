@@ -166,6 +166,7 @@
     <ClInclude Include="DX12GraphicContext.h" />
     <ClInclude Include="DX12LightManager.h" />
     <ClInclude Include="DX12MeshController.h" />
+    <ClInclude Include="Dx12RayTracingPipeline.h" />
     <ClInclude Include="DX12Texture2DController.h" />
     <ClInclude Include="DX12Utilities.h" />
     <ClInclude Include="framework.h" />
@@ -184,6 +185,7 @@
     <ClCompile Include="DX12GraphicContext.cpp" />
     <ClCompile Include="DX12LightManager.cpp" />
     <ClCompile Include="DX12MeshController.cpp" />
+    <ClCompile Include="Dx12RayTracingPipeline.cpp" />
     <ClCompile Include="DX12Texture2DController.cpp" />
     <ClCompile Include="DX12Utilities.cpp" />
     <ClCompile Include="HLSLMaterial.cpp" />

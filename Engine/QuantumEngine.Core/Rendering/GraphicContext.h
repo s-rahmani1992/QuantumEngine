@@ -3,6 +3,7 @@
 #include "Core/Matrix4.h"
 #include "Core/Vector3.h"
 #include "Core/Camera/Camera.h"
+#include <vector>
 
 namespace QuantumEngine {
 	class Mesh;
@@ -18,7 +19,7 @@ namespace QuantumEngine::Rendering {
 	public:
 		virtual void Render() = 0;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) = 0;
-		virtual void AddGameEntity(ref<GameEntity>& gameEntity) = 0;
+		virtual void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities) = 0;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) = 0;
 		virtual void RegisterLight(const SceneLightData& lights) = 0;
 		void SetCamera(const ref<Camera>& camera) { 
