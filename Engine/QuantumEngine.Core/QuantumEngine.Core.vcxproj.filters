@@ -98,6 +98,9 @@
     <ClInclude Include="Rendering\GPUMeshController.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="Core\ShapeBuilder.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -141,6 +144,9 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Model3DAsset.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\ShapeBuilder.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
