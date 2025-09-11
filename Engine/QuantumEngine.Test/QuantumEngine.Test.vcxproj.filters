@@ -83,6 +83,9 @@
     <Text Include="Assets\Shaders\rt_ground.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
+    <Text Include="Assets\Shaders\rt_refractor.lib.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\RTStructs.hlsli">
