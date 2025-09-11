@@ -25,6 +25,7 @@
 #include "Core/AssimpModel3DImporter.h"
 #include "Core/Model3DAsset.h"
 #include "StringUtilities.h"
+#include "Core/ShapeBuilder.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -139,12 +140,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
+    ref<Render::Shader> rtRefractorShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\rt_refractor.lib.hlsl", DX12::LIB_SHADER, errorStr);
+    if (rtRefractorShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
     auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader }, false);
     auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader }, false);
     auto rtColorProgram = gpuDevice->CreateShaderProgram({ rtColorShader }, true);
     auto rtSolidColorProgram = gpuDevice->CreateShaderProgram({ rtSolidColorShader }, true);
     auto rtWaterProgram = gpuDevice->CreateShaderProgram({ rtWaterShader }, true);
     auto rtGroundProgram = gpuDevice->CreateShaderProgram({ rtGroundShader }, true);
+    auto rtRefractorProgram = gpuDevice->CreateShaderProgram({ rtRefractorShader }, true);
 
     auto model = AssimpModel3DImporter::Import(WCharToString((root + L"\\Assets\\Models\\RetroCar.fbx").c_str()), ModelImportProperties{.axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f)}, errorStr);
     if(model == nullptr) {
@@ -153,6 +161,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	auto carMesh = model->GetMesh("Cube.002");
+
+    auto lionModel = AssimpModel3DImporter::Import(WCharToString((root + L"\\Assets\\Models\\lion-lp.fbx").c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(1.0f) }, errorStr);
+    if (lionModel == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Importing Model: \n") + errorStr).c_str(), "Model Import Error", 0);
+        return 0;
+    }
+
+	auto lionMesh = lionModel->GetMesh("Model.004");
 
     // Adding Meshes
     std::vector<Vertex> pyramidVertices = {
@@ -174,27 +190,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> pyramidMesh = std::make_shared<Mesh>(pyramidVertices, pyramidIndices);
 
-    std::vector<Vertex> cubeVertices = {
-        Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(0.0f, 1.0f), Vector3(-1.0f, -1.0f, -1.0f).Normalize()),
-        Vertex(Vector3(1.0f, -1.0f, -1.0f), Vector2(1.0f, 1.0f), Vector3(1.0f, -1.0f, -1.0f).Normalize()),
-        Vertex(Vector3(1.0f, 1.0f, -1.0f), Vector2(1.0f, 0.0f), Vector3(1.0f, 1.0f, -1.0f).Normalize()),
-        Vertex(Vector3(-1.0f, 1.0f, -1.0f), Vector2(0.0f, 0.0f), Vector3(-1.0f, 1.0f, -1.0f).Normalize()),
-        Vertex(Vector3(-1.0f, -1.0f, 1.0f), Vector2(1.0f, 0.0f), Vector3(-1.0f, -1.0f, 1.0f).Normalize()),
-        Vertex(Vector3(1.0f, -1.0f, 1.0f), Vector2(0.0f, 0.0f), Vector3(1.0f, -1.0f, 1.0f).Normalize()),
-        Vertex(Vector3(1.0f, 1.0f, 1.0f), Vector2(0.0f, 1.0f), Vector3(1.0f, 1.0f, 1.0f).Normalize()),
-        Vertex(Vector3(-1.0f, 1.0f, 1.0f), Vector2(1.0f, 1.0f), Vector3(-1.0f, 1.0f, 1.0f).Normalize()),
-    };
-
-    std::vector<UInt32> cubeIndices = { 
-        0, 1, 2, 0, 2, 3,
-        4, 6, 5, 4, 7, 6,
-        2, 5, 6, 2, 1, 5,
-        0, 7, 4, 0, 3, 7,
-        3, 6, 7, 3, 2, 6,
-        1, 4, 5, 1, 0, 4,
-    };
-
-    std::shared_ptr<Mesh> cubeMesh = std::make_shared<Mesh>(cubeVertices, cubeIndices);
+    std::shared_ptr<Mesh> cubeMesh = ShapeBuilder::CreateCube(1.0f);
+    std::shared_ptr<Mesh> sphereMesh = ShapeBuilder::CreateSphere(1.0f, 50, 50);
 
     std::vector<Vertex> skyBoxVertices = {
         Vertex(Vector3(-1.0f, -1.0f, -1.0f), Vector2(1.0f, 2.0f / 3), Vector3(0.0f)),
@@ -235,7 +232,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> planeMesh = std::make_shared<Mesh>(planeVertices, planeIndices);
 
-	assetManager->UploadMeshesToGPU({ carMesh, cubeMesh, pyramidMesh, skyBoxMesh, planeMesh });
+	assetManager->UploadMeshesToGPU({ carMesh, lionMesh, cubeMesh, sphereMesh, pyramidMesh, skyBoxMesh, planeMesh });
     
     Matrix4 project = mainCamera->ProjectionMatrix();
 
@@ -304,10 +301,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     mirrorRTMaterial->SetTexture2D("mainTexture", waterTex);
     mirrorRTMaterial->SetUInt32("castShadow", 0);
 
+    ref<DX12::HLSLMaterial> refractorRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtRefractorProgram);
+    refractorRTMaterial->Initialize();
+    refractorRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
+    refractorRTMaterial->SetFloat("refractionFactor", 1.2f);
+    refractorRTMaterial->SetUInt32("castShadow", 0);
+
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, material1, rtMaterial1);
-    auto transform2 = std::make_shared<Transform>(Vector3(-0.2f, 2.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, cubeMesh, material2, rtMaterial2);
+    auto transform2 = std::make_shared<Transform>(Vector3(10.2f, 5.4f, 3.0f), Vector3(3.6f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, sphereMesh, mirrorMaterial, mirrorRTMaterial);
     auto transform3 = std::make_shared<Transform>(Vector3(5.2f, 1.0f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, carMesh, material3, rtMaterial3);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
@@ -316,6 +319,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto groundEntity = std::make_shared<QuantumEngine::GameEntity>(groundTransform, planeMesh, planeMaterial, planeRTMaterial);
     auto mirrorTransform = std::make_shared<Transform>(Vector3(-3.0f, 5.0f, 0.0f), Vector3(5.0f), Vector3(0.0f, 0.0f, 1.0f), 90);
     auto mirrorEntity = std::make_shared<QuantumEngine::GameEntity>(mirrorTransform, planeMesh, mirrorMaterial, mirrorRTMaterial);
+    auto transform4 = std::make_shared<Transform>(Vector3(-2.2f, 2.4f, 3.0f), Vector3(1.6f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto entity4 = std::make_shared<QuantumEngine::GameEntity>(transform4, lionMesh, mirrorMaterial, refractorRTMaterial);
     SceneLightData lightData;
 
     lightData.directionalLights.push_back(DirectionalLight{
@@ -343,9 +348,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->RegisterLight(lightData);
 
     gpuContext->SetCamera(mainCamera);
-
-    gpuContext->PrepareGameEntities({ entity1, entity2, entity3, skyBoxEntity, groundEntity, mirrorEntity });
-    
+    gpuContext->PrepareGameEntities({entity1, entity2, entity3, entity4, skyBoxEntity, groundEntity});
     gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
