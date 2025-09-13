@@ -16,7 +16,7 @@
 #include "Rendering/GPUAssetManager.h"
 #include "HLSLMaterial.h"
 #include "Core/Texture2D.h"
-#include "Core/Texture2DImporter.h"
+#include "Core/WICTexture2DImporter.h"
 #include "Core/Matrix4.h"
 #include "Core/Transform.h"
 #include "Core/Camera/PerspectiveCamera.h"

@@ -64,7 +64,7 @@
     <ClInclude Include="Core\Texture2D.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\Texture2DImporter.h">
+    <ClInclude Include="Core\WICTexture2DImporter.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="Core\GUIDUtility.h">
@@ -124,7 +124,7 @@
     <ClCompile Include="Core\Texture2D.cpp">
       <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Texture2DImporter.cpp">
+    <ClCompile Include="Core\WICTexture2DImporter.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Matrix4.cpp">

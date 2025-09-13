@@ -1,4 +1,4 @@
-#include "Texture2DImporter.h"
+#include "WICTexture2DImporter.h"
 #include <wrl/client.h>
 
 using namespace Microsoft::WRL;
