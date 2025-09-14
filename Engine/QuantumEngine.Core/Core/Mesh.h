@@ -24,20 +24,19 @@ namespace QuantumEngine {
 	};
 
 	class Mesh {
-	private:
-		UInt32 m_vertexCount;
-		std::vector<Vertex> m_vertices;
-		std::vector<UInt32> m_indices;
-		ref<Rendering::GPUMeshController> m_gpuHandle;
 	public:
-		UInt32 GetVertexCount() const { return m_vertexCount; }
+		Mesh(const std::vector<Vertex>& vertices, const std::vector<UInt32>& indices);
+		UInt32 GetVertexCount() const { return m_vertices.size(); }
 		UInt32 GetIndexCount() const { return m_indices.size(); }
-		UInt32 GetTotalSize() const { return m_vertexCount * sizeof(Vertex) + m_indices.size() * sizeof(UInt32); }
+		UInt32 GetTotalSize() const { return m_vertices.size() * sizeof(Vertex) + m_indices.size() * sizeof(UInt32); }
 		void CopyVertexData(Byte* dest);
 		void CopyIndexData(Byte* dest);
 		ref<Rendering::GPUMeshController> GetGPUHandle() { return m_gpuHandle; }
 		void SetGPUHandle(ref<Rendering::GPUMeshController> gpuHandle) { m_gpuHandle = gpuHandle; }
-		Mesh(const std::vector<Vertex>& vertices, const std::vector<UInt32>& indices);
 		bool IsUploadedToGPU() const { return m_gpuHandle != nullptr; }
+	private:
+		std::vector<Vertex> m_vertices;
+		std::vector<UInt32> m_indices;
+		ref<Rendering::GPUMeshController> m_gpuHandle;
 	};
 }

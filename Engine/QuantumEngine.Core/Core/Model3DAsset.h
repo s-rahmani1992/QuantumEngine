@@ -10,6 +10,7 @@ namespace QuantumEngine {
 	class Model3DAsset {
 	public: 
 		Model3DAsset(const std::vector<std::pair<std::string, ref<Mesh>>>& meshes);
+		Model3DAsset(const Model3DAsset& src) = delete;
 		ref<Mesh> GetMesh(const std::string& name) {
 			auto it = m_meshes.find(name);
 			if (it != m_meshes.end()) {
