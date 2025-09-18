@@ -10,7 +10,8 @@
 #include "DX12Utilities.h"
 
 QuantumEngine::Rendering::DX12::HLSLMaterial::HLSLMaterial(const ref<ShaderProgram>& program)
-    :Material(program), m_variableData(nullptr), m_variableHeap(nullptr)
+    :Material(program), m_variableData(nullptr),
+	m_transformRootIndex(-1), m_cameraRootIndex(-1), m_lightRootIndex(-1)
 {
 }
 
@@ -20,7 +21,7 @@ QuantumEngine::Rendering::DX12::HLSLMaterial::~HLSLMaterial()
         delete[] m_variableData;
 }
 
-bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
+bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize(bool isRayTrace)
 {
     auto reflection = std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData();
     reflection->rootSignature->GetDevice(IID_PPV_ARGS(&m_device));
@@ -46,8 +47,19 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize()
 
         auto heapIt = reflection->boundResourceDatas.find(i);
         if (heapIt != reflection->boundResourceDatas.end()) {
-            if ((*heapIt).second.name == HLSL_OBJECT_TRANSFORM_DATA_NAME) {
-				m_transformHeapData.rootParamIndex = (*heapIt).first;
+            if ((*heapIt).second.name == HLSL_OBJECT_TRANSFORM_DATA_NAME && isRayTrace == false) {
+				m_transformRootIndex = (*heapIt).first;
+                continue;
+            }
+
+            if ((*heapIt).second.name == HLSL_CAMERA_DATA_NAME && isRayTrace == false) {
+                m_cameraRootIndex = (*heapIt).first;
+                continue;
+            }
+
+            if ((*heapIt).second.name == HLSL_LIGHT_DATA_NAME && isRayTrace == false) {
+                m_lightRootIndex = (*heapIt).first;
+                continue;
             }
 
             m_heapValues.emplace((*heapIt).second.name, HeapData{
@@ -100,8 +112,6 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterValues(ComPtr<ID3D12G
 {
     for(auto& rField : m_constantRegisterValues)
         commandList->SetGraphicsRoot32BitConstants(rField.rootParamIndex, rField.size, rField.location, 0);
-
-    commandList->SetDescriptorHeaps(1, m_variableHeap.GetAddressOf());
 
     for (auto& heapField : m_heapValues) {
         commandList->SetGraphicsRootDescriptorTable(heapField.second.rootParamIndex, heapField.second.gpuHandle);
@@ -159,30 +169,12 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::
 
     if (field != m_heapValues.end()) {
         (*field).second.descriptor = descriptorHeap;
-
-        if(m_variableHeap != nullptr)
-            m_device->CopyDescriptorsSimple(1, (*field).second.cpuHandle, descriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
     }
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::CopyVariableData(void* dest)
 {
     std::memcpy(dest, m_variableData, std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData()->totalVariableSize);
-}
-
-void QuantumEngine::Rendering::DX12::HLSLMaterial::PrepareDescriptor()
-{
-    if (m_heapValues.size() == 0)
-        return;
-
-    D3D12_DESCRIPTOR_HEAP_DESC meshHeapDesc{
-        .Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-        .NumDescriptors = (UINT)m_heapValues.size(),
-        .Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-    };
-
-    m_device->CreateDescriptorHeap(&meshHeapDesc, IID_PPV_ARGS(&m_variableHeap));
-    BindDescriptor(m_variableHeap, 0);
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset)
@@ -205,8 +197,26 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::BindDescriptor(const ComPtr<I
     }
 }
 
-void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ComPtr<ID3D12DescriptorHeap>& transformHeap)
+void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& transformHeapHandle)
 {
-	commandList->SetDescriptorHeaps(1, transformHeap.GetAddressOf());
-	commandList->SetGraphicsRootDescriptorTable(m_transformHeapData.rootParamIndex, transformHeap->GetGPUDescriptorHandleForHeapStart());
+    if(m_transformRootIndex == -1)
+		return;
+
+	commandList->SetGraphicsRootDescriptorTable(m_transformRootIndex, transformHeapHandle);
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterCameraDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& cameraHeapHandle)
+{
+    if (m_cameraRootIndex == -1)
+        return;
+
+	commandList->SetGraphicsRootDescriptorTable(m_cameraRootIndex, cameraHeapHandle);
+}
+
+void QuantumEngine::Rendering::DX12::HLSLMaterial::RegisterLightDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& lightHeapHandle)
+{
+    if (m_lightRootIndex == -1)
+        return;
+
+	commandList->SetGraphicsRootDescriptorTable(m_lightRootIndex, lightHeapHandle);
 }

@@ -218,7 +218,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 		rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
 	}
 	m_rtMaterial = std::make_shared<HLSLMaterial>(std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram));
-	m_rtMaterial->Initialize();
+	m_rtMaterial->Initialize(true);
 
 	m_rayTracingPipeline = std::make_shared<DX12RayTracingPipeline>();
 
@@ -244,6 +244,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 	m_rasterizationPipelines.reserve(gameEntities.size());
 	auto transformResourceDesc = ResourceUtilities::GetCommonBufferResourceDesc(CONSTANT_BUFFER_ALIGHT(sizeof(TransformGPU)), D3D12_RESOURCE_FLAG_NONE);
 
+	// Create Transform Resources and Rasterization Heap 
 	for(auto& gameEntity : gameEntities) {
 		ComPtr<ID3D12Resource2> transformResource;
 
@@ -257,35 +258,70 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 			.gameEntity = gameEntity,
 			.transformResource = transformResource,
 			});
+	}
 
-		m_rasterizationPipelines.push_back(std::make_shared<DX12GameEntityPipeline>());
+	UInt32 rasterHeapSize = m_entityGPUData.size() + 1 + 1; // entity transforms + camera + light
+	std::set<ref<HLSLMaterial>> usedMaterials;
+	for (auto& entityGpu : m_entityGPUData) {
+		auto material = std::dynamic_pointer_cast<HLSLMaterial>(entityGpu.gameEntity->GetMaterial());
+		if (usedMaterials.emplace(material).second == false)
+			continue;
+		rasterHeapSize += material->GetBoundResourceCount();
+	}
 
-		if(m_rasterizationPipelines.back()->Initialize(m_device, m_entityGPUData.back(), m_depthFormat) == false) {
-			return;
-		}
-		ComPtr<ID3D12DescriptorHeap> transformHeap;
-
-		D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
+	D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc{
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-		};
+		.NumDescriptors = rasterHeapSize,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+	};
 
-		if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&transformHeap)))) {
-			return;
-		}
+	m_device->CreateDescriptorHeap(&rtHeapDesc, IID_PPV_ARGS(&m_rasterHeap));
+
+	// Create views for camera and lights
+	auto incrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	auto firstHandle = m_rasterHeap->GetCPUDescriptorHandleForHeapStart();
+	auto gpuHandle = m_rasterHeap->GetGPUDescriptorHandleForHeapStart();
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cameraViewDesc;
+	cameraViewDesc.BufferLocation = m_cameraBuffer->GetGPUVirtualAddress();
+	cameraViewDesc.SizeInBytes = CONSTANT_BUFFER_ALIGHT(sizeof(CameraGPU));
+	m_device->CreateConstantBufferView(&cameraViewDesc, firstHandle);
+	m_cameraHandle = gpuHandle;
+	
+	firstHandle.ptr += incrementSize;
+	gpuHandle.ptr += incrementSize;
+	D3D12_CONSTANT_BUFFER_VIEW_DESC lightViewDesc;
+	lightViewDesc.BufferLocation = m_lightManager.GetResource()->GetGPUVirtualAddress();
+	lightViewDesc.SizeInBytes = m_lightManager.GetResource()->GetDesc().Width;
+	m_device->CreateConstantBufferView(&lightViewDesc, firstHandle);
+	m_lightHandle = gpuHandle;
+
+	// Populate Transform View and Pipelines
+	firstHandle.ptr += incrementSize;
+	gpuHandle.ptr += incrementSize;
+
+	for (auto& entityGpu : m_entityGPUData) {
 
 		D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
-		transformViewDesc.BufferLocation = transformResource->GetGPUVirtualAddress();
+		transformViewDesc.BufferLocation = entityGpu.transformResource->GetGPUVirtualAddress();
 		transformViewDesc.SizeInBytes = transformResourceDesc.Width;
+		m_device->CreateConstantBufferView(&transformViewDesc, firstHandle);
 
-		m_device->CreateConstantBufferView(&transformViewDesc, transformHeap->GetCPUDescriptorHandleForHeapStart());
+		auto pipeline = std::make_shared<DX12GameEntityPipeline>();
+		if (pipeline->Initialize(m_device, entityGpu, m_depthFormat, gpuHandle) == false) {
+			return;
+		}
 
-		auto hlslMat = std::dynamic_pointer_cast<HLSLMaterial>(gameEntity->GetMaterial());
-		hlslMat->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
-		hlslMat->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
-		hlslMat->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
-		hlslMat->PrepareDescriptor();
+		m_rasterizationPipelines.push_back(pipeline);
+
+		firstHandle.ptr += incrementSize;
+		gpuHandle.ptr += incrementSize;
+	}
+
+	UInt32 offset = 2 + gameEntities.size();
+
+	for(auto& mat : usedMaterials) {
+		mat->BindDescriptor(m_rasterHeap, offset);
+		offset += mat->GetBoundResourceCount();
 	}
 }
 
@@ -336,9 +372,10 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRasterization()
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 	
 	//draw
+	m_commandList->SetDescriptorHeaps(1, m_rasterHeap.GetAddressOf());
 
 	for (auto& pipeline : m_rasterizationPipelines) {
-		pipeline->Render(m_commandList);
+		pipeline->Render(m_commandList, m_cameraHandle, m_lightHandle);
 	}
 
 	//draw

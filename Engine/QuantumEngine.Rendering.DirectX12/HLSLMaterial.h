@@ -18,7 +18,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	public:
 		HLSLMaterial(const ref<ShaderProgram>& program);
 		~HLSLMaterial();
-		bool Initialize();
+		bool Initialize(bool isRayTrace);
 		void RegisterValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
 		void RegisterComputeValues(ComPtr<ID3D12GraphicsCommandList7>& commandList);
 		void SetColor(const std::string& fieldName, const Color& color);
@@ -30,9 +30,10 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
 		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
 		void CopyVariableData(void* dest);
-		void PrepareDescriptor();
 		void BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset);
-		void RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ComPtr<ID3D12DescriptorHeap>& transformHeap);
+		void RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& transformHeap);
+		void RegisterCameraDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& transformHeap);
+		void RegisterLightDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& transformHeap);
 		inline UInt32 GetBoundResourceCount() { return m_heapValues.size(); }
 	private:
 		struct constantBufferData {
@@ -55,9 +56,10 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::map<std::string, HeapData> m_heapValues;
 		std::map<std::string, Byte*> m_rootConstantVariableLocations;
 		std::vector<constantBufferData> m_constantRegisterValues;
-		HeapData m_transformHeapData;
+		UInt32 m_transformRootIndex;
+		UInt32 m_cameraRootIndex;
+		UInt32 m_lightRootIndex;
 		Byte* m_variableData;
-		ComPtr<ID3D12DescriptorHeap> m_variableHeap;
 		ComPtr<ID3D12Device10> m_device;
 	};
 }

@@ -13,12 +13,12 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12GameEntityPipeline
 	{
 	public:
-		bool Initialize(const ComPtr<ID3D12Device10>& device, const DX12EntityGPUData& entityGPUData, DXGI_FORMAT depthFormat);
-		void Render(ComPtr<ID3D12GraphicsCommandList7>& commandList);
+		bool Initialize(const ComPtr<ID3D12Device10>& device, const DX12EntityGPUData& entityGPUData, DXGI_FORMAT depthFormat, D3D12_GPU_DESCRIPTOR_HANDLE transformHandle);
+		void Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle);
 
 	private:
 		ref<HLSLMaterial> m_material;
-		ComPtr<ID3D12DescriptorHeap> m_transformHeap;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_transformHeapHandle;
 		ref<DX12MeshController> m_meshController;
 		ComPtr<ID3D12RootSignature> m_rootSignature;
 		ComPtr<ID3D12PipelineState> m_pipeline;

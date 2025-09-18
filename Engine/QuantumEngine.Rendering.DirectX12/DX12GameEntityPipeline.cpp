@@ -9,28 +9,11 @@
 #include "HLSLShaderProgram.h"
 #include "DX12Utilities.h"
 
-bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const ComPtr<ID3D12Device10>& device, const DX12EntityGPUData& entityGPUData, DXGI_FORMAT depthFormat)
+bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const ComPtr<ID3D12Device10>& device, const DX12EntityGPUData& entityGPUData, DXGI_FORMAT depthFormat, D3D12_GPU_DESCRIPTOR_HANDLE transformHandle)
 {
-	//Create Transform Descriptor Heap
-
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
-		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-	};
-
-	if (FAILED(device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_transformHeap)))) {
-		return false;
-	}
-
-	D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
-	transformViewDesc.BufferLocation = entityGPUData.transformResource->GetGPUVirtualAddress();
-	transformViewDesc.SizeInBytes = CONSTANT_BUFFER_ALIGHT(sizeof(TransformGPU));
-
-	device->CreateConstantBufferView(&transformViewDesc, m_transformHeap->GetCPUDescriptorHandleForHeapStart());
+	m_transformHeapHandle = transformHandle;;
 
 	// Create Pipeline State Object
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc;
 
 	//Input part
@@ -144,7 +127,7 @@ bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const Co
 	return true;
 }
 
-void QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Render(ComPtr<ID3D12GraphicsCommandList7>& commandList)
+void QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle)
 {
 	//Pipeline
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
@@ -157,7 +140,9 @@ void QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Render(ComPtr<ID3D1
 
 	//Set Material Variables
 	m_material->RegisterValues(commandList);
-	m_material->RegisterTransformDescriptor(commandList, m_transformHeap);
+	m_material->RegisterCameraDescriptor(commandList, camHandle);
+	m_material->RegisterLightDescriptor(commandList, lightHandle);
+	m_material->RegisterTransformDescriptor(commandList, m_transformHeapHandle);
 
 	//Draw Call
 	commandList->DrawIndexedInstanced(m_meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);

@@ -83,7 +83,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<HLSLMaterial> m_rtMaterial;
 		ComPtr<ID3D12Resource2> m_cameraBuffer;
 		ComPtr<ID3D12DescriptorHeap> m_cameraHeap;
-
+		ComPtr<ID3D12DescriptorHeap> m_rasterHeap;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_cameraHandle;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_lightHandle;
 		DX12LightManager m_lightManager;
 
 		std::vector<DX12EntityGPUData> m_entityGPUData;
