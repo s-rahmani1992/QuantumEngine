@@ -20,6 +20,7 @@
 #include "Dx12RayTracingPipeline.h"
 #include "Rendering/MeshRenderer.h"
 #include "Rendering/RayTracingComponent.h"
+#include "DX12ShaderRegistery.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -208,6 +209,11 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
 {
 	m_assetManager = std::dynamic_pointer_cast<DX12AssetManager>(assetManager);
+}
+
+void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery)
+{
+	m_shaderRegistery = std::dynamic_pointer_cast<DX12ShaderRegistery>(shaderRegistery);
 }
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(const ref<ShaderProgram>& rtProgram)

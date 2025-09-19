@@ -28,8 +28,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual bool Initialize() override;
 		virtual ref<GraphicContext> CreateContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window) override;
 		virtual ref<GPUAssetManager> CreateAssetManager() override;
-		virtual ref<ShaderProgram> CreateShaderProgram(const std::initializer_list<ref<Shader>>& shadersm, bool isLocal) override;
-
+		virtual ref<ShaderRegistery> CreateShaderRegistery() override;
 		~DX12GPUDeviceManager();
 		ref<DX12CommandExecuter> CreateCommandExecuter();
 	private:

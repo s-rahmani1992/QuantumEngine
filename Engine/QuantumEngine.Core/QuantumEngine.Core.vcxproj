@@ -143,6 +143,7 @@
     <ClInclude Include="Rendering\Renderer.h" />
     <ClInclude Include="Rendering\Shader.h" />
     <ClInclude Include="Rendering\ShaderProgram.h" />
+    <ClInclude Include="Rendering\ShaderRegistery.h" />
     <ClInclude Include="StringUtilities.h" />
   </ItemGroup>
   <ItemGroup>

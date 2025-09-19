@@ -14,11 +14,13 @@ namespace QuantumEngine {
 namespace QuantumEngine::Rendering {
 	class GPUAssetManager;
 	class ShaderProgram;
+	class ShaderRegistery;
 
 	class GraphicContext {
 	public:
 		virtual void Render() = 0;
-		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) = 0;
+		virtual void RegisterAssetManager(const ref<GPUAssetManager>& assetManager) = 0;
+		virtual void RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery) = 0;
 		virtual void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities) = 0;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) = 0;
 		virtual void RegisterLight(const SceneLightData& lights) = 0;

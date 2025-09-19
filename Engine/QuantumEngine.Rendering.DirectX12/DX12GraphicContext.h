@@ -30,6 +30,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLShaderProgram;
 	class DX12GameEntityPipeline;
 	class DX12RayTracingPipeline;
+	class DX12ShaderRegistery;
 
 	namespace RayTracing {
 		class RTAccelarationStructure;
@@ -62,6 +63,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		bool Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory);
 		virtual void Render() override;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& mesh) override;
+		virtual void RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery) override;
 		virtual void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities) override;
 		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) override;
 		virtual void RegisterLight(const SceneLightData& lights) override;
@@ -86,6 +88,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12GraphicsCommandList7> m_commandList;
 	
 		ref<DX12AssetManager> m_assetManager;
+		ref<DX12ShaderRegistery> m_shaderRegistery;
 
 		const DXGI_FORMAT m_depthFormat = DXGI_FORMAT_D32_FLOAT;
 

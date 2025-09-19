@@ -4,7 +4,7 @@
 #include "DX12CommandExecuter.h"
 #include "DX12GraphicContext.h"
 #include "DX12AssetManager.h"
-#include "HLSLShaderProgram.h"
+#include "DX12ShaderRegistery.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 {
@@ -66,14 +66,11 @@ ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::DX12::D
 	return assetManager;
 }
 
-ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateShaderProgram(const std::initializer_list<ref<Shader>>& shaders, bool isLocal)
+ref<QuantumEngine::Rendering::ShaderRegistery> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateShaderRegistery()
 {
-	ref<HLSLShaderProgram> program = std::make_shared<HLSLShaderProgram>(shaders);
-
-	if (program->Initialize(m_device, isLocal) == false)
-		return nullptr;
-
-	return program;
+	auto shaderReg = std::make_shared<DX12ShaderRegistery>();
+	shaderReg->Initialize(m_device);
+	return shaderReg;
 }
 
 QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::~DX12GPUDeviceManager()

@@ -28,6 +28,7 @@
 #include "Core/ShapeBuilder.h"
 #include "Rendering/MeshRenderer.h"
 #include "Rendering/RayTracingComponent.h"
+#include "DX12ShaderRegistery.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -63,6 +64,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto gpuContext = gpuDevice->CreateContextForWindows(win);
     auto assetManager = gpuDevice->CreateAssetManager();
     gpuContext->RegisterAssetManager(assetManager);
+	auto shaderRegistry = gpuDevice->CreateShaderRegistery();
+    gpuContext->RegisterShaderRegistery(shaderRegistry);
 
     LPWSTR rootF = new WCHAR[500];
     DWORD size;
@@ -148,13 +151,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
-    auto program = gpuDevice->CreateShaderProgram({ vertexShader, pixelShader }, false);
-    auto rtProgram = gpuDevice->CreateShaderProgram({ rtShader }, false);
-    auto rtColorProgram = gpuDevice->CreateShaderProgram({ rtColorShader }, true);
-    auto rtSolidColorProgram = gpuDevice->CreateShaderProgram({ rtSolidColorShader }, true);
-    auto rtWaterProgram = gpuDevice->CreateShaderProgram({ rtWaterShader }, true);
-    auto rtGroundProgram = gpuDevice->CreateShaderProgram({ rtGroundShader }, true);
-    auto rtRefractorProgram = gpuDevice->CreateShaderProgram({ rtRefractorShader }, true);
+    auto program = shaderRegistry->CreateAndRegisterShaderProgram("Simple_Program", { vertexShader, pixelShader }, false);
+    auto rtProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Program", { rtShader }, false);
+    auto rtColorProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Color_Program", { rtColorShader }, true);
+    auto rtSolidColorProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Solid_Color_Program", { rtSolidColorShader }, true);
+    auto rtWaterProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Reflection_Program", { rtWaterShader }, true);
+    auto rtGroundProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Ground_Program", { rtGroundShader }, true);
+    auto rtRefractorProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Refraction_Program", { rtRefractorShader }, true);
 
     auto model = AssimpModel3DImporter::Import(WCharToString((root + L"\\Assets\\Models\\RetroCar.fbx").c_str()), ModelImportProperties{.axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f)}, errorStr);
     if(model == nullptr) {
