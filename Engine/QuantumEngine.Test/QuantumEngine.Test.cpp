@@ -26,6 +26,7 @@
 #include "Core/Model3DAsset.h"
 #include "StringUtilities.h"
 #include "Core/ShapeBuilder.h"
+#include "Rendering/MeshRenderer.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -237,81 +238,83 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     Matrix4 project = mainCamera->ProjectionMatrix();
 
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
-    material1->Initialize();
+    material1->Initialize(false);
     material1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     material1->SetTexture2D("mainTexture", tex1);
 
     ref<DX12::HLSLMaterial> rtMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
-    rtMaterial1->Initialize();
+    rtMaterial1->Initialize(true);
     rtMaterial1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     rtMaterial1->SetTexture2D("mainTexture", tex1);
     rtMaterial1->SetUInt32("castShadow", 1);
 
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
-    material2->Initialize();
+    material2->Initialize(false);
     material2->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     material2->SetTexture2D("mainTexture", tex2);
 
     ref<DX12::HLSLMaterial> rtMaterial2 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
-    rtMaterial2->Initialize();
+    rtMaterial2->Initialize(true);
     rtMaterial2->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     rtMaterial2->SetTexture2D("mainTexture", tex2);
     rtMaterial2->SetUInt32("castShadow", 1);
 
     ref<DX12::HLSLMaterial> material3 = std::make_shared<DX12::HLSLMaterial>(program);
-    material3->Initialize();
+    material3->Initialize(false);
     material3->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     material3->SetTexture2D("mainTexture", carTex);
 
     ref<DX12::HLSLMaterial> rtMaterial3 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
-    rtMaterial3->Initialize();
+    rtMaterial3->Initialize(true);
     rtMaterial3->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     rtMaterial3->SetTexture2D("mainTexture", carTex);
     rtMaterial3->SetUInt32("castShadow", 1);
 
     ref<DX12::HLSLMaterial> skyboxMaterial = std::make_shared<DX12::HLSLMaterial>(program);
-    skyboxMaterial->Initialize();
+    skyboxMaterial->Initialize(false);
     skyboxMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     skyboxMaterial->SetTexture2D("mainTexture", skyBoxTex);
 
     ref<DX12::HLSLMaterial> skyboxRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
-    skyboxRTMaterial->Initialize();
+    skyboxRTMaterial->Initialize(true);
     skyboxRTMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     skyboxRTMaterial->SetTexture2D("mainTexture", skyBoxTex);
     skyboxRTMaterial->SetUInt32("castShadow", 0);
 
     ref<DX12::HLSLMaterial> planeMaterial = std::make_shared<DX12::HLSLMaterial>(program);
-    planeMaterial->Initialize();
+    planeMaterial->Initialize(false);
     planeMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     planeMaterial->SetTexture2D("mainTexture", groundTex);
 
     ref<DX12::HLSLMaterial> planeRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtGroundProgram);
-    planeRTMaterial->Initialize();
+    planeRTMaterial->Initialize(true);
     planeRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
     planeRTMaterial->SetTexture2D("mainTexture", groundTex);
 
     ref<DX12::HLSLMaterial> mirrorMaterial = std::make_shared<DX12::HLSLMaterial>(program);
-    mirrorMaterial->Initialize();
+    mirrorMaterial->Initialize(false);
     mirrorMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     mirrorMaterial->SetTexture2D("mainTexture", waterTex);
 
     ref<DX12::HLSLMaterial> mirrorRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtWaterProgram);
-    mirrorRTMaterial->Initialize();
+    mirrorRTMaterial->Initialize(true);
     mirrorRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
     mirrorRTMaterial->SetTexture2D("mainTexture", waterTex);
     mirrorRTMaterial->SetUInt32("castShadow", 0);
 
     ref<DX12::HLSLMaterial> refractorRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtRefractorProgram);
-    refractorRTMaterial->Initialize();
+    refractorRTMaterial->Initialize(true);
     refractorRTMaterial->SetColor("color", Color(0.1f, 0.7f, 1.0f, 1.0f));
     refractorRTMaterial->SetFloat("refractionFactor", 1.2f);
     refractorRTMaterial->SetUInt32("castShadow", 0);
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
-    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, material1, rtMaterial1);
+	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(pyramidMesh, mirrorMaterial);
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, meshRenderer1, rtMaterial1);
     auto transform2 = std::make_shared<Transform>(Vector3(10.2f, 5.4f, 3.0f), Vector3(3.6f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, sphereMesh, mirrorMaterial, mirrorRTMaterial);
-    auto transform3 = std::make_shared<Transform>(Vector3(5.2f, 1.0f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(sphereMesh, mirrorMaterial);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, sphereMesh, meshRenderer2, mirrorRTMaterial);
+    /*auto transform3 = std::make_shared<Transform>(Vector3(5.2f, 1.0f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, carMesh, material3, rtMaterial3);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
@@ -320,15 +323,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto mirrorTransform = std::make_shared<Transform>(Vector3(-3.0f, 5.0f, 0.0f), Vector3(5.0f), Vector3(0.0f, 0.0f, 1.0f), 90);
     auto mirrorEntity = std::make_shared<QuantumEngine::GameEntity>(mirrorTransform, planeMesh, mirrorMaterial, mirrorRTMaterial);
     auto transform4 = std::make_shared<Transform>(Vector3(-2.2f, 2.4f, 3.0f), Vector3(1.6f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto entity4 = std::make_shared<QuantumEngine::GameEntity>(transform4, lionMesh, mirrorMaterial, refractorRTMaterial);
+    auto entity4 = std::make_shared<QuantumEngine::GameEntity>(transform4, lionMesh, mirrorMaterial, refractorRTMaterial);*/
     SceneLightData lightData;
 
     lightData.directionalLights.push_back(DirectionalLight{
         .color = Color(1.0f, 1.0f, 1.0f, 1.0f),
         .direction = Vector3(2.0f, -6.0f, 0.0f),
-        .ambient = 0.1f,
-        .diffuse = 0.3f,
-        .specular = 0.0f,
+        .ambient = 0.7f,
+        .diffuse = 1.3f,
+        .specular = 1.0f,
         });
 
     lightData.pointLights.push_back(PointLight{
@@ -348,7 +351,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->RegisterLight(lightData);
 
     gpuContext->SetCamera(mainCamera);
-    gpuContext->PrepareGameEntities({entity1, entity2, entity3, entity4, skyBoxEntity, groundEntity});
+    gpuContext->PrepareGameEntities({entity1, entity2});
     gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;

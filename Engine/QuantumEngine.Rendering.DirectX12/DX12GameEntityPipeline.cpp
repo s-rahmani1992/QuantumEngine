@@ -8,22 +8,23 @@
 #include "HLSLMaterial.h"
 #include "HLSLShaderProgram.h"
 #include "DX12Utilities.h"
+#include "Rendering/MeshRenderer.h"
 
-bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const ComPtr<ID3D12Device10>& device, const DX12EntityGPUData& entityGPUData, DXGI_FORMAT depthFormat, D3D12_GPU_DESCRIPTOR_HANDLE transformHandle)
+bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const ComPtr<ID3D12Device10>& device, const DX12MeshRendererGPUData& meshRendererData, DXGI_FORMAT depthFormat)
 {
-	m_transformHeapHandle = transformHandle;;
+	m_transformHeapHandle = meshRendererData.transformHandle;
 
 	// Create Pipeline State Object
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc;
 
 	//Input part
-	m_meshController = std::dynamic_pointer_cast<DX12MeshController>(entityGPUData.gameEntity->GetMesh()->GetGPUHandle());
+	m_meshController = std::dynamic_pointer_cast<DX12MeshController>(meshRendererData.meshRenderer->GetMesh()->GetGPUHandle());
 	pipelineStateDesc.InputLayout = *(m_meshController->GetLayoutDesc());
 	pipelineStateDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//Shader Part
-	m_material = std::dynamic_pointer_cast<HLSLMaterial>(entityGPUData.gameEntity->GetMaterial());
+	m_material = std::dynamic_pointer_cast<HLSLMaterial>(meshRendererData.meshRenderer->GetMaterial());
 	auto program = std::dynamic_pointer_cast<HLSLShaderProgram>(m_material->GetProgram());
 	m_rootSignature = program->GetReflectionData()->rootSignature;
 	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(program->GetShader(VERTEX_SHADER));

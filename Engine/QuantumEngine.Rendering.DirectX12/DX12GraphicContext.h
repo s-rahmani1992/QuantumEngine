@@ -15,6 +15,10 @@ namespace QuantumEngine {
 	namespace Platform {
 		class GraphicWindow;
 	}
+
+	namespace Rendering {
+		class MeshRenderer;
+	}
 }
 
 namespace QuantumEngine::Rendering::DX12 {
@@ -35,6 +39,13 @@ namespace QuantumEngine::Rendering::DX12 {
 	public:
 		ref<GameEntity> gameEntity;
 		ComPtr<ID3D12Resource2> transformResource;
+	};
+
+	struct DX12MeshRendererGPUData {
+	public:
+		ref<QuantumEngine::Rendering::MeshRenderer> meshRenderer;
+		ComPtr<ID3D12Resource2> transformResource;
+		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};
 
 	struct TransformGPU {
@@ -89,6 +100,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		DX12LightManager m_lightManager;
 
 		std::vector<DX12EntityGPUData> m_entityGPUData;
+		std::vector<DX12MeshRendererGPUData> m_meshRendererData;
 		std::vector<ref<DX12GameEntityPipeline>> m_rasterizationPipelines;
 		ref<DX12RayTracingPipeline> m_rayTracingPipeline;
 	};

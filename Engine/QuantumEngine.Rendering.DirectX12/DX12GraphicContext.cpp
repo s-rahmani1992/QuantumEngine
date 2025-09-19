@@ -18,6 +18,7 @@
 #include <set>
 #include "DX12GameEntityPipeline.h"
 #include "Dx12RayTracingPipeline.h"
+#include "Rendering/MeshRenderer.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -199,8 +200,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		entity.transformResource->Unmap(0, nullptr);
 	}
 
-	//RenderRasterization();
-	RenderRayTracing();
+	RenderRasterization();
+	//RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
@@ -263,7 +264,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 	UInt32 rasterHeapSize = m_entityGPUData.size() + 1 + 1; // entity transforms + camera + light
 	std::set<ref<HLSLMaterial>> usedMaterials;
 	for (auto& entityGpu : m_entityGPUData) {
-		auto material = std::dynamic_pointer_cast<HLSLMaterial>(entityGpu.gameEntity->GetMaterial());
+		auto material = std::dynamic_pointer_cast<HLSLMaterial>(entityGpu.gameEntity->GetRenderer()->GetMaterial());
 		if (usedMaterials.emplace(material).second == false)
 			continue;
 		rasterHeapSize += material->GetBoundResourceCount();
@@ -300,18 +301,19 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 	gpuHandle.ptr += incrementSize;
 
 	for (auto& entityGpu : m_entityGPUData) {
-
 		D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
 		transformViewDesc.BufferLocation = entityGpu.transformResource->GetGPUVirtualAddress();
 		transformViewDesc.SizeInBytes = transformResourceDesc.Width;
 		m_device->CreateConstantBufferView(&transformViewDesc, firstHandle);
 
-		auto pipeline = std::make_shared<DX12GameEntityPipeline>();
-		if (pipeline->Initialize(m_device, entityGpu, m_depthFormat, gpuHandle) == false) {
-			return;
+		auto meshRenderer = std::dynamic_pointer_cast<MeshRenderer>(entityGpu.gameEntity->GetRenderer());
+		if (meshRenderer != nullptr) {
+			m_meshRendererData.push_back(DX12MeshRendererGPUData{
+				.meshRenderer = meshRenderer,
+				.transformResource = entityGpu.transformResource,
+				.transformHandle = gpuHandle,
+				});
 		}
-
-		m_rasterizationPipelines.push_back(pipeline);
 
 		firstHandle.ptr += incrementSize;
 		gpuHandle.ptr += incrementSize;
@@ -322,6 +324,15 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 	for(auto& mat : usedMaterials) {
 		mat->BindDescriptor(m_rasterHeap, offset);
 		offset += mat->GetBoundResourceCount();
+	}
+
+	for(auto& meshRender : m_meshRendererData) {
+		auto pipeline = std::make_shared<DX12GameEntityPipeline>();
+		if (pipeline->Initialize(m_device, meshRender, m_depthFormat) == false) {
+			return;
+		}
+
+		m_rasterizationPipelines.push_back(pipeline);
 	}
 }
 
