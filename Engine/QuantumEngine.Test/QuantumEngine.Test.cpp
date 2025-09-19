@@ -27,6 +27,7 @@
 #include "StringUtilities.h"
 #include "Core/ShapeBuilder.h"
 #include "Rendering/MeshRenderer.h"
+#include "Rendering/RayTracingComponent.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -308,12 +309,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     refractorRTMaterial->SetFloat("refractionFactor", 1.2f);
     refractorRTMaterial->SetUInt32("castShadow", 0);
 
-    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
-	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(pyramidMesh, mirrorMaterial);
-    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, pyramidMesh, meshRenderer1, rtMaterial1);
-    auto transform2 = std::make_shared<Transform>(Vector3(10.2f, 5.4f, 3.0f), Vector3(3.6f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(sphereMesh, mirrorMaterial);
-    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, sphereMesh, meshRenderer2, mirrorRTMaterial);
+    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(1.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
+	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(pyramidMesh, material1);
+	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(pyramidMesh, rtMaterial1);
+    auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, meshRenderer1, rtComponent1);
+    auto transform2 = std::make_shared<Transform>(Vector3(10.2f, 5.4f, 3.0f), Vector3(3.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
+    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(cubeMesh, material2);
+    auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(cubeMesh, rtMaterial2);
+    auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, meshRenderer2, rtComponent2);
     /*auto transform3 = std::make_shared<Transform>(Vector3(5.2f, 1.0f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, carMesh, material3, rtMaterial3);
     auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
@@ -329,9 +332,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     lightData.directionalLights.push_back(DirectionalLight{
         .color = Color(1.0f, 1.0f, 1.0f, 1.0f),
         .direction = Vector3(2.0f, -6.0f, 0.0f),
-        .ambient = 0.7f,
+        .ambient = 0.1f,
         .diffuse = 1.3f,
-        .specular = 1.0f,
+        .specular = 0.1f,
         });
 
     lightData.pointLights.push_back(PointLight{

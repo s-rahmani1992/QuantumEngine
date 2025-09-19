@@ -10,6 +10,7 @@
 #include "HLSLShaderProgram.h"
 #include "HLSLShader.h"
 #include "DX12MeshController.h"
+#include "Rendering/RayTracingComponent.h"
 
 bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12EntityGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial)
 {
@@ -22,14 +23,14 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	UInt32 rtHeapsize = 0;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;
 
 		rtHeapsize += rtMaterial->GetBoundResourceCount();
 		rtEntities.push_back(RayTracing::EntityBLASDesc{
-			.mesh = std::dynamic_pointer_cast<DX12MeshController>(entity.gameEntity->GetMesh()->GetGPUHandle()),
+			.mesh = std::dynamic_pointer_cast<DX12MeshController>(entity.gameEntity->GetRayTracingComponent()->GetMesh()->GetGPUHandle()),
 			.transform = entity.gameEntity->GetTransform(),
 			});
 
@@ -50,7 +51,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 
 		m_device->CreateConstantBufferView(&transformViewDesc, transformHeap->GetCPUDescriptorHandleForHeapStart());
 
-		auto meshController = std::dynamic_pointer_cast<DX12MeshController>(entity.gameEntity->GetMesh()->GetGPUHandle());
+		auto meshController = std::dynamic_pointer_cast<DX12MeshController>(entity.gameEntity->GetRayTracingComponent()->GetMesh()->GetGPUHandle());
 
 		rtMaterial->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
 		rtMaterial->SetDescriptorHeap("g_indices", meshController->GetIndexHeap());
@@ -120,7 +121,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	rtHeapsize += m_rtMaterial->GetBoundResourceCount();
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;
@@ -216,7 +217,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	entityRTDatas.reserve(entities.size() + 1); // Prevent vector from reallocation. So the pointer to entry is always valid
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;
@@ -306,7 +307,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	offset += m_rtMaterial->GetBoundResourceCount();
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;
@@ -328,7 +329,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	UInt32 rtEntityCount = 0;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;
@@ -405,7 +406,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	pMissData += missResordSize;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;
@@ -426,7 +427,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	entityIndex = 0;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 
 		if (rtMaterial == nullptr)
 			continue;

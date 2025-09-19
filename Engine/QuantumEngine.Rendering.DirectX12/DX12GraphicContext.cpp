@@ -19,6 +19,7 @@
 #include "DX12GameEntityPipeline.h"
 #include "Dx12RayTracingPipeline.h"
 #include "Rendering/MeshRenderer.h"
+#include "Rendering/RayTracingComponent.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -200,8 +201,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		entity.transformResource->Unmap(0, nullptr);
 	}
 
-	RenderRasterization();
-	//RenderRayTracing();
+	//RenderRasterization();
+	RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
@@ -212,7 +213,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(co
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(const ref<ShaderProgram>& rtProgram)
 {
 	for(auto& entity : m_entityGPUData) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRTMaterial());
+		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 		if (rtMaterial == nullptr)
 			continue;
 		rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);

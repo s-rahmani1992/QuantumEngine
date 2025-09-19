@@ -44,12 +44,12 @@ void rayGen()
     payLoad.recursionCount = 1;
     payLoad.targetMode = 0;
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payLoad);
-    float3 col = linearToSrgb(payLoad.color);
-    gOutput[launchIndex.xy] = float4(col, 1);
+    //float3 col = linearToSrgb(payLoad.color);
+    gOutput[launchIndex.xy] = float4(payLoad.color, 1);
 }
 
 [shader("miss")]
 void miss(inout GeneralPayload payload)
 {
-    payload.color = float3(0.4, 0.6, 0.2);
+    payload.color = float3(0.1f, 0.7f, 0.3f);
 }

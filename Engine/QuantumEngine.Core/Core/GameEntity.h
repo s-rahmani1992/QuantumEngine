@@ -6,27 +6,24 @@ namespace QuantumEngine {
 	class Transform;
 
 	namespace Rendering {
-		class Material;
 		class Renderer;
+		class RayTracingComponent;
 	}
 }
 
 namespace QuantumEngine {
-	
 	class GameEntity {
 	public:
-		GameEntity(const ref<Transform>& transform, const ref<Mesh>& mesh
-			, const ref<Rendering::Renderer>& renderer, const ref<Rendering::Material>& rtMaterial = nullptr)
-			:m_transform(transform), m_mesh(mesh), m_renderer(renderer), m_rtMaterial(rtMaterial) { }
-
-		inline ref<Mesh> GetMesh() const { return m_mesh; }
-		inline ref<Rendering::Renderer> GetRenderer() { return m_renderer; }
-		inline ref<Rendering::Material> GetRTMaterial() { return m_rtMaterial; }
+		GameEntity(const ref<Transform>& transform
+			, const ref<Rendering::Renderer>& renderer, const ref<Rendering::RayTracingComponent>& rtComponent)
+			:m_transform(transform), m_renderer(renderer), m_rtComponent(rtComponent) { }
+	public:
 		inline ref<Transform> GetTransform() const { return m_transform; }
+		inline ref<Rendering::Renderer> GetRenderer() { return m_renderer; }
+		inline ref<Rendering::RayTracingComponent> GetRayTracingComponent() { return m_rtComponent; }
 	private:
-		ref<Mesh> m_mesh;
-		ref<Rendering::Renderer> m_renderer;
 		ref<Transform> m_transform;
-		ref<Rendering::Material> m_rtMaterial;
+		ref<Rendering::Renderer> m_renderer;
+		ref<Rendering::RayTracingComponent> m_rtComponent;
 	};
 }

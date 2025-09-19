@@ -139,6 +139,7 @@
     <ClInclude Include="Rendering\GraphicContext.h" />
     <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Rendering\MeshRenderer.h" />
+    <ClInclude Include="Rendering\RayTracingComponent.h" />
     <ClInclude Include="Rendering\Renderer.h" />
     <ClInclude Include="Rendering\Shader.h" />
     <ClInclude Include="Rendering\ShaderProgram.h" />
