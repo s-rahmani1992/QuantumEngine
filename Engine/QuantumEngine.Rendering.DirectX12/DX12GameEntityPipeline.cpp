@@ -19,7 +19,7 @@ bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const Co
 
 	//Input part
 	m_meshController = std::dynamic_pointer_cast<DX12MeshController>(meshRendererData.meshRenderer->GetMesh()->GetGPUHandle());
-	pipelineStateDesc.InputLayout = *(m_meshController->GetLayoutDesc());
+	pipelineStateDesc.InputLayout = *(DX12MeshController::GetLayoutDesc());
 	pipelineStateDesc.IBStripCutValue = D3D12_INDEX_BUFFER_STRIP_CUT_VALUE_DISABLED;
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 

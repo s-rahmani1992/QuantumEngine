@@ -3,14 +3,20 @@
 #include "Core/Mesh.h"
 #include "DX12Utilities.h"
 
+D3D12_INPUT_ELEMENT_DESC QuantumEngine::Rendering::DX12::DX12MeshController::s_inputElementDescs[3] = {
+	{ "position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	{ "normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+};
+
+D3D12_INPUT_LAYOUT_DESC QuantumEngine::Rendering::DX12::DX12MeshController::s_layoutDesc = {
+	.pInputElementDescs = s_inputElementDescs,
+	.NumElements = 3,
+};
+
 QuantumEngine::Rendering::DX12::DX12MeshController::DX12MeshController(const ref<Mesh>& mesh)
 	:m_mesh(mesh)
 {
-}
-
-QuantumEngine::Rendering::DX12::DX12MeshController::~DX12MeshController()
-{
-	delete[] m_layoutDesc.pInputElementDescs;
 }
 
 D3D12_SHADER_RESOURCE_VIEW_DESC QuantumEngine::Rendering::DX12::DX12MeshController::GetVertexSRVDesc()
@@ -81,15 +87,6 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 	if (FAILED(device->CreateCommittedResource(&DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &indexDesc,
 		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_indexBuffer))))
 		return false;
-
-	//Input layout
-	D3D12_INPUT_ELEMENT_DESC* elements = new D3D12_INPUT_ELEMENT_DESC[3];
-	elements[0] = { "position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	elements[1] = { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-	elements[2] = { "normal", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 };
-
-	m_layoutDesc.NumElements = 3;
-	m_layoutDesc.pInputElementDescs = elements;
 
 	// Buffer views
 	m_bufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();

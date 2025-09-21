@@ -13,8 +13,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	{
 	public:
 		DX12MeshController(const ref<Mesh>& mesh);
-		virtual ~DX12MeshController() override;
-		inline D3D12_INPUT_LAYOUT_DESC* GetLayoutDesc() { return &m_layoutDesc; }
+		inline static D3D12_INPUT_LAYOUT_DESC* GetLayoutDesc() { return &s_layoutDesc; }
 		inline D3D12_VERTEX_BUFFER_VIEW* GetVertexView() { return &m_bufferView; }
 		inline D3D12_INDEX_BUFFER_VIEW* GetIndexView() { return &m_indexView; }
 		inline ref<Mesh> GetMesh() { return m_mesh; }
@@ -30,10 +29,12 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<Mesh> m_mesh;
 		ComPtr<ID3D12Resource2> m_vertexBuffer;
 		ComPtr<ID3D12Resource2> m_indexBuffer;
-		D3D12_INPUT_LAYOUT_DESC m_layoutDesc;
 		D3D12_VERTEX_BUFFER_VIEW m_bufferView;
 		D3D12_INDEX_BUFFER_VIEW m_indexView;
 		ComPtr<ID3D12DescriptorHeap> m_indexHeap;
 		ComPtr<ID3D12DescriptorHeap> m_vertexHeap;
+
+		static D3D12_INPUT_ELEMENT_DESC s_inputElementDescs[3];
+		static D3D12_INPUT_LAYOUT_DESC s_layoutDesc;
 	};
 }
