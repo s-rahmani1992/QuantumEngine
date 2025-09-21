@@ -29,6 +29,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void SetMatrix(const std::string& fieldName, const Matrix4& matrixValue);
 		void SetTexture2D(const std::string& fieldName, const ref<Texture2D>& texValue);
 		void SetDescriptorHeap(const std::string& fieldName, const ComPtr<ID3D12DescriptorHeap>& descriptorHeap);
+		void SetDescriptorHeap(const std::string& fieldName, const D3D12_GPU_DESCRIPTOR_HANDLE& descriptorHandle);
 		void CopyVariableData(void* dest);
 		void BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset);
 		void RegisterTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& transformHeap);
@@ -46,8 +47,8 @@ namespace QuantumEngine::Rendering::DX12 {
 			UInt32 rootParamIndex;
 			ComPtr<ID3D12DescriptorHeap> descriptor;
 			D3D12_GPU_DESCRIPTOR_HANDLE* heapLocation;
-			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle;
-			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle;
+			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = D3D12_CPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
+			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = D3D12_GPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
 		};
 
 		std::map<std::string, D3D12_SHADER_VARIABLE_DESC> ExtractConstantBuffers(const ComPtr<ID3D12ShaderReflection>& reflector);

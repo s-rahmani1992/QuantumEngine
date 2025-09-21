@@ -12,68 +12,65 @@
 #include "DX12MeshController.h"
 #include "Rendering/RayTracingComponent.h"
 
-bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12EntityGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial)
+bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial)
 {
+	m_rtMaterial = rtMaterial;
 	commandList->GetDevice(IID_PPV_ARGS(&m_device));
+
+	// Create ResourceHeap and material allocations
+
+	UInt32 globalDescriptorCount = 2; // TLAS + output
+
+	// global + entity(transform + vertex + index) + global material
+	UInt32 rtHeapsize = globalDescriptorCount + 3 * entities.size() + rtMaterial->GetBoundResourceCount();
+	std::set<ref<HLSLMaterial>> usedMaterials;
+	
+	for (auto& entity : entities) {
+		auto rtMaterial = entity.rtMaterial;
+		if (usedMaterials.emplace(rtMaterial).second == true)
+			rtHeapsize += rtMaterial->GetBoundResourceCount();
+	}
+
+	D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		.NumDescriptors = rtHeapsize,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
+	};
+
+	m_device->CreateDescriptorHeap(&rtHeapDesc, IID_PPV_ARGS(&m_rtHeap));
+
+	auto incSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	auto heapStartHandle = m_rtHeap->GetCPUDescriptorHandleForHeapStart();
+	auto gpuStartHandle = m_rtHeap->GetGPUDescriptorHandleForHeapStart();
 
 	// Initialize TLAS
 	m_TLASController = std::make_shared<RayTracing::RTAccelarationStructure>();
 	std::vector<RayTracing::EntityBLASDesc> rtEntities;
 
-	UInt32 rtHeapsize = 0;
-
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
+		auto rtMaterial = entity.rtMaterial;
 
-		if (rtMaterial == nullptr)
-			continue;
-
-		rtHeapsize += rtMaterial->GetBoundResourceCount();
 		rtEntities.push_back(RayTracing::EntityBLASDesc{
-			.mesh = std::dynamic_pointer_cast<DX12MeshController>(entity.gameEntity->GetRayTracingComponent()->GetMesh()->GetGPUHandle()),
-			.transform = entity.gameEntity->GetTransform(),
+			.mesh = entity.meshController,
+			.transform = entity.transform,
 			});
-
-		D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
-		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-		};
-
-		ComPtr<ID3D12DescriptorHeap> transformHeap;
-		if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&transformHeap)))) {
-			return false;
-		}
-
-		D3D12_CONSTANT_BUFFER_VIEW_DESC transformViewDesc;
-		transformViewDesc.BufferLocation = entity.transformResource->GetGPUVirtualAddress();
-		transformViewDesc.SizeInBytes = CONSTANT_BUFFER_ALIGHT(sizeof(TransformGPU));
-
-		m_device->CreateConstantBufferView(&transformViewDesc, transformHeap->GetCPUDescriptorHandleForHeapStart());
-
-		auto meshController = std::dynamic_pointer_cast<DX12MeshController>(entity.gameEntity->GetRayTracingComponent()->GetMesh()->GetGPUHandle());
-
-		rtMaterial->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, transformHeap);
-		rtMaterial->SetDescriptorHeap("g_indices", meshController->GetIndexHeap());
-		rtMaterial->SetDescriptorHeap("g_vertices",meshController->GetVertexHeap());
 	}
 
 	if (m_TLASController->Initialize(commandList, rtEntities) == false)
 		return false;
 
-	D3D12_DESCRIPTOR_HEAP_DESC heapDesc{
-		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
-	};
-
+	D3D12_SHADER_RESOURCE_VIEW_DESC tlasSRVDesc = {};
+	tlasSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_RAYTRACING_ACCELERATION_STRUCTURE;
+	tlasSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	tlasSRVDesc.RaytracingAccelerationStructure.Location = m_TLASController->GetResource()->GetGPUVirtualAddress();
+	m_device->CreateShaderResourceView(nullptr, &tlasSRVDesc, heapStartHandle);
+	auto tlasHandle = gpuStartHandle;
 	// Ray Tracing Output Buffer
 	// Create the output resource. The dimensions should match the swap-chain
 	D3D12_RESOURCE_DESC outputDesc = {};
 	outputDesc.DepthOrArraySize = 1;
 	outputDesc.Dimension = D3D12_RESOURCE_DIMENSION_TEXTURE2D;
 	outputDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	// The backbuffer is actually DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, but sRGB formats can't be used with UAVs. We will convert to sRGB ourselves in the shader
 	outputDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS;
 	outputDesc.Width = width;
 	outputDesc.Height = height;
@@ -87,10 +84,12 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 		return false;
 	}
 
-	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_outputHeap)))) {
-		return false;
-	}
-
+	heapStartHandle.ptr += incSize;
+	gpuStartHandle.ptr += incSize;
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavOutputDesc = {};
+	uavOutputDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	m_device->CreateUnorderedAccessView(m_outputBuffer.Get(), nullptr, &uavOutputDesc, heapStartHandle);
+	auto outputHandle = gpuStartHandle;
 	D3D12_RESOURCE_BARRIER outputEndRTBarrier
 	{
 	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
@@ -105,35 +104,41 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	};
 	commandList->ResourceBarrier(1, &outputEndRTBarrier);
 
-	D3D12_UNORDERED_ACCESS_VIEW_DESC uavOutputDesc = {};
-	uavOutputDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-	m_device->CreateUnorderedAccessView(m_outputBuffer.Get(), nullptr,
-		&uavOutputDesc, m_outputHeap->GetCPUDescriptorHandleForHeapStart()
-	);
+	// Populate Transform, Vertex, Index for entities
+	for(auto& entity : entities) {
+		heapStartHandle.ptr += incSize;
+		D3D12_CONSTANT_BUFFER_VIEW_DESC transformcbvDesc = {};
+		transformcbvDesc.BufferLocation = entity.transformResource->GetGPUVirtualAddress();
+		transformcbvDesc.SizeInBytes = CONSTANT_BUFFER_ALIGHT(sizeof(TransformGPU));
+		m_device->CreateConstantBufferView(&transformcbvDesc, heapStartHandle);
+
+		heapStartHandle.ptr += incSize;
+		auto vertexSRV = entity.meshController->GetVertexSRVDesc();
+		m_device->CreateShaderResourceView(entity.meshController->GetVertexResource().Get(), &vertexSRV, heapStartHandle);
+		
+		heapStartHandle.ptr += incSize;
+		auto indexSRV = entity.meshController->GetIndexSRVDesc();
+		m_device->CreateShaderResourceView(entity.meshController->GetIndexResource().Get(), &indexSRV, heapStartHandle);
+	}
+	
+	UInt32 offset = globalDescriptorCount + 3 * entities.size();
+	m_rtMaterial->BindDescriptor(m_rtHeap, offset);
+	offset += m_rtMaterial->GetBoundResourceCount();
+
+	for (auto& rtMaterial : usedMaterials) {
+		rtMaterial->BindDescriptor(m_rtHeap, offset);
+		offset += rtMaterial->GetBoundResourceCount();
+	}
 
 	// Ray Tracing Pipeline
-	this->m_rtMaterial = rtMaterial;
 	m_rtProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(m_rtMaterial->GetProgram());
 	std::set<ref< HLSLShader>> shaders;
-
-	m_rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
-	m_rtMaterial->SetDescriptorHeap("gOutput", m_outputHeap);
-	rtHeapsize += m_rtMaterial->GetBoundResourceCount();
-
-	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-
-		if (rtMaterial == nullptr)
-			continue;
-
-		rtMaterial->SetDescriptorHeap("gRtScene", m_TLASController->GetDescriptor());
-	}
 
 	ref<HLSLShader> libShader = std::dynamic_pointer_cast<HLSLShader>(m_rtProgram->GetShader(LIB_SHADER));
 	std::vector<D3D12_STATE_SUBOBJECT> subobjects;
 	subobjects.reserve(6 + 20 * entities.size());
-	// Create DXIL Sub Object
 
+	// Create DXIL Sub Object
 	subobjects.push_back(D3D12_STATE_SUBOBJECT{
 		.Type = D3D12_STATE_SUBOBJECT_TYPE_DXIL_LIBRARY,
 		.pDesc = libShader->GetDXIL(),
@@ -217,11 +222,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	entityRTDatas.reserve(entities.size() + 1); // Prevent vector from reallocation. So the pointer to entry is always valid
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-
-		if (rtMaterial == nullptr)
-			continue;
-
+		auto rtMaterial = entity.rtMaterial;
 		entityRTDatas.push_back(LocalRTData{});
 		LocalRTData& rtRef = entityRTDatas.back();
 		ref<HLSLShader> localLibShader = std::dynamic_pointer_cast<HLSLShader>(rtMaterial->GetProgram()->GetShader(LIB_SHADER));
@@ -294,28 +295,6 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 		return false;
 	}
 
-	D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc{
-		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
-		.NumDescriptors = rtHeapsize,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
-	};
-
-	m_device->CreateDescriptorHeap(&rtHeapDesc, IID_PPV_ARGS(&m_rtHeap));
-	UInt32 offset = 0;
-
-	m_rtMaterial->BindDescriptor(m_rtHeap, offset);
-	offset += m_rtMaterial->GetBoundResourceCount();
-
-	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-
-		if (rtMaterial == nullptr)
-			continue;
-
-		rtMaterial->BindDescriptor(m_rtHeap, offset);
-		offset += rtMaterial->GetBoundResourceCount();
-	}
-
 	// Create ShaderTable
 	UInt32 rayGenResordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + m_rtProgram->GetReflectionData()->totalVariableSize;
 	rayGenResordSize = SBT_SHADER_RECORD_ALIGHT(rayGenResordSize);
@@ -329,11 +308,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	UInt32 rtEntityCount = 0;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-
-		if (rtMaterial == nullptr)
-			continue;
-
+		auto rtMaterial = entity.rtMaterial;
 		auto localRTProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(rtMaterial->GetProgram());
 		UInt32 hitGroupSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + localRTProgram->GetReflectionData()->totalVariableSize;
 		hitGroupSize = SBT_SHADER_RECORD_ALIGHT(hitGroupSize);
@@ -348,7 +323,6 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 				missResordSize = hitGroupSize;
 
 			rtMissEntityCount++;
-
 			rtMaterial->SetUInt32("missIndex", rtMissEntityCount);
 		}
 
@@ -382,13 +356,11 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 		&shaderTableBufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&m_shaderTableBuffer))))
 		return false;
 
-	ComPtr<ID3D12DescriptorHeap> shaderTableHeap;
-	if (FAILED(m_device->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&shaderTableHeap)))) {
-		return false;
-	}
-
 	Byte* pData;
 	m_shaderTableBuffer->Map(0, nullptr, reinterpret_cast<void**>(&pData));
+
+	m_rtMaterial->SetDescriptorHeap(HLSL_RT_TLAS_SCENE_NAME, tlasHandle);
+	m_rtMaterial->SetDescriptorHeap(HLSL_RT_OUTPUT_TEXTURE_NAME, outputHandle);
 
 	// Entry 0 - ray-gen program ID and descriptor data
 	std::memcpy(pData, rtProperties->GetShaderIdentifier(libShader->GetRayGenExport().c_str()),
@@ -406,11 +378,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	pMissData += missResordSize;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-
-		if (rtMaterial == nullptr)
-			continue;
-
+		auto rtMaterial = entity.rtMaterial;
 		ref<HLSLShader> localLibShader = std::dynamic_pointer_cast<HLSLShader>(rtMaterial->GetProgram()->GetShader(LIB_SHADER));
 
 		if (localLibShader->GetMissExport().empty())
@@ -426,14 +394,23 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 	pData += missSectionSize;
 	entityIndex = 0;
 
+	auto entityHandle = gpuStartHandle;
+	entityHandle.ptr += incSize;
 	for (auto& entity : entities) {
-		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-
-		if (rtMaterial == nullptr)
-			continue;
-
+		auto rtMaterial = entity.rtMaterial;
 		std::memcpy(pData, rtProperties->GetShaderIdentifier((L"Entity_" + std::to_wstring(entityIndex)).c_str()),
 			D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
+
+		rtMaterial->SetDescriptorHeap(HLSL_RT_TLAS_SCENE_NAME, tlasHandle);
+		rtMaterial->SetDescriptorHeap(HLSL_RT_OUTPUT_TEXTURE_NAME, outputHandle);
+
+		rtMaterial->SetDescriptorHeap(HLSL_OBJECT_TRANSFORM_DATA_NAME, entityHandle);
+		entityHandle.ptr += incSize;
+		rtMaterial->SetDescriptorHeap(HLSL_VERTEX_SRV_NAME, entityHandle);
+		entityHandle.ptr += incSize;
+		rtMaterial->SetDescriptorHeap(HLSL_INDEX_SRV_NAME, entityHandle);
+		entityHandle.ptr += incSize;
+
 		rtMaterial->CopyVariableData(pData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 		pData += hitRecordSize;
 		entityIndex++;

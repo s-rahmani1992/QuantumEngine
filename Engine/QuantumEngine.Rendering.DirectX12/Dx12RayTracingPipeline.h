@@ -21,14 +21,14 @@ namespace QuantumEngine::Rendering::DX12 {
 		struct EntityBLASDesc;
 	}
 
-	struct DX12EntityGPUData;
+	struct DX12RayTracingGPUData;
 	class HLSLMaterial;
 	class HLSLShaderProgram;
 
 	class DX12RayTracingPipeline
 	{
 	public:
-		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12EntityGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial);
+		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial);
 		void RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera);
 		ComPtr<ID3D12Resource2> GetOutputBuffer() const { return m_outputBuffer; }
 	private:

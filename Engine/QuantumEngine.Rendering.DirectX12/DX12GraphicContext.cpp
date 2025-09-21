@@ -219,6 +219,17 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterShaderRegistery
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(const ref<ShaderProgram>& rtProgram)
 {
 	for(auto& entity : m_entityGPUData) {
+		auto rtComponent = entity.gameEntity->GetRayTracingComponent();
+
+		if(rtComponent == nullptr)
+			continue;
+
+		m_rtEntityData.push_back(DX12RayTracingGPUData{
+			.meshController = std::dynamic_pointer_cast<DX12MeshController>(rtComponent->GetMesh()->GetGPUHandle()),
+			.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(rtComponent->GetRTMaterial()),
+			.transformResource = entity.transformResource,
+			.transform = entity.gameEntity->GetTransform(),
+			});
 		auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
 		if (rtMaterial == nullptr)
 			continue;
@@ -234,7 +245,7 @@ bool QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareRayTracingData(c
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
 	m_rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
 	m_rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
-	m_rayTracingPipeline->Initialize(m_commandList, m_entityGPUData, m_window->GetWidth(), m_window->GetHeight(), m_rtMaterial);
+	m_rayTracingPipeline->Initialize(m_commandList, m_rtEntityData, m_window->GetWidth(), m_window->GetHeight(), m_rtMaterial);
 	
 	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 

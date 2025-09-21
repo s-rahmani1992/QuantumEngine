@@ -18,8 +18,10 @@ namespace QuantumEngine::Rendering::DX12 {
 		inline D3D12_VERTEX_BUFFER_VIEW* GetVertexView() { return &m_bufferView; }
 		inline D3D12_INDEX_BUFFER_VIEW* GetIndexView() { return &m_indexView; }
 		inline ref<Mesh> GetMesh() { return m_mesh; }
-		inline ComPtr<ID3D12DescriptorHeap> GetIndexHeap() { return m_indexHeap; }
-		inline ComPtr<ID3D12DescriptorHeap> GetVertexHeap() { return m_vertexHeap; }
+		D3D12_SHADER_RESOURCE_VIEW_DESC GetVertexSRVDesc();
+		D3D12_SHADER_RESOURCE_VIEW_DESC GetIndexSRVDesc();
+		inline ComPtr<ID3D12Resource2> GetIndexResource() { return m_indexBuffer; }
+		inline ComPtr<ID3D12Resource2> GetVertexResource() { return m_vertexBuffer; }
 		bool Initialize(const ComPtr<ID3D12Device10>& device);
 		void CopyToGPU(const ComPtr<ID3D12Resource2>& uploadBuffer, ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList, UInt32 offset, Byte* mapData);
 		ComPtr<ID3D12Resource2> CreateBLASResource(const ComPtr<ID3D12GraphicsCommandList7>& commandList, ComPtr<ID3D12Resource2>& scratchBuffer);

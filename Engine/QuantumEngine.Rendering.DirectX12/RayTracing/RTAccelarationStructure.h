@@ -25,6 +25,7 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<EntityBLASDesc>& entities);
 		void UpdateTransforms(const ComPtr<ID3D12GraphicsCommandList7>& commandList, Matrix4& viewMatrix);
 		inline ComPtr<ID3D12DescriptorHeap> GetDescriptor() { return m_tlasHeap; }
+		inline ComPtr<ID3D12Resource2> GetResource() { return m_topLevelAccelerationStructure; }
 	private:
 		struct EntityBLAS {
 			ref<Transform> transform;

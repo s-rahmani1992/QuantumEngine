@@ -49,6 +49,14 @@ namespace QuantumEngine::Rendering::DX12 {
 		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};
 
+	struct DX12RayTracingGPUData {
+	public:
+		ref<QuantumEngine::Rendering::DX12::DX12MeshController> meshController;
+		ref<QuantumEngine::Rendering::DX12::HLSLMaterial> rtMaterial;
+		ComPtr<ID3D12Resource2> transformResource;
+		ref<Transform> transform;
+	};
+
 	struct TransformGPU {
 	public:
 		Matrix4 modelMatrix;
@@ -105,6 +113,8 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::vector<DX12EntityGPUData> m_entityGPUData;
 		std::vector<DX12MeshRendererGPUData> m_meshRendererData;
 		std::vector<ref<DX12GameEntityPipeline>> m_rasterizationPipelines;
+
+		std::vector<DX12RayTracingGPUData> m_rtEntityData;
 		ref<DX12RayTracingPipeline> m_rayTracingPipeline;
 	};
 }

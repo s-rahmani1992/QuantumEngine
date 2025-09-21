@@ -172,6 +172,16 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::
     }
 }
 
+void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::string& fieldName, const D3D12_GPU_DESCRIPTOR_HANDLE& descriptorHandle)
+{
+    auto field = m_heapValues.find(fieldName);
+
+    if (field != m_heapValues.end()) {
+        (*field).second.gpuHandle = descriptorHandle;
+		*((*field).second.heapLocation) = descriptorHandle;
+    }
+}
+
 void QuantumEngine::Rendering::DX12::HLSLMaterial::CopyVariableData(void* dest)
 {
     std::memcpy(dest, m_variableData, std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData()->totalVariableSize);

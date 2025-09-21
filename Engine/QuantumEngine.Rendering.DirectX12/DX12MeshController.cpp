@@ -13,6 +13,40 @@ QuantumEngine::Rendering::DX12::DX12MeshController::~DX12MeshController()
 	delete[] m_layoutDesc.pInputElementDescs;
 }
 
+D3D12_SHADER_RESOURCE_VIEW_DESC QuantumEngine::Rendering::DX12::DX12MeshController::GetVertexSRVDesc()
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC vertexView{
+	.Format = DXGI_FORMAT_UNKNOWN,
+	.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+	.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+	.Buffer = D3D12_BUFFER_SRV{
+		.FirstElement = 0,
+		.NumElements = m_mesh->GetVertexCount(),
+		.StructureByteStride = sizeof(Vertex),
+		.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+		},
+	};
+
+	return vertexView;
+}
+
+D3D12_SHADER_RESOURCE_VIEW_DESC QuantumEngine::Rendering::DX12::DX12MeshController::GetIndexSRVDesc()
+{
+	D3D12_SHADER_RESOURCE_VIEW_DESC indexView{
+	.Format = DXGI_FORMAT_UNKNOWN,
+	.ViewDimension = D3D12_SRV_DIMENSION_BUFFER,
+	.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING,
+	.Buffer = D3D12_BUFFER_SRV{
+		.FirstElement = 0,
+		.NumElements = m_mesh->GetIndexCount(),
+		.StructureByteStride = sizeof(UInt32),
+		.Flags = D3D12_BUFFER_SRV_FLAG_NONE,
+		},
+	};
+
+	return indexView;
+}
+
 bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr<ID3D12Device10>& device)
 {
 	//Create upload and vertex buffers
