@@ -84,25 +84,31 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 		return false;
 	}
 
+	D3D12_DESCRIPTOR_HEAP_DESC rtoutDesc{
+		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
+		.NumDescriptors = rtHeapsize,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+	};
+
+	if(FAILED(m_device->CreateDescriptorHeap(&rtoutDesc, IID_PPV_ARGS(&m_outputHeap)))) {
+		return false;
+	}
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC outputSRVDesc = {};
+	outputSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	outputSRVDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	outputSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	outputSRVDesc.Texture2D.MipLevels = 1;
+
+	m_device->CreateShaderResourceView(m_outputBuffer.Get(), &outputSRVDesc, m_outputHeap->GetCPUDescriptorHandleForHeapStart());
+
 	heapStartHandle.ptr += incSize;
 	gpuStartHandle.ptr += incSize;
 	D3D12_UNORDERED_ACCESS_VIEW_DESC uavOutputDesc = {};
 	uavOutputDesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 	m_device->CreateUnorderedAccessView(m_outputBuffer.Get(), nullptr, &uavOutputDesc, heapStartHandle);
 	auto outputHandle = gpuStartHandle;
-	D3D12_RESOURCE_BARRIER outputEndRTBarrier
-	{
-	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
-		{
-		.pResource = m_outputBuffer.Get(),
-		.Subresource = 0,
-		.StateBefore = D3D12_RESOURCE_STATE_COMMON,
-		.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		},
-	};
-	commandList->ResourceBarrier(1, &outputEndRTBarrier);
+	
 
 	// Populate Transform, Vertex, Index for entities
 	for(auto& entity : entities) {
@@ -459,5 +465,25 @@ void QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::RenderCommand(ComPt
 	commandList->SetDescriptorHeaps(1, m_rtHeap.GetAddressOf());
 	m_rtMaterial->RegisterComputeValues(commandList);
 	// Run Ray Tracing Pipeline
+
+	D3D12_RESOURCE_BARRIER outputBeginRTBarrier
+	{
+	.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+	.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+	.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+		{
+		.pResource = m_outputBuffer.Get(),
+		.Subresource = 0,
+		.StateBefore = D3D12_RESOURCE_STATE_COMMON,
+		.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		},
+	};
+	commandList->ResourceBarrier(1, &outputBeginRTBarrier);
+
 	commandList->DispatchRays(&m_raytraceDesc);
+
+	D3D12_RESOURCE_BARRIER outputEndRTBarrier = outputBeginRTBarrier;
+	outputEndRTBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+	outputEndRTBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+	commandList->ResourceBarrier(1, &outputEndRTBarrier);
 }

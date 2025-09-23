@@ -86,6 +86,21 @@
     <Text Include="Assets\Shaders\rt_refractor.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
+    <Text Include="Assets\Shaders\g_buffer.pix.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer.vert.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_mirror.vert.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_mirror.pix.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\RTStructs.hlsli">

@@ -21,6 +21,8 @@
 #include "Rendering/MeshRenderer.h"
 #include "Rendering/RayTracingComponent.h"
 #include "DX12ShaderRegistery.h"
+#include "DX12GBufferPipelineModule.h"
+#include "Rendering/GBufferRTReflectionRenderer.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GraphicContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -202,8 +204,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::Render()
 		entity.transformResource->Unmap(0, nullptr);
 	}
 
-	//RenderRasterization();
-	RenderRayTracing();
+	RenderRasterization();
+	//RenderRayTracing();
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
@@ -333,15 +335,17 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 				});
 		}
 
+		auto gBufferMeshRenderer = std::dynamic_pointer_cast<GBufferRTReflectionRenderer>(entityGpu.gameEntity->GetRenderer());
+		if( gBufferMeshRenderer != nullptr) {
+			m_gBufferEntities.push_back(EntityGBufferData{
+				.renderer = gBufferMeshRenderer,
+				.transformResource = entityGpu.transformResource,
+				.transformHandle = gpuHandle,
+				});
+		}
+
 		firstHandle.ptr += incrementSize;
 		gpuHandle.ptr += incrementSize;
-	}
-
-	UInt32 offset = 2 + gameEntities.size();
-
-	for(auto& mat : usedMaterials) {
-		mat->BindDescriptor(m_rasterHeap, offset);
-		offset += mat->GetBoundResourceCount();
 	}
 
 	for(auto& meshRender : m_meshRendererData) {
@@ -352,6 +356,81 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::PrepareGameEntities(con
 
 		m_rasterizationPipelines.push_back(pipeline);
 	}
+
+	if(m_gBufferEntities.size() > 0 ) {
+		m_gBufferPipeline = std::make_shared<DX12GBufferPipelineModule>();
+		
+		if(m_gBufferPipeline->Initialize(m_device, Vector2UInt(m_window->GetWidth(), m_window->GetHeight()), m_shaderRegistery->GetShaderProgram("G_Buffer_Program")))
+			m_gBufferPipeline->PrepareEntities(m_gBufferEntities);
+		
+
+		// Initialize Ray Tracing Stage of Reflection Renderer
+		for (auto& entity : m_entityGPUData) {
+			auto rtComponent = entity.gameEntity->GetRayTracingComponent();
+
+			if (rtComponent == nullptr)
+				continue;
+
+			m_rtEntityData.push_back(DX12RayTracingGPUData{
+				.meshController = std::dynamic_pointer_cast<DX12MeshController>(rtComponent->GetMesh()->GetGPUHandle()),
+				.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(rtComponent->GetRTMaterial()),
+				.transformResource = entity.transformResource,
+				.transform = entity.gameEntity->GetTransform(),
+				});
+			auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
+			if (rtMaterial == nullptr)
+				continue;
+			rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
+			rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
+		}
+		auto gBufferRTMaterial = std::make_shared<HLSLMaterial>(std::dynamic_pointer_cast<HLSLShaderProgram>(m_shaderRegistery->GetShaderProgram("G_Buffer_RT_Global_Program")));
+		gBufferRTMaterial->Initialize(true);
+
+		m_GBufferrayTracingPipeline = std::make_shared<DX12RayTracingPipeline>();
+
+		m_commandAllocator->Reset();
+		m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+		gBufferRTMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
+		gBufferRTMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
+		gBufferRTMaterial->SetDescriptorHeap("gPositionTex", m_gBufferPipeline->GetPositionHeap());
+		gBufferRTMaterial->SetDescriptorHeap("gNormalTex", m_gBufferPipeline->GetNormalHeap());
+		gBufferRTMaterial->SetDescriptorHeap("gMaskTex", m_gBufferPipeline->GetMaskHeap());
+		
+		m_GBufferrayTracingPipeline->Initialize(m_commandList, m_rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial);
+
+		m_commandExecuter->ExecuteAndWait(m_commandList.Get());
+
+
+		for (auto& entity : m_gBufferEntities) {
+			auto meshRender = std::make_shared<MeshRenderer>(entity.renderer->GetMesh(), entity.renderer->GetMaterial());
+			auto pipeline = std::make_shared<DX12GameEntityPipeline>();
+
+			auto material = std::dynamic_pointer_cast<HLSLMaterial>(entity.renderer->GetMaterial());
+			material->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
+			material->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
+			material->SetDescriptorHeap(HLSL_RT_OUTPUT_TEXTURE_NAME, m_GBufferrayTracingPipeline->GetOutputHeap());
+			material->SetDescriptorHeap("gPositionTex", m_gBufferPipeline->GetPositionHeap());
+			material->SetDescriptorHeap("gNormalTex", m_gBufferPipeline->GetNormalHeap());
+			material->SetDescriptorHeap("gMaskTex", m_gBufferPipeline->GetMaskHeap());
+
+			if (pipeline->Initialize(m_device, DX12MeshRendererGPUData
+				{ 
+					.meshRenderer = meshRender, 
+					.transformResource = entity.transformResource,
+					.transformHandle = entity.transformHandle
+				}, m_depthFormat) == false) {
+				continue;
+			}
+
+			m_rasterizationPipelines.push_back(pipeline);
+		}
+	}
+
+	UInt32 offset = 2 + gameEntities.size();
+	for (auto& mat : usedMaterials) {
+		mat->BindDescriptor(m_rasterHeap, offset);
+		offset += mat->GetBoundResourceCount();
+	}
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRasterization()
@@ -359,6 +438,13 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRasterization()
 	// Reset Commands
 	m_commandAllocator->Reset();
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
+
+	m_commandList->SetDescriptorHeaps(1, m_rasterHeap.GetAddressOf());
+
+	if (m_gBufferEntities.size() > 0) {
+		m_gBufferPipeline->RenderCommand(m_commandList, m_cameraHandle);
+		m_GBufferrayTracingPipeline->RenderCommand(m_commandList, m_camera);
+	}
 
 	//Set Render Target
 	auto m_current_buffer_index = m_swapChain->GetCurrentBackBufferIndex();
@@ -401,8 +487,8 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRasterization()
 	m_commandList->RSSetScissorRects(1, &scissorRect);
 	
 	//draw
+	
 	m_commandList->SetDescriptorHeaps(1, m_rasterHeap.GetAddressOf());
-
 	for (auto& pipeline : m_rasterizationPipelines) {
 		pipeline->Render(m_commandList, m_cameraHandle, m_lightHandle);
 	}
@@ -461,7 +547,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRayTracing()
 		{
 		.pResource = m_rayTracingPipeline->GetOutputBuffer().Get(),
 		.Subresource = 0,
-		.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		.StateBefore = D3D12_RESOURCE_STATE_COMMON,
 		.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE,
 		},
 	};
@@ -497,7 +583,7 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::RenderRayTracing()
 		.pResource = m_rayTracingPipeline->GetOutputBuffer().Get(),
 		.Subresource = 0,
 		.StateBefore = D3D12_RESOURCE_STATE_COPY_SOURCE,
-		.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		.StateAfter = D3D12_RESOURCE_STATE_COMMON,
 		},
 	};
 	m_commandList->ResourceBarrier(1, &outputEndRTBarrier);

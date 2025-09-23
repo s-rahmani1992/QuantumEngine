@@ -57,4 +57,5 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, position, normal);
     
     payload.color = lightFactor * color.xyz * texColor.xyz;
+    payload.hit = 1;
 }

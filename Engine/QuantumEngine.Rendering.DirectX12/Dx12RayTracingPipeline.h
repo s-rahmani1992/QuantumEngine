@@ -31,6 +31,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial);
 		void RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera);
 		ComPtr<ID3D12Resource2> GetOutputBuffer() const { return m_outputBuffer; }
+		ComPtr<ID3D12DescriptorHeap> GetOutputHeap() const { return m_outputHeap; }
 	private:
 		ComPtr<ID3D12Device10> m_device;
 		ComPtr<ID3D12Resource2> m_outputBuffer;
@@ -43,7 +44,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		ref<HLSLShaderProgram> m_rtProgram;
 		ref<HLSLMaterial> m_rtMaterial;
 		ComPtr<ID3D12DescriptorHeap> m_rtHeap;
-
 		D3D12_DISPATCH_RAYS_DESC m_raytraceDesc;
 	};
 }

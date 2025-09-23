@@ -113,6 +113,12 @@
     <ClInclude Include="Rendering\ShaderRegistery.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Vector2UInt.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Rendering\GBufferRTReflectionRenderer.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -159,6 +165,9 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\ShapeBuilder.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Vector2UInt.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

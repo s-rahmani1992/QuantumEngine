@@ -18,6 +18,7 @@ namespace QuantumEngine {
 
 	namespace Rendering {
 		class MeshRenderer;
+		class GBufferRTReflectionRenderer;
 	}
 }
 
@@ -31,6 +32,8 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12GameEntityPipeline;
 	class DX12RayTracingPipeline;
 	class DX12ShaderRegistery;
+	class DX12GBufferPipelineModule;
+	struct EntityGBufferData;
 
 	namespace RayTracing {
 		class RTAccelarationStructure;
@@ -45,6 +48,13 @@ namespace QuantumEngine::Rendering::DX12 {
 	struct DX12MeshRendererGPUData {
 	public:
 		ref<QuantumEngine::Rendering::MeshRenderer> meshRenderer;
+		ComPtr<ID3D12Resource2> transformResource;
+		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
+	};
+
+	struct EntityGBufferData {
+	public:
+		ref<GBufferRTReflectionRenderer> renderer;
 		ComPtr<ID3D12Resource2> transformResource;
 		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};
@@ -114,6 +124,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::vector<DX12MeshRendererGPUData> m_meshRendererData;
 		std::vector<ref<DX12GameEntityPipeline>> m_rasterizationPipelines;
 
+		std::vector<EntityGBufferData> m_gBufferEntities;
+		ref<DX12GBufferPipelineModule> m_gBufferPipeline;
+		ref<DX12RayTracingPipeline> m_GBufferrayTracingPipeline;
 		std::vector<DX12RayTracingGPUData> m_rtEntityData;
 		ref<DX12RayTracingPipeline> m_rayTracingPipeline;
 	};

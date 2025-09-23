@@ -29,6 +29,7 @@
 #include "Rendering/MeshRenderer.h"
 #include "Rendering/RayTracingComponent.h"
 #include "DX12ShaderRegistery.h"
+#include "Rendering/GBufferRTReflectionRenderer.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -95,7 +96,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     assetManager->UploadTextureToGPU(carTex);
 
     // Creating the camera
-    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 2.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
+    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 5.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
     ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
     CameraController camController(mainCamera);
 
@@ -151,6 +152,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         return 0;
     }
 
+    ref<Render::Shader> gBufferMirrorVertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\g_buffer_mirror.vert.hlsl", DX12::VERTEX_SHADER, errorStr);
+
+    if (gBufferMirrorVertexShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
+    ref<Render::Shader> gBufferMirrorPixelShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\g_buffer_mirror.pix.hlsl", DX12::PIXEL_SHADER, errorStr);
+
+    if (gBufferMirrorPixelShader == nullptr) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Compiling Shader: \n") + errorStr).c_str(), "Shader Compile Error", 0);
+        return 0;
+    }
+
     auto program = shaderRegistry->CreateAndRegisterShaderProgram("Simple_Program", { vertexShader, pixelShader }, false);
     auto rtProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Program", { rtShader }, false);
     auto rtColorProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Color_Program", { rtColorShader }, true);
@@ -158,6 +173,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto rtWaterProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Reflection_Program", { rtWaterShader }, true);
     auto rtGroundProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Ground_Program", { rtGroundShader }, true);
     auto rtRefractorProgram = shaderRegistry->CreateAndRegisterShaderProgram("Simple_RT_Refraction_Program", { rtRefractorShader }, true);
+	auto gBufferMirrorProgram = shaderRegistry->CreateAndRegisterShaderProgram("G_Buffer_Mirror_Program", { gBufferMirrorVertexShader, gBufferMirrorPixelShader }, false);
 
     auto model = AssimpModel3DImporter::Import(WCharToString((root + L"\\Assets\\Models\\RetroCar.fbx").c_str()), ModelImportProperties{.axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f)}, errorStr);
     if(model == nullptr) {
@@ -195,7 +211,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> pyramidMesh = std::make_shared<Mesh>(pyramidVertices, pyramidIndices);
 
-    std::shared_ptr<Mesh> cubeMesh = ShapeBuilder::CreateCube(1.0f);
+    std::shared_ptr<Mesh> cubeMesh = ShapeBuilder::CreateCompleteCube(1.0f);
     std::shared_ptr<Mesh> sphereMesh = ShapeBuilder::CreateSphere(1.0f, 50, 50);
 
     std::vector<Vertex> skyBoxVertices = {
@@ -244,12 +260,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
     material1->Initialize(false);
     material1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
-    material1->SetTexture2D("mainTexture", tex1);
+    material1->SetTexture2D("mainTexture", tex2);
 
     ref<DX12::HLSLMaterial> rtMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtColorProgram);
     rtMaterial1->Initialize(true);
     rtMaterial1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
-    rtMaterial1->SetTexture2D("mainTexture", tex1);
+    rtMaterial1->SetTexture2D("mainTexture", tex2);
     rtMaterial1->SetUInt32("castShadow", 1);
 
     ref<DX12::HLSLMaterial> material2 = std::make_shared<DX12::HLSLMaterial>(program);
@@ -312,17 +328,25 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     refractorRTMaterial->SetFloat("refractionFactor", 1.2f);
     refractorRTMaterial->SetUInt32("castShadow", 0);
 
-    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(1.3f), Vector3(0.0f, 0.0f, 1.0f), 45);
+	ref<DX12::HLSLMaterial> mirrorGBufferMaterial = std::make_shared<DX12::HLSLMaterial>(gBufferMirrorProgram);
+	mirrorGBufferMaterial->Initialize(false);
+	mirrorGBufferMaterial->SetTexture2D("mainTexture", waterTex);
+
+    auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
 	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(pyramidMesh, material1);
-	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(pyramidMesh, rtMaterial1);
+	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(pyramidMesh, rtMaterial3);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, meshRenderer1, rtComponent1);
-    auto transform2 = std::make_shared<Transform>(Vector3(10.2f, 5.4f, 3.0f), Vector3(3.6f), Vector3(0.0f, 1.0f, 1.0f), 60);
-    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(cubeMesh, material2);
-    auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(cubeMesh, rtMaterial2);
+    
+    auto transform2 = std::make_shared<Transform>(Vector3(5.2f, 3.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 120);
+    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(carMesh, material3);
+    auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(carMesh, rtMaterial3);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, meshRenderer2, rtComponent2);
-    /*auto transform3 = std::make_shared<Transform>(Vector3(5.2f, 1.0f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, carMesh, material3, rtMaterial3);
-    auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    
+    auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 1.0f, 4.0f), Vector3(6.0f, 1.0f, 6.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(cubeMesh, mirrorGBufferMaterial);
+	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(cubeMesh, mirrorRTMaterial);
+    auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, mirrorRenderer, nullptr);
+    /*auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
     auto groundTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto groundEntity = std::make_shared<QuantumEngine::GameEntity>(groundTransform, planeMesh, planeMaterial, planeRTMaterial);
@@ -335,7 +359,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     lightData.directionalLights.push_back(DirectionalLight{
         .color = Color(1.0f, 1.0f, 1.0f, 1.0f),
         .direction = Vector3(2.0f, -6.0f, 0.0f),
-        .ambient = 0.1f,
+        .ambient = 0.3f,
         .diffuse = 1.3f,
         .specular = 0.1f,
         });
@@ -357,7 +381,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->RegisterLight(lightData);
 
     gpuContext->SetCamera(mainCamera);
-    gpuContext->PrepareGameEntities({entity1, entity2});
+    gpuContext->PrepareGameEntities({entity1, entity2, entity3});
     gpuContext->PrepareRayTracingData(rtProgram);
 
     Int64 countsPerSecond = 0;
