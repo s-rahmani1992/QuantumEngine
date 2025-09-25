@@ -1,7 +1,8 @@
 #include "TransformStructs.hlsli"
 #include "RTStructs.hlsli"
+#include "LightStructs.hlsli"
 
-cbuffer ObjectTransformData : register(b2)
+cbuffer ObjectTransformData : register(b4)
 {
     TransformData transformData;
 };
@@ -18,6 +19,16 @@ cbuffer MissProps : register(b1, space1)
     uint missIndex;
     float3 h; //dummy field to keep the register multiple of 4
 };
+
+cbuffer CameraData : register(b2)
+{
+    CameraData cameraData;
+};
+
+cbuffer LightData : register(b3, space0)
+{
+    LightData lightData;
+}
 
 RaytracingAccelerationStructure gRtScene : register(t3, space1);
 
@@ -60,7 +71,18 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         innerPayload.targetMode = 1;
         innerPayload.recursionCount = payload.recursionCount + 1;
         TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, missIndex, ray, innerPayload);
-        payload.color = 0.5 * (innerPayload.color.xyz + texColor.xyz);
+        
+        float3 lightFactor = float3(0.0f, 0.0f, 0.0f);
+    
+        for (uint i = 0; i < lightData.directionalLightCount; i++)
+            lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, ray.Origin, normal);
+        for (uint i = 0; i < lightData.pointLightCount; i++)
+            lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, ray.Origin, normal);
+        
+        if(innerPayload.hit == 0)
+            payload.color = lightFactor * texColor.xyz;
+        else
+            payload.color = 0.5 * lightFactor * (innerPayload.color.xyz + texColor.xyz);
     }
     else
     {
@@ -72,4 +94,5 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
 void miss(inout GeneralPayload payload)
 {
     payload.color = float3(2.4, 2.6, 2.2);
+    payload.hit = 0;
 }

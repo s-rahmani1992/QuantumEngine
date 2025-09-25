@@ -335,7 +335,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
 	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(pyramidMesh, material1);
-	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(pyramidMesh, rtMaterial3);
+	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(pyramidMesh, rtMaterial1);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, meshRenderer1, rtComponent1);
     
     auto transform2 = std::make_shared<Transform>(Vector3(5.2f, 3.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 120);
@@ -343,9 +343,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(carMesh, rtMaterial3);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, meshRenderer2, rtComponent2);
     
-    auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 1.0f, 4.0f), Vector3(6.0f, 1.0f, 6.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(cubeMesh, mirrorGBufferMaterial);
-	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(cubeMesh, mirrorRTMaterial);
+    auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 3.0f, 4.0f), Vector3(1.0f, 1.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(lionMesh, mirrorGBufferMaterial);
+	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(lionMesh, mirrorRTMaterial);
     auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, mirrorRenderer, nullptr);
     /*auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
