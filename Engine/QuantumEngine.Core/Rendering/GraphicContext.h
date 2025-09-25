@@ -1,8 +1,8 @@
 #pragma once
 #include "../BasicTypes.h"
-#include "Core/Matrix4.h"
-#include "Core/Vector3.h"
-#include "Core/Camera/Camera.h"
+#include "../Core/Matrix4.h"
+#include "../Core/Vector3.h"
+#include "../Core/Camera/Camera.h"
 #include <vector>
 
 namespace QuantumEngine {

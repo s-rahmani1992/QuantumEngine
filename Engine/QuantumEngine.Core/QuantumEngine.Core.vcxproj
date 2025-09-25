@@ -114,6 +114,7 @@
   <ItemGroup>
     <ClInclude Include="BasicTypes.h" />
     <ClInclude Include="Core\AssimpModel3DImporter.h" />
+    <ClInclude Include="Core\Behaviour.h" />
     <ClInclude Include="Core\Camera\Camera.h" />
     <ClInclude Include="Core\Camera\PerspectiveCamera.h" />
     <ClInclude Include="Core\Color.h" />

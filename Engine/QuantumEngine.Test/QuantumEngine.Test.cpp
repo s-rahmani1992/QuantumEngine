@@ -30,6 +30,7 @@
 #include "Rendering/RayTracingComponent.h"
 #include "DX12ShaderRegistery.h"
 #include "Rendering/GBufferRTReflectionRenderer.h"
+#include "FrameRateLogger.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -98,7 +99,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // Creating the camera
     auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 5.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
     ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
-    CameraController camController(mainCamera);
+    ref<CameraController> cameraController = std::make_shared<CameraController>(mainCamera);
 
     // Compiling Shaders
     ref<Render::Shader> vertexShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\color.vert.hlsl", DX12::VERTEX_SHADER, errorStr);
@@ -384,29 +385,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     gpuContext->PrepareGameEntities({entity1, entity2, entity3});
     gpuContext->PrepareRayTracingData(rtProgram);
 
-    Int64 countsPerSecond = 0;
-    QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
-    double secondsPerCount = 1.0 / (double)countsPerSecond;
-    Int32 fps = 60;
-    Float targetDelta = 1.0f / fps;
-    Float deltaTime = 0.0f;
-    Int64 lastCount = 0;
-    QueryPerformanceCounter((LARGE_INTEGER*)&lastCount);
-    Int64 currentCount = 0;
-    while (win->ShouldClose() == false) {
-        QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
-        win->Update(deltaTime);
-        camController.Update(deltaTime);
-        gpuContext->Render();
-
-        deltaTime = secondsPerCount * (currentCount - lastCount);
-        while (deltaTime < targetDelta) {
-            QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
-            deltaTime = secondsPerCount * (currentCount - lastCount);
-        }
-        lastCount = currentCount;
-        int fpsd = (int)(1.0f / deltaTime);
-    }
+	auto frameLogger = std::make_shared<FrameRateLogger>();
+    Platform::Application::Run(win, gpuContext, std::vector<ref<Behaviour>>({ cameraController, frameLogger }));
     // Initialize global strings
     //LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     //LoadStringW(hInstance, IDC_QUANTUMENGINETEST, szWindowClass, MAX_LOADSTRING);

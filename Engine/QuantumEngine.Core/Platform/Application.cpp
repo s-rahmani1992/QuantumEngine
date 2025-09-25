@@ -1,5 +1,7 @@
 #include "Application.h"
 #include "GraphicWindow.h"
+#include "../Core/Behaviour.h"
+#include "../Rendering/GraphicContext.h"
 
 QuantumEngine::Platform::Application QuantumEngine::Platform::Application::m_instance = {};
 
@@ -13,6 +15,62 @@ void QuantumEngine::Platform::Application::CreateApplication(HINSTANCE hInstance
 ref<QuantumEngine::Platform::GraphicWindow> QuantumEngine::Platform::Application::CreateGraphicWindow(const WindowProperties& properties)
 {
 	return std::make_shared<GraphicWindow>(properties, m_instance.winClass);
+}
+
+void QuantumEngine::Platform::Application::Run(const ref<QuantumEngine::Platform::GraphicWindow>& win, const ref<QuantumEngine::Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours)
+{
+    Int64 countsPerSecond = 0;
+    QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
+    double secondsPerCount = 1.0 / (double)countsPerSecond;
+    Int32 fps = 60;
+    Float targetDelta = 1.0f / fps;
+    Float deltaTime = 0.0f;
+    Int64 lastCount = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&lastCount);
+    Int64 currentCount = 0;
+    while (win->ShouldClose() == false) {
+        QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
+        win->Update(deltaTime);
+
+        for(const auto& behaviour : behaviours) {
+            behaviour->Update(deltaTime);
+		}
+
+        renderer->Render();
+
+        deltaTime = secondsPerCount * (currentCount - lastCount);
+        lastCount = currentCount;
+    }
+}
+
+void QuantumEngine::Platform::Application::RunFixed(const ref<GraphicWindow>& win, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours, UInt32 fps)
+{
+    Int64 countsPerSecond = 0;
+    QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSecond);
+    double secondsPerCount = 1.0 / (double)countsPerSecond;
+    Float targetDelta = 1.0f / fps;
+    Float deltaTime = 0.0f;
+    Int64 lastCount = 0;
+    QueryPerformanceCounter((LARGE_INTEGER*)&lastCount);
+    Int64 currentCount = 0;
+    while (win->ShouldClose() == false) {
+        QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
+        win->Update(deltaTime);
+
+        for (const auto& behaviour : behaviours) {
+            behaviour->Update(deltaTime);
+        }
+
+        renderer->Render();
+
+        deltaTime = secondsPerCount * (currentCount - lastCount);
+        while (deltaTime < targetDelta) {
+            QueryPerformanceCounter((LARGE_INTEGER*)&currentCount);
+            deltaTime = secondsPerCount * (currentCount - lastCount);
+        }
+        lastCount = currentCount;
+        int fpsd = (int)(1.0f / deltaTime);
+    }
 }
 
 void QuantumEngine::Platform::Application::CreateWindowClass()

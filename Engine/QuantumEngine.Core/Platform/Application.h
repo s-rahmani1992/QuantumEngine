@@ -3,6 +3,15 @@
 #include "./CommonWin.h"
 #include "../BasicTypes.h"
 #include "../Rendering/GPUDeviceManager.h"
+#include <vector>
+
+namespace QuantumEngine {
+	class Behaviour;
+}
+
+namespace QuantumEngine::Rendering {
+	class GraphicContext;
+}
 
 namespace QuantumEngine::Platform {
 	struct WindowProperties;
@@ -23,6 +32,9 @@ namespace QuantumEngine::Platform {
 			m_instance.m_gpu_device->Initialize();
 			return m_instance.m_gpu_device;
 		}
+
+		static void Run(const ref<GraphicWindow>& window, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours);
+		static void RunFixed(const ref<GraphicWindow>& window, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours, UInt32 fps = 60);
 
 	private:
 		void CreateWindowClass();

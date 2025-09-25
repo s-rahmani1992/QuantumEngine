@@ -1,11 +1,12 @@
 #pragma once
 #include "Core/Camera/Camera.h"
+#include "Core/Behaviour.h"
 
-class CameraController
+class CameraController : public QuantumEngine::Behaviour
 {
 public:
 	CameraController(ref<QuantumEngine::Camera>& camera);
-	void Update(Float deltaTime);
+	virtual void Update(Float deltaTime) override;
 private:
 	ref<QuantumEngine::Camera> m_camera;
 	Float m_moveSpeed;
