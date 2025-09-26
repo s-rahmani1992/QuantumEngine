@@ -98,7 +98,7 @@ ref<QuantumEngine::Mesh> QuantumEngine::ShapeBuilder::CreateSphere(Float radius,
 			unsigned int index1 = nextStack * (vSegment + 1) + slices;
 			unsigned int index2 = stacks * (vSegment + 1) + nextSlice;
 			unsigned int index3 = nextStack * (vSegment + 1) + nextSlice;
-			sphereIndices.insert(sphereIndices.end(), { index0, index1, index2, index2, index1, index3 });
+			sphereIndices.insert(sphereIndices.end(), { index0, index2, index1, index2, index3, index1 });
 		}
 	}
 	return std::make_shared<Mesh>(sphereVertices, sphereIndices);
