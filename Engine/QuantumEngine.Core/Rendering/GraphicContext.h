@@ -21,14 +21,7 @@ namespace QuantumEngine::Rendering {
 		virtual void Render() = 0;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& assetManager) = 0;
 		virtual void RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery) = 0;
-		virtual void PrepareGameEntities(const std::vector<ref<GameEntity>>& gameEntities) = 0;
-		virtual bool PrepareRayTracingData(const ref<ShaderProgram>& rtProgram) = 0;
-		virtual void RegisterLight(const SceneLightData& lights) = 0;
-		void SetCamera(const ref<Camera>& camera) { 
-			m_camera = camera; 
-			m_camData.projectionMatrix = camera->ProjectionMatrix();
-			m_camData.inverseProjectionMatrix = camera->InverseProjectionMatrix();
-		}
+		virtual bool PrepareScene(const std::vector<ref<GameEntity>>& gameEntities, const ref<Camera>& camera, const SceneLightData& lights, const ref<ShaderProgram>& rtProgram) = 0;
 	protected:
 		struct CameraGPU {
 		public:
@@ -37,7 +30,6 @@ namespace QuantumEngine::Rendering {
 			Matrix4 viewMatrix;
 			Vector3 position;
 		};
-		ref<Camera> m_camera;
-		CameraGPU m_camData;
+		
 	};
 }

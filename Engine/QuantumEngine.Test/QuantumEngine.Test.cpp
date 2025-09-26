@@ -63,7 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     OS::Application::CreateApplication(hInstance);
     auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
     auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
-    auto gpuContext = gpuDevice->CreateContextForWindows(win);
+    auto gpuContext = gpuDevice->CreateHybridContextForWindows(win);
     auto assetManager = gpuDevice->CreateAssetManager();
     gpuContext->RegisterAssetManager(assetManager);
 	auto shaderRegistry = gpuDevice->CreateShaderRegistery();
@@ -346,7 +346,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 3.0f, 4.0f), Vector3(1.0f, 1.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
 	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(lionMesh, mirrorGBufferMaterial);
 	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(lionMesh, mirrorRTMaterial);
-    auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, mirrorRenderer, nullptr);
+    auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, mirrorRenderer, rtComponent3);
     /*auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);
     auto groundTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
@@ -379,12 +379,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         .radius = 9.0f,
         });
 
-    gpuContext->RegisterLight(lightData);
-
-    gpuContext->SetCamera(mainCamera);
-    gpuContext->PrepareGameEntities({entity1, entity2, entity3});
-    gpuContext->PrepareRayTracingData(rtProgram);
-
+	gpuContext->PrepareScene({ entity1, entity2, entity3 }, mainCamera, lightData, rtProgram);
+    
 	auto frameLogger = std::make_shared<FrameRateLogger>();
     Platform::Application::Run(win, gpuContext, std::vector<ref<Behaviour>>({ cameraController, frameLogger }));
     // Initialize global strings

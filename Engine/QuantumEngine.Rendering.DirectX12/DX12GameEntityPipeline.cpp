@@ -3,7 +3,7 @@
 #include "Core/GameEntity.h"
 #include "Core/Mesh.h"
 #include "DX12MeshController.h"
-#include "DX12GraphicContext.h"
+#include "DX12HybridContext.h"
 #include "HLSLShader.h"
 #include "HLSLMaterial.h"
 #include "HLSLShaderProgram.h"

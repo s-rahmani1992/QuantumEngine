@@ -2,7 +2,8 @@
 #include "Platform/GraphicWindow.h"
 #include "DX12GPUDeviceManager.h"
 #include "DX12CommandExecuter.h"
-#include "DX12GraphicContext.h"
+#include "DX12RayTracingContext.h"
+#include "DX12HybridContext.h"
 #include "DX12AssetManager.h"
 #include "DX12ShaderRegistery.h"
 
@@ -45,11 +46,22 @@ bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 		return false;
 }
 
-ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
+ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateHybridContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
 {
 	ref<DX12CommandExecuter> cmdExecuter = CreateCommandExecuter();
-	ref<DX12GraphicContext> context = std::make_shared< DX12GraphicContext>(2, cmdExecuter, window);
+	ref<DX12GraphicContext> context = std::make_shared< DX12HybridContext>(2, cmdExecuter, window);
 	
+	if (context->Initialize(m_device.Get(), m_factory))
+		return context;
+
+	return nullptr;
+}
+
+ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateRayTracingContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
+{
+	ref<DX12CommandExecuter> cmdExecuter = CreateCommandExecuter();
+	ref<DX12GraphicContext> context = std::make_shared<DX12RayTracingContext>(2, cmdExecuter, window);
+
 	if (context->Initialize(m_device.Get(), m_factory))
 		return context;
 

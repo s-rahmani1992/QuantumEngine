@@ -165,8 +165,10 @@
     <ClInclude Include="DX12GBufferPipelineModule.h" />
     <ClInclude Include="DX12GPUDeviceManager.h" />
     <ClInclude Include="DX12GraphicContext.h" />
+    <ClInclude Include="DX12HybridContext.h" />
     <ClInclude Include="DX12LightManager.h" />
     <ClInclude Include="DX12MeshController.h" />
+    <ClInclude Include="DX12RayTracingContext.h" />
     <ClInclude Include="Dx12RayTracingPipeline.h" />
     <ClInclude Include="DX12ShaderRegistery.h" />
     <ClInclude Include="DX12Texture2DController.h" />
@@ -186,8 +188,10 @@
     <ClCompile Include="DX12GBufferPipelineModule.cpp" />
     <ClCompile Include="DX12GPUDeviceManager.cpp" />
     <ClCompile Include="DX12GraphicContext.cpp" />
+    <ClCompile Include="DX12HybridContext.cpp" />
     <ClCompile Include="DX12LightManager.cpp" />
     <ClCompile Include="DX12MeshController.cpp" />
+    <ClCompile Include="DX12RayTracingContext.cpp" />
     <ClCompile Include="Dx12RayTracingPipeline.cpp" />
     <ClCompile Include="DX12ShaderRegistery.cpp" />
     <ClCompile Include="DX12Texture2DController.cpp" />

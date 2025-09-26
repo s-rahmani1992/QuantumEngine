@@ -26,7 +26,8 @@ namespace QuantumEngine::Rendering::DX12 {
 	{
 	public:
 		virtual bool Initialize() override;
-		virtual ref<GraphicContext> CreateContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window) override;
+		virtual ref<GraphicContext> CreateHybridContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window) override;
+		virtual ref<GraphicContext> CreateRayTracingContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window) override;
 		virtual ref<GPUAssetManager> CreateAssetManager() override;
 		virtual ref<ShaderRegistery> CreateShaderRegistery() override;
 		~DX12GPUDeviceManager();

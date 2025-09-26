@@ -7,7 +7,7 @@
 #include "Core/Mesh.h"
 #include "HLSLMaterial.h"
 #include "Rendering/GBufferRTReflectionRenderer.h"
-#include "DX12GraphicContext.h"
+#include "DX12HybridContext.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<HLSLShaderProgram>& gBufferProgram)
 {
