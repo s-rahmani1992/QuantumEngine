@@ -63,7 +63,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     OS::Application::CreateApplication(hInstance);
     auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
     auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"First Window" });
-    auto gpuContext = gpuDevice->CreateHybridContextForWindows(win);
+    auto gpuContext = gpuDevice->CreateRayTracingContextForWindows(win);
     auto assetManager = gpuDevice->CreateAssetManager();
     gpuContext->RegisterAssetManager(assetManager);
 	auto shaderRegistry = gpuDevice->CreateShaderRegistery();
@@ -334,8 +334,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	mirrorGBufferMaterial->SetTexture2D("mainTexture", waterTex);
 
     auto transform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
-	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(pyramidMesh, material1);
-	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(pyramidMesh, rtMaterial1);
+	auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(sphereMesh, material1);
+	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(sphereMesh, rtMaterial1);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, meshRenderer1, rtComponent1);
     
     auto transform2 = std::make_shared<Transform>(Vector3(5.2f, 3.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 120);
@@ -344,8 +344,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, meshRenderer2, rtComponent2);
     
     auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 3.0f, 4.0f), Vector3(1.0f, 1.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(lionMesh, mirrorGBufferMaterial);
-	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(lionMesh, mirrorRTMaterial);
+	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(sphereMesh, mirrorGBufferMaterial);
+	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(sphereMesh, mirrorRTMaterial);
     auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, mirrorRenderer, rtComponent3);
     /*auto skyBoxTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(40.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto skyBoxEntity = std::make_shared<QuantumEngine::GameEntity>(skyBoxTransform, skyBoxMesh, skyboxMaterial, skyboxRTMaterial);

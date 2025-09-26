@@ -39,7 +39,7 @@ void rayGen()
     float3 rayDirection = normalize(pos.xyz - cameraData.position);
     ray.Direction = rayDirection - 2 * dot(norm, rayDirection) * norm;
 
-    ray.TMin = 0;
+    ray.TMin = 0.1;
     ray.TMax = 100000;
 
     GeneralPayload payLoad;
