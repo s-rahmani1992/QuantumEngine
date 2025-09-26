@@ -29,10 +29,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12AssetManager;
 	class HLSLMaterial;
 	class HLSLShaderProgram;
-	class DX12GameEntityPipeline;
-	class DX12RayTracingPipeline;
 	class DX12ShaderRegistery;
-	class DX12GBufferPipelineModule;
 	struct EntityGBufferData;
 
 	namespace RayTracing {

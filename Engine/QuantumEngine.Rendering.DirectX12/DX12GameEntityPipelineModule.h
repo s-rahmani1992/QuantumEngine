@@ -10,7 +10,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLMaterial;
 	class DX12MeshController;
 
-	class DX12GameEntityPipeline
+	class DX12GameEntityPipelineModule
 	{
 	public:
 		bool Initialize(const ComPtr<ID3D12Device10>& device, const DX12MeshRendererGPUData& meshRendererData, DXGI_FORMAT depthFormat);

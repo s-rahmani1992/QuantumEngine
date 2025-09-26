@@ -2,6 +2,10 @@
 #include "DX12GraphicContext.h"
 
 namespace QuantumEngine::Rendering::DX12 {
+	class DX12RayTracingPipelineModule;
+	class DX12GBufferPipelineModule;
+	class DX12GameEntityPipelineModule;
+
 	struct DX12MeshRendererGPUData {
 	public:
 		ref<QuantumEngine::Rendering::MeshRenderer> meshRenderer;
@@ -40,11 +44,11 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12DescriptorHeap> m_rasterHeap;
 
 		std::vector<DX12MeshRendererGPUData> m_meshRendererData;
-		std::vector<ref<DX12GameEntityPipeline>> m_rasterizationPipelines;
+		std::vector<ref<DX12GameEntityPipelineModule>> m_rasterizationPipelines;
 
 		std::vector<EntityGBufferData> m_gBufferEntities;
 		ref<DX12GBufferPipelineModule> m_gBufferPipeline;
-		ref<DX12RayTracingPipeline> m_GBufferrayTracingPipeline;
+		ref<DX12RayTracingPipelineModule> m_GBufferrayTracingPipeline;
 	};
 }
 

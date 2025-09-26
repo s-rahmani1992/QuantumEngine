@@ -3,8 +3,8 @@
 #include "Platform/GraphicWindow.h"
 #include "DX12Utilities.h"
 #include "DX12CommandExecuter.h"
-#include "DX12GameEntityPipeline.h"
-#include "Dx12RayTracingPipeline.h"
+#include "DX12GameEntityPipelineModule.h"
+#include "Dx12RayTracingPipelineModule.h"
 #include "DX12GBufferPipelineModule.h"
 #include "HLSLMaterial.h"
 #include "HLSLShaderProgram.h"
@@ -247,7 +247,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 	}
 
 	for (auto& meshRender : m_meshRendererData) {
-		auto pipeline = std::make_shared<DX12GameEntityPipeline>();
+		auto pipeline = std::make_shared<DX12GameEntityPipelineModule>();
 		if (pipeline->Initialize(m_device, meshRender, m_depthFormat) == false) {
 			return;
 		}
@@ -285,7 +285,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		auto gBufferRTMaterial = std::make_shared<HLSLMaterial>(std::dynamic_pointer_cast<HLSLShaderProgram>(m_shaderRegistery->GetShaderProgram("G_Buffer_RT_Global_Program")));
 		gBufferRTMaterial->Initialize(true);
 
-		m_GBufferrayTracingPipeline = std::make_shared<DX12RayTracingPipeline>();
+		m_GBufferrayTracingPipeline = std::make_shared<DX12RayTracingPipelineModule>();
 
 		m_commandAllocator->Reset();
 		m_commandList->Reset(m_commandAllocator.Get(), nullptr);
@@ -301,7 +301,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 
 		for (auto& entity : m_gBufferEntities) {
 			auto meshRender = std::make_shared<MeshRenderer>(entity.renderer->GetMesh(), entity.renderer->GetMaterial());
-			auto pipeline = std::make_shared<DX12GameEntityPipeline>();
+			auto pipeline = std::make_shared<DX12GameEntityPipelineModule>();
 
 			auto material = std::dynamic_pointer_cast<HLSLMaterial>(entity.renderer->GetMaterial());
 			material->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);

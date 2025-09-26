@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "Dx12RayTracingPipeline.h"
+#include "Dx12RayTracingPipelineModule.h"
 #include "RayTracing/RTAccelarationStructure.h"
 #include "DX12GraphicContext.h"
 #include "Core/GameEntity.h"
@@ -12,7 +12,7 @@
 #include "DX12MeshController.h"
 #include "Rendering/RayTracingComponent.h"
 
-bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial)
+bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial)
 {
 	m_rtMaterial = rtMaterial;
 	commandList->GetDevice(IID_PPV_ARGS(&m_device));
@@ -454,7 +454,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::Initialize(const Co
 
 }
 
-void QuantumEngine::Rendering::DX12::DX12RayTracingPipeline::RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera)
+void QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera)
 {
 	Matrix4 v = camera->ViewMatrix();
 	m_TLASController->UpdateTransforms(commandList, v);

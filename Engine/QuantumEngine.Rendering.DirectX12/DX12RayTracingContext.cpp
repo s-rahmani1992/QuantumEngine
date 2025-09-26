@@ -7,7 +7,7 @@
 #include "HLSLShaderProgram.h"
 #include "HLSLMaterial.h"
 #include "DX12Utilities.h"
-#include "DX12RayTracingPipeline.h"
+#include "DX12RayTracingPipelineModule.h"
 #include "Platform/GraphicWindow.h"
 #include "DX12CommandExecuter.h"
 
@@ -135,7 +135,7 @@ void QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareRayTracingPip
 	m_rtMaterial = std::make_shared<HLSLMaterial>(std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram));
 	m_rtMaterial->Initialize(true);
 
-	m_rayTracingPipeline = std::make_shared<DX12RayTracingPipeline>();
+	m_rayTracingPipeline = std::make_shared<DX12RayTracingPipelineModule>();
 
 	m_commandAllocator->Reset();
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);

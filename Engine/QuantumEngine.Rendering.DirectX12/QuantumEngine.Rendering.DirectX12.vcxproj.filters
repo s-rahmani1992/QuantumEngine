@@ -63,10 +63,10 @@
     <ClInclude Include="DX12LightManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12GameEntityPipeline.h">
+    <ClInclude Include="DX12GameEntityPipelineModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dx12RayTracingPipeline.h">
+    <ClInclude Include="Dx12RayTracingPipelineModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DX12ShaderRegistery.h">
@@ -128,10 +128,10 @@
     <ClCompile Include="DX12LightManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12GameEntityPipeline.cpp">
+    <ClCompile Include="DX12GameEntityPipelineModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Dx12RayTracingPipeline.cpp">
+    <ClCompile Include="Dx12RayTracingPipelineModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DX12ShaderRegistery.cpp">

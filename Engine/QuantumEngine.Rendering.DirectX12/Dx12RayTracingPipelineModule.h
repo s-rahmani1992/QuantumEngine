@@ -25,7 +25,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLMaterial;
 	class HLSLShaderProgram;
 
-	class DX12RayTracingPipeline
+	class DX12RayTracingPipelineModule
 	{
 	public:
 		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial);

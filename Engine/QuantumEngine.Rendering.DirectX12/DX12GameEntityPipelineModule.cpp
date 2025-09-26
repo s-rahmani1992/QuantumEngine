@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "DX12GameEntityPipeline.h"
+#include "DX12GameEntityPipelineModule.h"
 #include "Core/GameEntity.h"
 #include "Core/Mesh.h"
 #include "DX12MeshController.h"
@@ -10,7 +10,7 @@
 #include "DX12Utilities.h"
 #include "Rendering/MeshRenderer.h"
 
-bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const ComPtr<ID3D12Device10>& device, const DX12MeshRendererGPUData& meshRendererData, DXGI_FORMAT depthFormat)
+bool QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const DX12MeshRendererGPUData& meshRendererData, DXGI_FORMAT depthFormat)
 {
 	m_transformHeapHandle = meshRendererData.transformHandle;
 
@@ -128,7 +128,7 @@ bool QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Initialize(const Co
 	return true;
 }
 
-void QuantumEngine::Rendering::DX12::DX12GameEntityPipeline::Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle)
+void QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle)
 {
 	//Pipeline
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
