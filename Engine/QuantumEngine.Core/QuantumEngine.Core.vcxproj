@@ -124,6 +124,7 @@
     <ClInclude Include="Core\Matrix4.h" />
     <ClInclude Include="Core\Mesh.h" />
     <ClInclude Include="Core\Model3DAsset.h" />
+    <ClInclude Include="Core\Scene.h" />
     <ClInclude Include="Core\ShapeBuilder.h" />
     <ClInclude Include="Core\Texture2D.h" />
     <ClInclude Include="Core\Vector2UInt.h" />

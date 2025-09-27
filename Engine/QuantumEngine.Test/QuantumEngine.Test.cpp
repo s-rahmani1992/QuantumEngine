@@ -31,25 +31,13 @@
 #include "DX12ShaderRegistery.h"
 #include "Rendering/GBufferRTReflectionRenderer.h"
 #include "FrameRateLogger.h"
+#include "Core/Scene.h"
 
 namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
 namespace Render = QuantumEngine::Rendering;
 
 using namespace QuantumEngine;
-
-#define MAX_LOADSTRING 100
-
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
-
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -69,16 +57,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	auto shaderRegistry = gpuDevice->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistry);
 
-    LPWSTR rootF = new WCHAR[500];
-    DWORD size;
-    size = GetModuleFileNameW(NULL, rootF, 500);
-    std::wstring root = std::wstring(rootF, size);
-
-    const size_t last_slash_idx = root.rfind('\\');
-    if (std::string::npos != last_slash_idx)
-        root = root.substr(0, last_slash_idx);
-
-    delete[] rootF;
+    std::wstring root = Platform::Application::GetExecutablePath();
     std::string errorStr;
 
     // Importing Textures
@@ -254,10 +233,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
     std::shared_ptr<Mesh> planeMesh = std::make_shared<Mesh>(planeVertices, planeIndices);
 
-	assetManager->UploadMeshesToGPU({ carMesh, lionMesh, cubeMesh, sphereMesh, pyramidMesh, skyBoxMesh, planeMesh });
-    
-    Matrix4 project = mainCamera->ProjectionMatrix();
-
     ref<DX12::HLSLMaterial> material1 = std::make_shared<DX12::HLSLMaterial>(program);
     material1->Initialize(false);
     material1->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
@@ -338,12 +313,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(sphereMesh, rtMaterial1);
     auto entity1 = std::make_shared<QuantumEngine::GameEntity>(transform1, meshRenderer1, rtComponent1);
     
-    auto transform2 = std::make_shared<Transform>(Vector3(5.2f, 3.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 120);
+    auto transform2 = std::make_shared<Transform>(Vector3(5.2f, 1.4f, 3.0f), Vector3(0.6f), Vector3(0.0f, 1.0f, 1.0f), 0);
     auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(carMesh, material3);
     auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(carMesh, rtMaterial3);
     auto entity2 = std::make_shared<QuantumEngine::GameEntity>(transform2, meshRenderer2, rtComponent2);
     
-    auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 3.0f, 4.0f), Vector3(1.0f, 1.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto transform3 = std::make_shared<Transform>(Vector3(2.2f, 3.0f, 4.0f), Vector3(2.0f, 2.0f, 2.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
 	auto mirrorRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(sphereMesh, mirrorGBufferMaterial);
 	auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(sphereMesh, mirrorRTMaterial);
     auto entity3 = std::make_shared<QuantumEngine::GameEntity>(transform3, mirrorRenderer, rtComponent3);
@@ -379,158 +354,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
         .radius = 9.0f,
         });
 
-	gpuContext->PrepareScene({ entity1, entity2, entity3 }, mainCamera, lightData, rtProgram);
+    ref<Scene> scene = std::make_shared<Scene>();
+    scene->mainCamera = mainCamera;
+    scene->lightData = lightData;
+	scene->entities = { entity1, entity2, entity3 };
+	scene->rtGlobalProgram = rtProgram;
+    //scene->entities.push_back(skyBoxEntity);
+    //scene->entities.push_back(groundEntity);
+    //scene->entities.push_back(mirrorEntity);
+    //scene->entities.push_back(entity4);
+    if (gpuContext->PrepareScene(scene) == false) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Preparing Scene: \n") + errorStr).c_str(), "Scene Prepare Error", 0);
+        return 0;
+    }
+
+	gpuContext->PrepareScene(scene);
     
 	auto frameLogger = std::make_shared<FrameRateLogger>();
     Platform::Application::Run(win, gpuContext, std::vector<ref<Behaviour>>({ cameraController, frameLogger }));
-    // Initialize global strings
-    //LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    //LoadStringW(hInstance, IDC_QUANTUMENGINETEST, szWindowClass, MAX_LOADSTRING);
-    //MyRegisterClass(hInstance);
-
-    //// Perform application initialization:
-    //if (!InitInstance (hInstance, nCmdShow))
-    //{
-    //    return FALSE;
-    //}
-
-    //HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_QUANTUMENGINETEST));
-
-    //MSG msg;
-
-    //// Main message loop:
-    //while (GetMessage(&msg, nullptr, 0, 0))
-    //{
-    //    if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-    //    {
-    //        TranslateMessage(&msg);
-    //        DispatchMessage(&msg);
-    //    }
-    //}
-
-    //return (int) msg.wParam;
-}
-
-
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_QUANTUMENGINETEST));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_QUANTUMENGINETEST);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
-}
-
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   hInst = hInstance; // Store instance handle in our global variable
-
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // Parse the menu selections:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-            // TODO: Add any drawing code that uses hdc here...
-            EndPaint(hWnd, &ps);
-        }
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
-}
-
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
-
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
 }

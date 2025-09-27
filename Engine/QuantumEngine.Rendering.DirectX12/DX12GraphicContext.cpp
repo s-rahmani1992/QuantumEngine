@@ -9,6 +9,9 @@
 #include "DX12Utilities.h"
 #include "DX12ShaderRegistery.h"
 #include "DX12AssetManager.h"
+#include "Rendering/Renderer.h"
+#include "Rendering/RayTracingComponent.h"
+#include "Core/Scene.h"
 
 QuantumEngine::Rendering::DX12::DX12GraphicContext::DX12GraphicContext(UInt8 bufferCount, const ref<DX12CommandExecuter>& commandExecuter, ref<QuantumEngine::Platform::GraphicWindow>& window)
 	:m_bufferCount(bufferCount), m_commandExecuter(commandExecuter), m_window(window),
@@ -169,6 +172,22 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::InitializeEntityGPUData
 			.transformResource = transformResource,
 			});
 	}
+}
+
+void QuantumEngine::Rendering::DX12::DX12GraphicContext::UploadTexturesAndMeshes(const ref<Scene>& scene)
+{
+	std::set<ref<Mesh>> uniqueMeshes;
+
+	for (auto& entity : scene->entities) {
+		uniqueMeshes.insert(entity->GetRenderer()->GetMesh());
+
+		auto rtcomponent = entity->GetRayTracingComponent();
+
+		if(rtcomponent != nullptr)
+			uniqueMeshes.insert(rtcomponent->GetMesh());
+	}
+
+	m_assetManager->UploadMeshesToGPU(std::vector<ref<Mesh>>(uniqueMeshes.begin(), uniqueMeshes.end()));
 }
 
 void QuantumEngine::Rendering::DX12::DX12GraphicContext::UpdateDataHeaps()

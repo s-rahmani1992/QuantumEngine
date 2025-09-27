@@ -70,6 +70,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		bool InitializeCamera(const ref<Camera>& camera);
 		bool InitializeLight(const SceneLightData& lights);
 		void InitializeEntityGPUData(const std::vector<ref<GameEntity>>& gameEntities);
+		void UploadTexturesAndMeshes(const ref<Scene>& scene);
 		void UpdateDataHeaps();
 
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;

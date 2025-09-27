@@ -28,7 +28,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		}
 
 		virtual bool Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory) override;
-		virtual bool PrepareScene(const std::vector<ref<GameEntity>>& gameEntities, const ref<Camera>& camera, const SceneLightData& lights, const ref<ShaderProgram>& rtProgram) override;
+		virtual bool PrepareScene(const ref<Scene>& scene) override;
 		virtual void Render() override;
 
 	private:

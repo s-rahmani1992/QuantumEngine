@@ -17,6 +17,23 @@ ref<QuantumEngine::Platform::GraphicWindow> QuantumEngine::Platform::Application
 	return std::make_shared<GraphicWindow>(properties, m_instance.winClass);
 }
 
+std::wstring QuantumEngine::Platform::Application::GetExecutablePath()
+{
+    LPWSTR rootF = new WCHAR[500];
+    DWORD size;
+    size = GetModuleFileNameW(NULL, rootF, 500);
+    std::wstring root = std::wstring(rootF, size);
+
+    const size_t last_slash_idx = root.rfind('\\');
+
+    if (std::string::npos != last_slash_idx)
+        root = root.substr(0, last_slash_idx);
+
+	delete[] rootF;
+
+    return root;
+}
+
 void QuantumEngine::Platform::Application::Run(const ref<QuantumEngine::Platform::GraphicWindow>& win, const ref<QuantumEngine::Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours)
 {
     Int64 countsPerSecond = 0;

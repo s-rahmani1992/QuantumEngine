@@ -10,6 +10,7 @@
 #include "DX12RayTracingPipelineModule.h"
 #include "Platform/GraphicWindow.h"
 #include "DX12CommandExecuter.h"
+#include "Core/Scene.h"
 
 bool QuantumEngine::Rendering::DX12::DX12RayTracingContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -22,16 +23,17 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingContext::Initialize(const Com
 	return true;
 }
 
-bool QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareScene(const std::vector<ref<GameEntity>>& gameEntities, const ref<Camera>& camera, const SceneLightData& lights, const ref<ShaderProgram>& rtProgram)
+bool QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareScene(const ref<Scene>& scene)
 {
-	if (InitializeCamera(camera) == false)
+	if (InitializeCamera(scene->mainCamera) == false)
 		return false;
 
-	if (InitializeLight(lights) == false)
+	if (InitializeLight(scene->lightData) == false)
 		return false;
 
-	InitializeEntityGPUData(gameEntities);
-	PrepareRayTracingPipeline(rtProgram);
+	UploadTexturesAndMeshes(scene);
+	InitializeEntityGPUData(scene->entities);
+	PrepareRayTracingPipeline(scene->rtGlobalProgram);
     return true;
 }
 

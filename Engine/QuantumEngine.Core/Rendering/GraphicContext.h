@@ -9,6 +9,7 @@ namespace QuantumEngine {
 	class Mesh;
 	class GameEntity;
 	struct SceneLightData;
+	class Scene;
 }
 
 namespace QuantumEngine::Rendering {
@@ -21,7 +22,7 @@ namespace QuantumEngine::Rendering {
 		virtual void Render() = 0;
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& assetManager) = 0;
 		virtual void RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery) = 0;
-		virtual bool PrepareScene(const std::vector<ref<GameEntity>>& gameEntities, const ref<Camera>& camera, const SceneLightData& lights, const ref<ShaderProgram>& rtProgram) = 0;
+		virtual bool PrepareScene(const ref<Scene>& scene) = 0;
 	protected:
 		struct CameraGPU {
 		public:

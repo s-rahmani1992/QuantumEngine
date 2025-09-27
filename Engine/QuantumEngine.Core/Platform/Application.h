@@ -33,6 +33,7 @@ namespace QuantumEngine::Platform {
 			return m_instance.m_gpu_device;
 		}
 
+		static std::wstring GetExecutablePath();
 		static void Run(const ref<GraphicWindow>& window, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours);
 		static void RunFixed(const ref<GraphicWindow>& window, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours, UInt32 fps = 60);
 

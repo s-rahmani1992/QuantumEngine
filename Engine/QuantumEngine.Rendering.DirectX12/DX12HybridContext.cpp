@@ -16,6 +16,7 @@
 #include "Rendering/RayTracingComponent.h"
 #include "DX12MeshController.h"
 #include "Core/Mesh.h"
+#include "Core/Scene.h"
 
 bool QuantumEngine::Rendering::DX12::DX12HybridContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -31,15 +32,16 @@ bool QuantumEngine::Rendering::DX12::DX12HybridContext::Initialize(const ComPtr<
 	return true;
 }
 
-bool QuantumEngine::Rendering::DX12::DX12HybridContext::PrepareScene(const std::vector<ref<GameEntity>>& gameEntities, const ref<Camera>& camera, const SceneLightData& lights, const ref<ShaderProgram>& rtProgram)
+bool QuantumEngine::Rendering::DX12::DX12HybridContext::PrepareScene(const ref<Scene>& scene)
 {
-	if (InitializeCamera(camera) == false)
+	if (InitializeCamera(scene->mainCamera) == false)
 		return false;
 
-	if (InitializeLight(lights) == false)
+	if (InitializeLight(scene->lightData) == false)
 		return false;
 
-	InitializeEntityGPUData(gameEntities);
+	UploadTexturesAndMeshes(scene);
+	InitializeEntityGPUData(scene->entities);
 	InitializePipelines();
 	return true;
 }

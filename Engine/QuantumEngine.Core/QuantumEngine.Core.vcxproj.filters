@@ -122,6 +122,9 @@
     <ClInclude Include="Core\Behaviour.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Scene.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">

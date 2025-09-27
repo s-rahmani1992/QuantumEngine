@@ -15,3 +15,8 @@ std::string WCharToString(const wchar_t* wcstr)
 	WideCharToMultiByte(CP_UTF8, 0, wcstr, -1, str.data(), size_needed, nullptr, nullptr);
 	return str;
 }
+
+std::string WStringToString(const std::wstring& wString)
+{
+	return WCharToString(wString.c_str());
+}
