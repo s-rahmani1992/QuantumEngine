@@ -4,9 +4,10 @@
 
 cbuffer MaterialProps : register(b0, space1)
 {
-    float4 color;
-    uint castShadow;
-    float3 dummy;
+    float ambient;
+    float diffuse;
+    float specular;
+    float padding; // Padding
 };
 
 cbuffer ObjectTransformData : register(b1, space1)
@@ -32,12 +33,6 @@ StructuredBuffer<Vertex> g_vertices : register(t2, space1);
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    if (payload.targetMode == 2) // It's for shadow
-    {
-        payload.hit = castShadow > 0 ? 0.7f : 0.0f;
-        return;
-    }
-    
     uint baseIndex = PrimitiveIndex() * 3;
     Vertex v1 = g_vertices[g_indices[baseIndex]];
     Vertex v2 = g_vertices[g_indices[baseIndex + 1]];
@@ -49,13 +44,14 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
     float3 position = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 
-    float3 lightFactor = float3(0.0f, 0.0f, 0.0f);
+    float3 lightFactor = float3(0.1f, 0.1f, 0.1f);
+    float3 ads = float3(ambient, diffuse, specular);
 
     for (uint i = 0; i < lightData.directionalLightCount; i++)
-        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, position, normal);
+        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, position, normal, ads);
     for (uint i = 0; i < lightData.pointLightCount; i++)
-        lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, position, normal);
+        lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, position, normal, ads);
     
-    payload.color = lightFactor * color.xyz * texColor.xyz;
+    payload.color = lightFactor * texColor.xyz;
     payload.hit = 1;
 }

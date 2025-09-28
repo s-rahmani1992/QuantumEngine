@@ -74,10 +74,10 @@
     <Text Include="Assets\Shaders\color.pix.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\rt_shader.lib.hlsl">
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\rt_color.lib.hlsl">
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\rt_solid_color.lib.hlsl">

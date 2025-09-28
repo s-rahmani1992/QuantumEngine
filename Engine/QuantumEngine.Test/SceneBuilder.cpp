@@ -20,6 +20,7 @@
 #include <Core/Scene.h>
 #include <Rendering/GraphicContext.h>
 #include "FrameRateLogger.h"
+#include <Rendering/RayTracingComponent.h>
 
 using namespace QuantumEngine;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -81,9 +82,29 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
         return nullptr;
     }
 
-    auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Program", { vertexShader, pixelShader }, false);
+    auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
     
-	////// Creating the materials
+    std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
+    ref<Render::Shader> rtGlobalShader = DX12::HLSLShaderImporter::Import(rtGlobalShaderPath, DX12::LIB_SHADER, errorStr);
+
+    if (rtGlobalShader == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        return 0;
+    }
+
+	auto rtGlobalProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Global_Program", { rtGlobalShader }, false);
+
+    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
+    ref<Render::Shader> rtSimpleLightShader = DX12::HLSLShaderImporter::Import(rtSimpleLightShaderPath, DX12::LIB_SHADER, errorStr);
+
+    if (rtSimpleLightShader == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
+        return 0;
+    }
+
+	auto rtSimpleLightProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Light_Program", { rtSimpleLightShader }, true);
+
+    ////// Creating the materials
 
     ref<DX12::HLSLMaterial> carMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
     carMaterial1->Initialize(false);
@@ -92,6 +113,13 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 	carMaterial1->SetFloat("diffuse", 1.0f);
     carMaterial1->SetFloat("specular", 0.1f);
 
+	ref<DX12::HLSLMaterial> carRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
+	carRTMaterial->Initialize(true);
+	carRTMaterial->SetTexture2D("mainTexture", carTex1);
+	carRTMaterial->SetFloat("ambient", 0.1f);
+	carRTMaterial->SetFloat("diffuse", 1.0f);
+	carRTMaterial->SetFloat("specular", 0.1f);
+
     ref<DX12::HLSLMaterial> rabbitStatueMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
     rabbitStatueMaterial1->Initialize(false);
     rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
@@ -99,15 +127,25 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     rabbitStatueMaterial1->SetFloat("diffuse", 0.8f);
     rabbitStatueMaterial1->SetFloat("specular", 0.1f);
 
+	ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
+	rabbitStatueRTMaterial->Initialize(true);
+	rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
+	rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
+	rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
+	rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
+
+
 	////// Creating the entities
 
     auto carTransform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 1.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(carMesh1, carMaterial1);
-    auto carEntity1 = std::make_shared<QuantumEngine::GameEntity>(carTransform1, meshRenderer1, nullptr);
+	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(carMesh1, carRTMaterial);
+    auto carEntity1 = std::make_shared<QuantumEngine::GameEntity>(carTransform1, meshRenderer1, rtComponent1);
 
     auto rabbitStatueTransform1 = std::make_shared<Transform>(Vector3(5.2f, 1.4f, 3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(rabbitStatueMesh1, rabbitStatueMaterial1);
-    auto rabbitStatueEntity1 = std::make_shared<QuantumEngine::GameEntity>(rabbitStatueTransform1, meshRenderer2, nullptr);
+	auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(rabbitStatueMesh1, rabbitStatueRTMaterial);
+    auto rabbitStatueEntity1 = std::make_shared<QuantumEngine::GameEntity>(rabbitStatueTransform1, meshRenderer2, rtComponent2);
 
 	////// Creating the lights
 
@@ -128,7 +166,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
             .c1 = 1.0f,
             .c2 = 0.0f,
         },
-        .radius = 6.0f,
+        .radius = 9.0f,
         });
     
     auto frameLogger = std::make_shared<FrameRateLogger>();
@@ -138,6 +176,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     scene->lightData = lightData;
     scene->entities = { carEntity1, rabbitStatueEntity1};
     scene->behaviours = { cameraController, frameLogger };
+	scene->rtGlobalProgram = rtGlobalProgram;
     
     return scene;
 }
@@ -162,5 +201,28 @@ bool SceneBuilder::Run_LightSample_Hybrid(const ref<Render::GPUDeviceManager>& d
     gpuContext->PrepareScene(scene);
     Platform::Application::Run(win, gpuContext, scene->behaviours);
     
+    return true;
+}
+
+bool SceneBuilder::Run_LightSample_RayTracing(const ref<Render::GPUDeviceManager>& device, ref<Platform::GraphicWindow> win, std::string& errorStr)
+{
+    auto gpuContext = device->CreateRayTracingContextForWindows(win);
+    auto assetManager = device->CreateAssetManager();
+    gpuContext->RegisterAssetManager(assetManager);
+    auto shaderRegistery = device->CreateShaderRegistery();
+    gpuContext->RegisterShaderRegistery(shaderRegistery);
+
+    std::string error;
+
+    ref<Scene> scene = BuildLightScene(assetManager, shaderRegistery, win, error);
+
+    if (scene == nullptr) {
+        errorStr = error;
+        return false;
+    }
+
+    gpuContext->PrepareScene(scene);
+    Platform::Application::Run(win, gpuContext, scene->behaviours);
+
     return true;
 }
