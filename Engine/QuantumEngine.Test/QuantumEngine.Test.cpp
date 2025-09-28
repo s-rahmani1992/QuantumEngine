@@ -62,7 +62,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::wstring root = Platform::Application::GetExecutablePath();
     std::string errorStr;
 
-    SceneBuilder::BuildLightScene(gpuDevice, win, errorStr);
+    if (SceneBuilder::Run_LightSample_Hybrid(gpuDevice, win, errorStr) == false) {
+        MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + errorStr).c_str(), "App Error", 0);
+        return 0;
+    }
     // Importing Textures
     /*ref<QuantumEngine::Texture2D> tex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\player.png", errorStr);
     ref<QuantumEngine::Texture2D> tex2 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\bg.jpg", errorStr);

@@ -5,6 +5,7 @@
 #include "Light/Lights.h"
 #include "Texture2D.h"
 #include "../Rendering/ShaderProgram.h"
+#include "Behaviour.h"
 #include <vector>
 
 namespace QuantumEngine {
@@ -14,5 +15,6 @@ namespace QuantumEngine {
 		SceneLightData lightData;
 		std::vector<ref<GameEntity>> entities;
 		ref<Rendering::ShaderProgram> rtGlobalProgram;
+		std::vector<ref<Behaviour>> behaviours;
 	};
 }

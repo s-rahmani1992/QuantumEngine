@@ -24,16 +24,8 @@
 using namespace QuantumEngine;
 namespace DX12 = QuantumEngine::Rendering::DX12;
 
-bool SceneBuilder::BuildLightScene(const ref<Render::GPUDeviceManager>& device, ref<Platform::GraphicWindow> win, std::string& error)
+ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, ref<Platform::GraphicWindow> win, std::string& error)
 {
-
-    auto gpuContext = device->CreateHybridContextForWindows(win);
-    auto assetManager = device->CreateAssetManager();
-    gpuContext->RegisterAssetManager(assetManager);
-    auto shaderRegistery = device->CreateShaderRegistery();
-    gpuContext->RegisterShaderRegistery(shaderRegistery);
-
-
 	std::string errorStr;
 
 	std::wstring root = Platform::Application::GetExecutablePath();
@@ -59,7 +51,7 @@ bool SceneBuilder::BuildLightScene(const ref<Render::GPUDeviceManager>& device, 
     auto carModel1 = AssimpModel3DImporter::Import(WCharToString(carModelPath1.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f) }, errorStr);
     if (carModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(carModelPath1) + "Error: \n" + errorStr;
-        return false;
+        return nullptr;
     }
     auto carMesh1 = carModel1->GetMesh("Cube.002");
 
@@ -67,7 +59,7 @@ bool SceneBuilder::BuildLightScene(const ref<Render::GPUDeviceManager>& device, 
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
-        return false;
+        return nullptr;
     }
     auto rabbitStatueMesh1 = rabbitStatueModel1->GetMesh("Rabbit_low_Stereo_textured_mesh");
 
@@ -78,7 +70,7 @@ bool SceneBuilder::BuildLightScene(const ref<Render::GPUDeviceManager>& device, 
 
     if (vertexShader == nullptr) {
 		error = "Error in Compiling Shader At: \n" + WStringToString(lightVertexShaderPath) + "Error: \n" + errorStr;
-        return false;
+        return nullptr;
     }
 
     std::wstring lightPixelShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.pix.hlsl";
@@ -86,7 +78,7 @@ bool SceneBuilder::BuildLightScene(const ref<Render::GPUDeviceManager>& device, 
 
     if (pixelShader == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(lightPixelShaderPath) + "Error: \n" + errorStr;
-        return false;
+        return nullptr;
     }
 
     auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Program", { vertexShader, pixelShader }, false);
@@ -139,15 +131,36 @@ bool SceneBuilder::BuildLightScene(const ref<Render::GPUDeviceManager>& device, 
         .radius = 6.0f,
         });
     
+    auto frameLogger = std::make_shared<FrameRateLogger>();
+
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
     scene->entities = { carEntity1, rabbitStatueEntity1};
+    scene->behaviours = { cameraController, frameLogger };
+    
+    return scene;
+}
+
+bool SceneBuilder::Run_LightSample_Hybrid(const ref<Render::GPUDeviceManager>& device, ref<Platform::GraphicWindow> win, std::string& errorStr)
+{
+    auto gpuContext = device->CreateHybridContextForWindows(win);
+    auto assetManager = device->CreateAssetManager();
+    gpuContext->RegisterAssetManager(assetManager);
+    auto shaderRegistery = device->CreateShaderRegistery();
+    gpuContext->RegisterShaderRegistery(shaderRegistery);
+
+	std::string error;
+
+    ref<Scene> scene = BuildLightScene(assetManager, shaderRegistery, win, error);
+
+    if(scene == nullptr) {
+        errorStr = error;
+        return false;
+	}
 
     gpuContext->PrepareScene(scene);
-
-    auto frameLogger = std::make_shared<FrameRateLogger>();
-    Platform::Application::Run(win, gpuContext, std::vector<ref<Behaviour>>({ cameraController, frameLogger }));
-
+    Platform::Application::Run(win, gpuContext, scene->behaviours);
+    
     return true;
 }
