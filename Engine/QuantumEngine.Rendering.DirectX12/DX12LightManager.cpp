@@ -5,7 +5,6 @@
 
 bool QuantumEngine::Rendering::DX12::DX12LightManager::Initialize(const SceneLightData& lights, const ComPtr<ID3D12Device10>& device)
 {
-	auto k = sizeof(PointLight);
 	UInt32 lightSize = CONSTANT_BUFFER_ALIGHT(10 * (sizeof(DirectionalLight) + sizeof(PointLight)) + 2 * sizeof(UInt32));
 
 	D3D12_RESOURCE_DESC shaderTableBufferDesc

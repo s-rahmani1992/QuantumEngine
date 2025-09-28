@@ -103,12 +103,14 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="QuantumEngine.Test.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="SceneBuilder.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="FrameRateLogger.cpp" />
     <ClCompile Include="QuantumEngine.Test.cpp" />
+    <ClCompile Include="SceneBuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="QuantumEngine.Test.rc" />
@@ -232,6 +234,20 @@
     <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\simple_light_raster.vert.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\simple_light_raster.pix.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

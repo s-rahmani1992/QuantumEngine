@@ -36,6 +36,9 @@
     <ClInclude Include="FrameRateLogger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SceneBuilder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Test.cpp">
@@ -45,6 +48,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FrameRateLogger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SceneBuilder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -105,6 +111,12 @@
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster.vert.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster.pix.hlsl">
       <Filter>Assets</Filter>
     </Text>
   </ItemGroup>
