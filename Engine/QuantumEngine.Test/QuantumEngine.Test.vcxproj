@@ -189,7 +189,7 @@
     <None Include="Assets\Shaders\RTStructs.hlsli" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\rt_ground.lib.hlsl">
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>

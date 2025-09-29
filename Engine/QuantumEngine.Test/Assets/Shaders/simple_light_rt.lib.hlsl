@@ -7,7 +7,7 @@ cbuffer MaterialProps : register(b0, space1)
     float ambient;
     float diffuse;
     float specular;
-    float padding; // Padding
+    uint castShadow = 0;
 };
 
 cbuffer ObjectTransformData : register(b1, space1)
@@ -33,6 +33,12 @@ StructuredBuffer<Vertex> g_vertices : register(t2, space1);
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    if (payload.targetMode == 2 && castShadow > 0)
+    {
+        payload.hit = 1;
+        return;
+    }
+    
     float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
     float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;

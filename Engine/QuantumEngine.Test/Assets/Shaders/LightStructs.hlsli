@@ -53,7 +53,7 @@ inline float3 PhongDirectionalLight(DirectionalLight light, float3 camPosition, 
     }
     
 
-    return light.intensity * (ads.x + specular + diffuse) * light.color.xyz;
+    return (ads.x + light.intensity * (specular + diffuse)) * light.color.xyz;
 }
 
 inline float3 PhongPointLight(PointLight light, float3 camPosition, float3 position, float3 normal, float3 ads)
@@ -64,7 +64,7 @@ inline float3 PhongPointLight(PointLight light, float3 camPosition, float3 posit
 
     if (sqrlightMag > pow(light.radius, 2))
     { //light is too far away from pixel
-        return light.intensity * ads.x * light.color.xyz;
+        return ads.x * light.color.xyz;
     }
 	
     float lightMag = sqrt(sqrlightMag);
@@ -83,7 +83,7 @@ inline float3 PhongPointLight(PointLight light, float3 camPosition, float3 posit
     }
     
     float att = light.AttenuationFactor(lightMag);
-    return light.intensity * (ads.x + specular + diffuse) * light.color.xyz;
+    return (ads.x + att * light.intensity * (specular + diffuse)) * light.color.xyz;
 }
 
 inline float3 PhongLight(LightData lightData, float3 camPosition, float3 position, float3 normal, float3 ads)
