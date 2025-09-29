@@ -34,7 +34,7 @@ struct LightData
     uint pointLightCount;
 };
 
-float3 PhongDirectionalLight(DirectionalLight light, float3 camPosition, float3 position, float3 normal, float3 ads)
+inline float3 PhongDirectionalLight(DirectionalLight light, float3 camPosition, float3 position, float3 normal, float3 ads)
 {
     float3 norm = normalize(normal);
     float3 lightDir = normalize(light.direction);
@@ -56,7 +56,7 @@ float3 PhongDirectionalLight(DirectionalLight light, float3 camPosition, float3 
     return light.intensity * (ads.x + specular + diffuse) * light.color.xyz;
 }
 
-float3 PhongPointLight(PointLight light, float3 camPosition, float3 position, float3 normal, float3 ads)
+inline float3 PhongPointLight(PointLight light, float3 camPosition, float3 position, float3 normal, float3 ads)
 {
     float3 norm = normalize(normal);
     float3 lightDir = -position + light.position;
@@ -84,4 +84,16 @@ float3 PhongPointLight(PointLight light, float3 camPosition, float3 position, fl
     
     float att = light.AttenuationFactor(lightMag);
     return light.intensity * (ads.x + specular + diffuse) * light.color.xyz;
+}
+
+inline float3 PhongLight(LightData lightData, float3 camPosition, float3 position, float3 normal, float3 ads)
+{
+    float3 lightFactor = float3(0.0f, 0.0f, 0.0f);
+
+    for (uint i = 0; i < lightData.directionalLightCount; i++)
+        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], camPosition, position, normal, ads);
+    for (uint i = 0; i < lightData.pointLightCount; i++)
+        lightFactor += PhongPointLight(lightData.pointLights[i], camPosition, position, normal, ads);
+    
+    return lightFactor;
 }

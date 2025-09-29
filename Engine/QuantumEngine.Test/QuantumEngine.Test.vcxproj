@@ -172,7 +172,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\rt_water.lib.hlsl">
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
@@ -219,12 +219,12 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\g_buffer_mirror.pix.hlsl">
+    <Text Include="Assets\Shaders\reflection_g_buffer.pix.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
     </Text>
-    <Text Include="Assets\Shaders\g_buffer_mirror.vert.hlsl">
+    <Text Include="Assets\Shaders\reflection_g_buffer.vert.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>

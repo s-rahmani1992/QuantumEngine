@@ -44,7 +44,7 @@ void rayGen()
 
     GeneralPayload payLoad;
     payLoad.recursionCount = 1;
-    payLoad.targetMode = 0;
+    payLoad.targetMode = 1;
     TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payLoad);
     //float3 col = linearToSrgb(payLoad.color);
     if(payLoad.hit == 0)

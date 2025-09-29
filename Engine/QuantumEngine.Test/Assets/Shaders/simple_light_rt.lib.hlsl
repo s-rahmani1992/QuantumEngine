@@ -33,24 +33,15 @@ StructuredBuffer<Vertex> g_vertices : register(t2, space1);
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    uint baseIndex = PrimitiveIndex() * 3;
-    Vertex v1 = g_vertices[g_indices[baseIndex]];
-    Vertex v2 = g_vertices[g_indices[baseIndex + 1]];
-    Vertex v3 = g_vertices[g_indices[baseIndex + 2]];
-    float2 uv = v1.uv + attribs.barycentrics.x * (v2.uv - v1.uv) + attribs.barycentrics.y * (v3.uv - v1.uv);
-    float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);
-    
-    float3 normal = v1.normal + attribs.barycentrics.x * (v2.normal - v1.normal) + attribs.barycentrics.y * (v3.normal - v1.normal);
+    float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
+    float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
-    float3 position = WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
+    float3 position = CalculeteHitPosition();
+    
+    float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);
 
-    float3 lightFactor = float3(0.1f, 0.1f, 0.1f);
     float3 ads = float3(ambient, diffuse, specular);
-
-    for (uint i = 0; i < lightData.directionalLightCount; i++)
-        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, position, normal, ads);
-    for (uint i = 0; i < lightData.pointLightCount; i++)
-        lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, position, normal, ads);
+    float3 lightFactor = PhongLight(lightData, cameraData.position, position, normal, ads);
     
     payload.color = lightFactor * texColor.xyz;
     payload.hit = 1;

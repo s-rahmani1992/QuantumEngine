@@ -20,7 +20,15 @@ cbuffer CameraData : register(b1)
     CameraData cameraData;
 };
 
-cbuffer LightData : register(b3, space0)
+cbuffer MaterialProps : register(b2)
+{
+    float reflectivity;
+    float ambient;
+    float diffuse;
+    float specular;
+};
+
+cbuffer LightData : register(b3)
 {
     LightData lightData;
 }
@@ -40,18 +48,14 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float3 pos = gPositionTex.SampleLevel(mainSampler, uv, 0).xyz;
     float3 norm = 2 * gNormalTex.SampleLevel(mainSampler, uv, 0).xyz - 1;
     float4 reflectionData = gOutput.Sample(mainSampler, uv, 0);
-    float3 lightFactor = float3(0.0f, 0.0f, 0.0f);
     
-    for (uint i = 0; i < lightData.directionalLightCount; i++)
-        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, pos, norm);
-    for (uint i = 0; i < lightData.pointLightCount; i++)
-        lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, pos, norm);
+    float3 ads = float3(ambient, diffuse, specular);
+    float3 lightFactor = PhongLight(lightData, cameraData.position, pos, norm, ads);
     
     float4 texColor = mainTexture.Sample(mainSampler, input.texCoord);
     
     if (reflectionData.w < 0.1f)
         return float4(lightFactor * texColor.xyz, 1);
     else
-        return float4(0.5 * lightFactor * (texColor.xyz + reflectionData.xyz), 1);
-    //return float4(reflectionData.xyz, 1);
+        return float4(lightFactor * ((1 - reflectivity) * texColor.xyz + reflectivity * reflectionData.xyz), 1);
 }

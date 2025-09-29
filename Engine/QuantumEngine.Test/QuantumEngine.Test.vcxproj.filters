@@ -83,7 +83,7 @@
     <Text Include="Assets\Shaders\rt_solid_color.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\rt_water.lib.hlsl">
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\TransformStructs.hlsli">
@@ -104,10 +104,10 @@
     <Text Include="Assets\Shaders\g_buffer.vert.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\g_buffer_mirror.vert.hlsl">
+    <Text Include="Assets\Shaders\reflection_g_buffer.vert.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\g_buffer_mirror.pix.hlsl">
+    <Text Include="Assets\Shaders\reflection_g_buffer.pix.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">

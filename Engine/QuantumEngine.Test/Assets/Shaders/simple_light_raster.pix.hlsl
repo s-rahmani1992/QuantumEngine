@@ -31,13 +31,9 @@ sampler mainSampler : register(s0);
 
 float4 main(VS_OUTPUT input) : SV_TARGET
 {
-    float3 lightFactor = float3(0.0f, 0.0f, 0.0f);
     float3 ads = float3(ambient, diffuse, specular);
-    
-    for (uint i = 0; i < lightData.directionalLightCount; i++)
-        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, input.worldPos, input.norm, ads);
-    for (uint i = 0; i < 1; i++)
-        lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, input.worldPos, input.norm, ads);
+  
+    float3 lightFactor = PhongLight(lightData, cameraData.position, input.worldPos, input.norm, ads);
     
     float4 texColor = mainTexture.Sample(mainSampler, input.texCoord);
     return float4(lightFactor * texColor.xyz, 1);
