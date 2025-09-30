@@ -44,6 +44,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         return;
     }
     
+    payload.hit = 1;
     float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
     float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
