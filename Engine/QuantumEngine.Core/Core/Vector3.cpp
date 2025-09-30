@@ -50,6 +50,11 @@ QuantumEngine::Vector3 QuantumEngine::Vector3::operator*(Float fValue)
 	return Vector3(fValue * x, fValue * y, fValue * z);
 }
 
+std::string QuantumEngine::Vector3::ToString()
+{
+	return "( " + std::to_string(x) + " , " + std::to_string(y) + " , " + std::to_string(z) + ")";
+}
+
 QuantumEngine::Vector3 operator*(Float fValue, const QuantumEngine::Vector3& vector)
 {
 	return QuantumEngine::Vector3(fValue * vector.x, fValue * vector.y, fValue * vector.z);

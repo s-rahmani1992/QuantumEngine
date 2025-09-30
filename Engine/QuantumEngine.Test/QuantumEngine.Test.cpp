@@ -1,7 +1,6 @@
 // QuantumEngine.Test.cpp : Defines the entry point for the application.
 //
 
-#include "framework.h"
 #include "QuantumEngine.Test.h"
 #include "Platform/Application.h"
 #include "Platform/GraphicWindow.h"
@@ -62,7 +61,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     std::wstring root = Platform::Application::GetExecutablePath();
     std::string errorStr;
 
-    if (SceneBuilder::Run_RefractionSample_RayTracing(gpuDevice, win, errorStr) == false) {
+    if (SceneBuilder::Run_LightSample_Hybrid(gpuDevice, win, errorStr) == false) {
         MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + errorStr).c_str(), "App Error", 0);
         return 0;
     }

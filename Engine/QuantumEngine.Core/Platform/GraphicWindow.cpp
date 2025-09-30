@@ -5,7 +5,7 @@ QuantumEngine::Platform::GraphicWindow::GraphicWindow(const WindowProperties& pr
 {
     m_handle = CreateWindowExW(WS_EX_OVERLAPPEDWINDOW | WS_EX_APPWINDOW,
         (LPCWSTR)winClass, m_title.c_str(), WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        100, 100, m_width, m_height, nullptr, nullptr, GetModuleHandleW(nullptr), this);
+        10, 10, m_width, m_height, nullptr, nullptr, GetModuleHandleW(nullptr), this);
 }
 
 void QuantumEngine::Platform::GraphicWindow::Update(const Float& deltaTime)

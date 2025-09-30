@@ -3,5 +3,9 @@
 
 void FrameRateLogger::Update(Float deltaTime)
 {
-	OutputDebugStringA((std::to_string(1.0f/deltaTime) + '\n').c_str());
+	if (deltaTime < 0.0001f)
+		return;
+	m_totalFPS += 1.0f / deltaTime;
+	m_frameCount++;
+	OutputDebugStringA((std::to_string(m_totalFPS/ m_frameCount) + '\n').c_str());
 }

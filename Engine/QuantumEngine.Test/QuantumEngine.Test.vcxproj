@@ -100,7 +100,6 @@
   <ItemGroup>
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="FrameRateLogger.h" />
-    <ClInclude Include="framework.h" />
     <ClInclude Include="QuantumEngine.Test.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SceneBuilder.h" />

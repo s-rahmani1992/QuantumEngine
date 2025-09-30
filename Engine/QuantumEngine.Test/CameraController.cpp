@@ -14,6 +14,15 @@ CameraController::CameraController(ref<QuantumEngine::Camera>& camera)
 
 void CameraController::Update(Float deltaTime)
 {
+	if (GetKeyState('P') & 0x80) {
+		auto pos = m_camera->GetTransform()->Position();
+		auto axis = m_camera->GetTransform()->RotationAxis();
+		auto angle = m_camera->GetTransform()->GetAngle();
+		OutputDebugStringA((pos.ToString() + "\n").c_str());
+		OutputDebugStringA((axis.ToString() + "\n").c_str());
+		OutputDebugStringA((std::to_string(angle) + "\n").c_str());
+	}
+
 	// TODO Replace it with event-based input system
 	if ((GetKeyState(VK_RBUTTON) & 0x80) == 0) {
 		POINT mousePos;
@@ -47,4 +56,6 @@ void CameraController::Update(Float deltaTime)
 	if (GetKeyState(VK_RIGHT) & 0x80 || GetKeyState('D') & 0x80) {
 		m_camera->GetTransform()->MoveRight(m_moveSpeed * deltaTime);
 	}
+
+	
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "../BasicTypes.h"
+#include <string>
 
 namespace QuantumEngine {
 	struct Vector3 {
@@ -13,6 +14,7 @@ namespace QuantumEngine {
 		Vector3 operator-();
 		Vector3 operator+(const Vector3& vectorB);
 		Vector3 operator*(Float fValue);
+		std::string ToString();
 	public:
 		Float x;
 		Float y;
