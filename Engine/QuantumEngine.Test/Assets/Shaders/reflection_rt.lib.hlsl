@@ -46,6 +46,8 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         return;
     }
     
+    payload.hit = 1;
+    
     float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
     float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
@@ -61,7 +63,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         
         RayDesc ray;
         ray.Origin = position;
-        ray.Direction = rayDirection - 2 * dot(normal, rayDirection) * normal;
+        ray.Direction = normalize(reflect(rayDirection, normal));
         ray.TMin = 0.1;
         ray.TMax = 100000;
         
