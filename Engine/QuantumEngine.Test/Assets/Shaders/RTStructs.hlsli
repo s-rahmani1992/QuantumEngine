@@ -50,3 +50,22 @@ inline float3 CalculeteHitPosition()
 {
     return WorldRayOrigin() + RayTCurrent() * WorldRayDirection();
 }
+
+inline float3 Refract(float3 rayDirection, float3 normal, float refractionFactor, inout bool isReflect)
+{
+    float cosI = dot(normal, rayDirection);
+    float refractionIndex = 1.0f;
+        
+    if (cosI < 0) // from outside to inside
+        refractionIndex = 1.0f / refractionFactor;
+    else // from inside to outside
+        refractionIndex = refractionFactor;
+        
+    float sinT2 = refractionIndex * refractionIndex * (1.0 - cosI * cosI);
+    isReflect = sinT2 > 1.0f;
+    
+    if (isReflect) // Total internal reflection
+        return normalize(rayDirection - 2 * cosI * normal);
+    else
+        return normalize(refractionIndex * rayDirection + (refractionIndex * cosI - sqrt(1 - sinT2)) * normal);
+}

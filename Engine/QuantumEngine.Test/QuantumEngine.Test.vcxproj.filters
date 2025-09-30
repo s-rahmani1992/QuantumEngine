@@ -89,7 +89,7 @@
     <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\rt_refractor.lib.hlsl">
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\g_buffer.pix.hlsl">

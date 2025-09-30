@@ -186,7 +186,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\rt_refractor.lib.hlsl">
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <FileType>Document</FileType>
