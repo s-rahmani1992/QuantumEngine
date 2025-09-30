@@ -3,6 +3,10 @@ struct Attenuation
     float c0;
     float c1;
     float c2;
+    float AttenuationFactor(float distance)
+    {
+        return 1.0f / (c0 + c1 * distance + c2 * distance * distance);
+    }
 };
 
 struct DirectionalLight
@@ -19,11 +23,6 @@ struct PointLight
     float intensity;
     Attenuation attenuation;
     float radius;
-    
-    float AttenuationFactor(float distance)
-    {
-        return 1.0f / (attenuation.c0 + attenuation.c1 * distance + attenuation.c2 * distance * distance);
-    }
 };
 
 struct LightData
@@ -82,7 +81,7 @@ inline float3 PhongPointLight(PointLight light, float3 camPosition, float3 posit
         specular = spec * ads.z;
     }
     
-    float att = light.AttenuationFactor(lightMag);
+    float att = light.attenuation.AttenuationFactor(lightMag);
     return (ads.x + att * light.intensity * (specular + diffuse)) * light.color.xyz;
 }
 

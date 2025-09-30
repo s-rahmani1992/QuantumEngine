@@ -68,12 +68,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\color.vert.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\color.pix.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
     <Text Include="Assets\Shaders\rt_global.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>

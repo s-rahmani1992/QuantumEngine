@@ -10,12 +10,13 @@ cbuffer ObjectTransformData : register(b4)
 cbuffer MaterialProps : register(b0, space1)
 {
     uint missIndex;
+    uint castShadow = 0;
     float reflectivity;
     uint maxRecursion;
     float ambient;
     float diffuse;
     float specular;
-    float2 padding; // Padding
+    float padding; // Padding
 };
 
 cbuffer CameraData : register(b2)
@@ -39,21 +40,20 @@ StructuredBuffer<Vertex> g_vertices : register(t2, space1);
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    if (payload.targetMode == 2 && castShadow > 0)
+    {
+        payload.hit = 1;
+        return;
+    }
+    
     float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
     float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
     float3 position = CalculeteHitPosition();
     
     float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);
-    
     float3 ads = float3(ambient, diffuse, specular);
-    
-    float3 lightFactor = float3(0.0f, 0.0f, 0.0f);
-    
-    for (uint i = 0; i < lightData.directionalLightCount; i++)
-        lightFactor += PhongDirectionalLight(lightData.directionalLights[i], cameraData.position, position, normal, ads);
-    for (uint i = 0; i < lightData.pointLightCount; i++)
-        lightFactor += PhongPointLight(lightData.pointLights[i], cameraData.position, position, normal, ads);
+    float3 lightFactor = PhongLight(lightData, cameraData.position, position, normal, ads);
     
     if (payload.recursionCount <= maxRecursion)
     {
@@ -76,9 +76,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
             payload.color = lightFactor * (reflectivity * innerPayload.color.xyz + (1 - reflectivity) * texColor.xyz);
     }
     else
-    {
         payload.color = lightFactor * texColor.xyz;
-    }
 }
 
 [shader("miss")]
