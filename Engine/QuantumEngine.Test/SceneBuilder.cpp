@@ -98,7 +98,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     }
     auto carMesh1 = carModel1->GetMesh("Cube.002");
 
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
@@ -345,7 +345,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     }
     auto carMesh1 = carModel1->GetMesh("Cube.002");
 
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
@@ -623,7 +623,7 @@ ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& as
     }
     auto carMesh1 = carModel1->GetMesh("Cube.002");
 
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
@@ -848,7 +848,7 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     }
     auto carMesh1 = carModel1->GetMesh("Cube.002");
 
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
@@ -1095,7 +1095,7 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
     }
     auto carMesh1 = carModel1->GetMesh("Cube.002");
 
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
