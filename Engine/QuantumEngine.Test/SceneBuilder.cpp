@@ -787,42 +787,6 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     std::wstring root = Platform::Application::GetExecutablePath();
     std::string rootA = WStringToString(root);
 
-    ////// Creating the camera
-
-    auto camtransform = std::make_shared<Transform>(Vector3(0.0f, 5.0f, -3.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
-    ref<CameraController> cameraController = std::make_shared<CameraController>(mainCamera);
-
-    ////// Importing Textures
-
-    ref<QuantumEngine::Texture2D> carTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\RetroCarAlbedo.png", errorStr);
-    ref<QuantumEngine::Texture2D> waterTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\water.jpeg", errorStr);
-    ref<QuantumEngine::Texture2D> rabbitStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\bg.jpg", errorStr);
-
-    assetManager->UploadTextureToGPU(carTex1);
-    assetManager->UploadTextureToGPU(rabbitStatueTex1);
-    assetManager->UploadTextureToGPU(waterTex1);
-
-    ////// Importing meshes
-
-    auto carModelPath1 = root + L"\\Assets\\Models\\RetroCar.fbx";
-    auto carModel1 = AssimpModel3DImporter::Import(WCharToString(carModelPath1.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f) }, errorStr);
-    if (carModel1 == nullptr) {
-        errorStr = "Error in Importing Model At: \n" + WStringToString(carModelPath1) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-    auto carMesh1 = carModel1->GetMesh("Cube.002");
-
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
-    auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
-    if (rabbitStatueModel1 == nullptr) {
-        errorStr = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-    auto rabbitStatueMesh1 = rabbitStatueModel1->GetMesh("Rabbit_low_Stereo_textured_mesh");
-
-    auto cubeMesh = ShapeBuilder::CreateCompleteCube(1.0f);
-
     ////// Compiling Shaders
 
     std::wstring lightVertexShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.vert.hlsl";
@@ -848,6 +812,79 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
 
         auto rtRefractionProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Reflection_Program", { rtRefractionShader }, true);
 
+    ////// Creating the camera
+
+    auto camtransform = std::make_shared<Transform>(Vector3(4.4f, 3.5f, -7.8f), Vector3(1.0f), Vector3(-0.08f, 0.19f, -0.01f), 27);
+    ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
+    ref<CameraController> cameraController = std::make_shared<CameraController>(mainCamera);
+
+    ////// Importing Textures
+
+    ref<QuantumEngine::Texture2D> carTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\RetroCarAlbedo.png", errorStr);
+    ref<QuantumEngine::Texture2D> rabbitStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Rabbit_basecolor.jpg", errorStr);
+    ref<QuantumEngine::Texture2D> lionStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Lion_statue_raw_texture.jpg", errorStr);
+    ref<QuantumEngine::Texture2D> chairTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\leather_chair_BaseColor.png", errorStr);
+    ref<QuantumEngine::Texture2D> groundBrickTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\brickGround.png", errorStr);
+    assetManager->UploadTextureToGPU(carTex1);
+    assetManager->UploadTextureToGPU(rabbitStatueTex1);
+    assetManager->UploadTextureToGPU(lionStatueTex1);
+    assetManager->UploadTextureToGPU(groundBrickTex1);
+    assetManager->UploadTextureToGPU(chairTex1);
+
+    ////// Importing meshes
+
+    auto carModelPath1 = root + L"\\Assets\\Models\\RetroCar.fbx";
+    auto carModel1 = AssimpModel3DImporter::Import(WCharToString(carModelPath1.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f) }, errorStr);
+    if (carModel1 == nullptr) {
+        error = "Error in Importing Model At: \n" + WStringToString(carModelPath1) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+    auto carMesh1 = carModel1->GetMesh("Cube.002");
+
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.obj";
+    auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
+    if (rabbitStatueModel1 == nullptr) {
+        error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+    auto rabbitStatueMesh1 = rabbitStatueModel1->GetMesh("Rabbit_low_Stereo_textured_mesh");
+
+    auto lionStatuePath = root + L"\\Assets\\Models\\lion-lp.fbx";
+    auto lionStatueModel1 = AssimpModel3DImporter::Import(WCharToString(lionStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(1.0f) }, errorStr);
+
+    if (lionStatueModel1 == nullptr) {
+        error = "Error in Importing Model At: \n" + WStringToString(lionStatuePath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    auto lionStatueMesh1 = lionStatueModel1->GetMesh("Model.004");
+
+    auto chairPath = root + L"\\Assets\\Models\\leather_chair.fbx";
+    auto chairModel1 = AssimpModel3DImporter::Import(WCharToString(chairPath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(1.0f) }, errorStr);
+
+    if (chairModel1 == nullptr) {
+        error = "Error in Importing Model At: \n" + WStringToString(chairPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    auto chairMesh1 = chairModel1->GetMesh("leather_chair.001");
+
+    std::vector<Vertex> planeVertices = {
+        Vertex(Vector3(-1.0f, 0, -1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(1.0f, 0, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(1.0f, 0, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(-1.0f, 0, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f, 1.0f, 0.0f)),
+    };
+
+    std::vector<UInt32> planeIndices = {
+        0, 1, 2, 0, 2, 3,
+    };
+
+    ref<Mesh> planeMesh = std::make_shared<Mesh>(planeVertices, planeIndices);
+
+    ref<Mesh> cubeMesh = ShapeBuilder::CreateCompleteCube(1.0f);
+    ref<Mesh> sphereMesh = ShapeBuilder::CreateSphere(1.0f, 30, 30);
+
     ////// Creating the materials
 
     ref<DX12::HLSLMaterial> carMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
@@ -864,19 +901,33 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     carRTMaterial->SetFloat("diffuse", 1.0f);
     carRTMaterial->SetFloat("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> rabbitStatueMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    rabbitStatueMaterial1->Initialize(false);
-    rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
-    rabbitStatueMaterial1->SetFloat("ambient", 0.1f);
-    rabbitStatueMaterial1->SetFloat("diffuse", 0.8f);
-    rabbitStatueMaterial1->SetFloat("specular", 0.1f);
-
     ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
     rabbitStatueRTMaterial->Initialize(true);
     rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
     rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
     rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
     rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
+
+    ref<DX12::HLSLMaterial> lionStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
+    lionStatueRTMaterial->Initialize(true);
+    lionStatueRTMaterial->SetTexture2D("mainTexture", lionStatueTex1);
+    lionStatueRTMaterial->SetFloat("ambient", 0.1f);
+    lionStatueRTMaterial->SetFloat("diffuse", 0.8f);
+    lionStatueRTMaterial->SetFloat("specular", 0.1f);
+
+    ref<DX12::HLSLMaterial> chairRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
+    chairRTMaterial->Initialize(true);
+    chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
+    chairRTMaterial->SetFloat("ambient", 0.1f);
+    chairRTMaterial->SetFloat("diffuse", 0.8f);
+    chairRTMaterial->SetFloat("specular", 0.1f);
+
+    ref<DX12::HLSLMaterial> groundRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
+    groundRTMaterial1->Initialize(true);
+    groundRTMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
+    groundRTMaterial1->SetFloat("ambient", 0.1f);
+    groundRTMaterial1->SetFloat("diffuse", 0.8f);
+    groundRTMaterial1->SetFloat("specular", 0.1f);
 
     ref<DX12::HLSLMaterial> refractionRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtRefractionProgram);
     refractionRTMaterial1->Initialize(true);
@@ -885,20 +936,40 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
 
     ////// Creating the entities
 
-    auto carTransform1 = std::make_shared<Transform>(Vector3(0.0f, 3.0f, 4.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto carTransform1 = std::make_shared<Transform>(Vector3(-1.0f, 1.0f, 1.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
     auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(carMesh1, carMaterial1);
     auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(carMesh1, carRTMaterial);
     auto carEntity1 = std::make_shared<QuantumEngine::GameEntity>(carTransform1, meshRenderer1, rtComponent1);
 
-    auto rabbitStatueTransform1 = std::make_shared<Transform>(Vector3(3.2f, 1.4f, 5.0f), Vector3(2.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(rabbitStatueMesh1, rabbitStatueMaterial1);
+    auto rabbitStatueTransform1 = std::make_shared<Transform>(Vector3(-0.2f, 2.5f, 1.0f), Vector3(2.0f), Vector3(0.0f, 1.0f, 0.0f), 180);
+    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(rabbitStatueMesh1, carRTMaterial);
     auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(rabbitStatueMesh1, rabbitStatueRTMaterial);
     auto rabbitStatueEntity1 = std::make_shared<QuantumEngine::GameEntity>(rabbitStatueTransform1, meshRenderer2, rtComponent2);
 
-    auto mirrorTransform = std::make_shared<Transform>(Vector3(-2.2f, 0.4f, 1.0f), Vector3(5.0f, 5.0f, 1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto gBufferRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(cubeMesh, carMaterial1);
-    auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(cubeMesh, refractionRTMaterial1);
-    auto mirrorEntity1 = std::make_shared<QuantumEngine::GameEntity>(mirrorTransform, gBufferRenderer, rtComponent3);
+    auto lionStatueTransform1 = std::make_shared<Transform>(Vector3(3.2f, 3.4f, 2.0f), Vector3(0.8f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto meshRenderer3 = std::make_shared<Render::MeshRenderer>(lionStatueMesh1, carRTMaterial);
+    auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(lionStatueMesh1, lionStatueRTMaterial);
+    auto lionStatueEntity1 = std::make_shared<QuantumEngine::GameEntity>(lionStatueTransform1, meshRenderer3, rtComponent3);
+
+    auto chairTransform1 = std::make_shared<Transform>(Vector3(2.2f, 0.0f, 1.0f), Vector3(1.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto meshRenderer4 = std::make_shared<Render::MeshRenderer>(chairMesh1, carRTMaterial);
+    auto rtComponent4 = std::make_shared<Render::RayTracingComponent>(chairMesh1, chairRTMaterial);
+    auto chairEntity1 = std::make_shared<QuantumEngine::GameEntity>(chairTransform1, meshRenderer4, rtComponent4);
+
+    auto groundTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(20.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto gBufferRenderer = std::make_shared<Render::MeshRenderer>(planeMesh, carRTMaterial);
+    auto rtComponent5 = std::make_shared<Render::RayTracingComponent>(planeMesh, groundRTMaterial1);
+    auto groundEntity1 = std::make_shared<QuantumEngine::GameEntity>(groundTransform, gBufferRenderer, rtComponent5);
+
+    auto refractorTransform1 = std::make_shared<Transform>(Vector3(-0.2f, 0.4f, -3.0f), Vector3(2.0f, 5.0f, 0.5f), Vector3(0.0f, 0.0f, 1.0f), 90);
+    auto Renderer = std::make_shared<Render::GBufferRTReflectionRenderer>(cubeMesh, carMaterial1);
+    auto rtComponent6 = std::make_shared<Render::RayTracingComponent>(cubeMesh, refractionRTMaterial1);
+    auto glassEntity1 = std::make_shared<QuantumEngine::GameEntity>(refractorTransform1, Renderer, rtComponent6);
+
+    auto refractorTransform2 = std::make_shared<Transform>(Vector3(3.2f, 2.4f, -2.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto rtComponent7 = std::make_shared<Render::RayTracingComponent>(sphereMesh, refractionRTMaterial1);
+    auto glassEntity2 = std::make_shared<QuantumEngine::GameEntity>(refractorTransform2, Renderer, rtComponent7);
+
 
     ////// Creating the lights
 
@@ -927,7 +998,7 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { carEntity1, rabbitStatueEntity1, mirrorEntity1 };
+    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, groundEntity1, glassEntity1, glassEntity2 };
     scene->behaviours = { cameraController, frameLogger };
     scene->rtGlobalProgram = rtGlobalProgram;
 
