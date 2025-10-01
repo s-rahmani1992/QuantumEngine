@@ -36,6 +36,12 @@
     <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EntityMover.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EntityRotator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Test.cpp">
@@ -48,6 +54,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SceneBuilder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityMover.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EntityRotator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,7 +83,7 @@
     <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\rt_solid_color.lib.hlsl">
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">

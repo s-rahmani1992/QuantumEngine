@@ -13,6 +13,8 @@ namespace QuantumEngine {
 		Float SquareMagnitude() const;
 		Vector3 operator-();
 		Vector3 operator+(const Vector3& vectorB);
+		Vector3 operator+=(const Vector3& vectorB);
+		Vector3 operator-(const Vector3& vectorB);
 		Vector3 operator*(Float fValue);
 		std::string ToString();
 	public:

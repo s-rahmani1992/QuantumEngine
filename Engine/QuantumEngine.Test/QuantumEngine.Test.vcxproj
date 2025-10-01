@@ -99,6 +99,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="EntityMover.h" />
+    <ClInclude Include="EntityRotator.h" />
     <ClInclude Include="FrameRateLogger.h" />
     <ClInclude Include="QuantumEngine.Test.h" />
     <ClInclude Include="Resource.h" />
@@ -107,6 +109,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="EntityMover.cpp" />
+    <ClCompile Include="EntityRotator.cpp" />
     <ClCompile Include="FrameRateLogger.cpp" />
     <ClCompile Include="QuantumEngine.Test.cpp" />
     <ClCompile Include="SceneBuilder.cpp" />
@@ -150,7 +154,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\rt_solid_color.lib.hlsl">
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>

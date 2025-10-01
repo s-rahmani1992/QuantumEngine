@@ -45,6 +45,19 @@ QuantumEngine::Vector3 QuantumEngine::Vector3::operator+(const Vector3& vectorB)
 	return Vector3(x + vectorB.x, y + vectorB.y, z + vectorB.z);
 }
 
+QuantumEngine::Vector3 QuantumEngine::Vector3::operator+=(const Vector3& vectorB)
+{
+	x += vectorB.x;
+	y += vectorB.y;
+	z += vectorB.z;
+	return *this;
+}
+
+QuantumEngine::Vector3 QuantumEngine::Vector3::operator-(const Vector3& vectorB)
+{
+	return Vector3(x - vectorB.x, y - vectorB.y, z - vectorB.z);
+}
+
 QuantumEngine::Vector3 QuantumEngine::Vector3::operator*(Float fValue)
 {
 	return Vector3(fValue * x, fValue * y, fValue * z);

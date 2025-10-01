@@ -21,6 +21,12 @@ StructuredBuffer<Vertex> g_vertices : register(t2, space1);
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
+    if (payload.targetMode == 2)
+    {
+        payload.hit = 0;
+        return;
+    }
+    
     float3 rayDirection = normalize(WorldRayDirection());
     float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
     normal = normalize(mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz);
