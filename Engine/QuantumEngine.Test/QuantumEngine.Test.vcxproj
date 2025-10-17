@@ -119,10 +119,6 @@
     <ResourceCompile Include="QuantumEngine.Test.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="QuantumEngine.Test.ico" />
-    <Image Include="small.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\QuantumEngine.Core\QuantumEngine.Core.vcxproj">
       <Project>{9daa880f-4d66-4557-b473-d8183fd9dcfb}</Project>
     </ProjectReference>
@@ -241,6 +237,9 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="engine-icon.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -3,6 +3,9 @@
 #include "../Core/Behaviour.h"
 #include "../Rendering/GraphicContext.h"
 
+//TODO Move icon to common resource file
+#define IDI_QUANTUMENGINETEST           129
+
 QuantumEngine::Platform::Application QuantumEngine::Platform::Application::m_instance = {};
 
 void QuantumEngine::Platform::Application::CreateApplication(HINSTANCE hInstance)
@@ -99,12 +102,12 @@ void QuantumEngine::Platform::Application::CreateWindowClass()
     wcex.cbClsExtra = 0; //Allocate additional space for class
     wcex.cbWndExtra = sizeof(GraphicWindow*); //Allocate additional space for each window for storing pointer to created window. Used for getting window in nessage handler
     wcex.hInstance = m_app_instance;
-    wcex.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
+    wcex.hIcon = (HICON)LoadImageW(m_app_instance, MAKEINTRESOURCEW(IDI_QUANTUMENGINETEST), IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR | LR_SHARED);
     wcex.hCursor = LoadCursorW(nullptr, IDC_ARROW);
     wcex.hbrBackground = nullptr;
     wcex.lpszMenuName = nullptr;
     wcex.lpszClassName = L"WIN_CLASS";
-    wcex.hIconSm = LoadIconW(nullptr, IDI_APPLICATION);
+    wcex.hIconSm = (HICON)LoadImageW(m_app_instance, MAKEINTRESOURCEW(IDI_QUANTUMENGINETEST), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED);
     winClass = RegisterClassExW(&wcex);
 }
 

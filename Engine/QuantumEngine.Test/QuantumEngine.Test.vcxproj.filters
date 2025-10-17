@@ -69,14 +69,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="QuantumEngine.Test.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="Assets\Shaders\rt_global.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
@@ -127,5 +119,10 @@
     <None Include="Assets\Shaders\RTStructs.hlsli">
       <Filter>Assets</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="engine-icon.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
 </Project>
