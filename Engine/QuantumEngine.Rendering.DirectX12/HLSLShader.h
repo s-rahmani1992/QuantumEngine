@@ -54,7 +54,6 @@ namespace QuantumEngine::Rendering::DX12 {
 			return m_empty;
 		}
 	private:
-		void FillReflection(ComPtr<ID3D12ShaderReflection>& shaderReflection);
 		void FillReflection(ComPtr<ID3D12LibraryReflection>& libraryReflection);
 		void InitializeDXIL();
 		static UInt32 m_shaderCounter;

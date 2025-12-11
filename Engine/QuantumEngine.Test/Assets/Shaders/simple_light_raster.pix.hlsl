@@ -9,7 +9,7 @@ struct VS_OUTPUT
     float3 worldPos : POSITION;
 };
 
-cbuffer CameraData : register(b1)
+cbuffer _CameraData : register(b1)
 {
     CameraData cameraData;
 };
@@ -21,7 +21,7 @@ cbuffer Material : register(b2)
     float specular;
 };
 
-cbuffer LightData : register(b3)
+cbuffer _LightData : register(b3)
 {
     LightData lightData;
 }

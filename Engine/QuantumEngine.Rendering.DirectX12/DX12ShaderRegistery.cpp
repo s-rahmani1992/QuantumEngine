@@ -3,6 +3,10 @@
 #include "HLSLShaderProgram.h"
 #include "HLSLShaderImporter.h"
 #include <Shader/HLSLRasterizationProgram.h>
+#include <Rendering/Shader.h>
+#include "HLSLShader.h"
+#include <vector>
+#include <memory>
 
 namespace Render = QuantumEngine::Rendering;
 namespace HLSL = QuantumEngine::Rendering::DX12::Shader;
@@ -43,7 +47,7 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 		return;
 	}
 
-	CreateAndRegisterShaderProgram("G_Buffer_RT_Global_Program", { rtGBufferShader }, false);
+	CreateAndRegisterShaderProgram("G_Buffer_RT_Global_Program", { rtGBufferShader }, true);
 }
 
 ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::GetShaderProgram(const std::string& name)
@@ -72,6 +76,22 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::RegisterShaderProgram(
 
 ref<Render::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Render::Shader>>& shaders, bool isRT)
 {
+	std::vector<ref<HLSLShader>> hlslShaders;
+
+	if(isRT == false) {
+		for (auto& shader : shaders) {
+			ref<HLSLShader> hlsl = std::dynamic_pointer_cast<HLSLShader>(shader);
+			hlslShaders.push_back(hlsl);
+		}
+		ref<HLSL::HLSLRasterizationProgram> rasterProgram = std::make_shared<Shader::HLSLRasterizationProgram>(hlslShaders);
+
+		if (rasterProgram->InitializeRootSignature(m_device)) {
+			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rasterProgram);
+			return rasterProgram;
+		}
+
+		return nullptr;
+	}
 	ref<HLSLShaderProgram> program = std::make_shared<HLSLShaderProgram>(shaders);
 
 	if (program->Initialize(m_device, isRT))
