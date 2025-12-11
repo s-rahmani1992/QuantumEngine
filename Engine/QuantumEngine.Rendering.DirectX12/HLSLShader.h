@@ -42,6 +42,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType, ComPtr<ID3D12ShaderReflection>& shaderReflection);
 		HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType, ComPtr<ID3D12LibraryReflection>& libraryReflection);
 		inline HLSLShaderReflection* GetReflection() { return &m_reflection; }
+		inline ComPtr<ID3D12ShaderReflection> GetRawReflection() { return m_rawReflection; }
 		inline D3D12_DXIL_LIBRARY_DESC* GetDXIL() { return &m_dxilData; }
 		D3D12_HIT_GROUP_DESC GetHitGroup(const std::wstring& exportName);
 		std::wstring& GetRayGenExport() { return m_entryPoints[RAYGEN_NAME]; }
@@ -64,5 +65,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		D3D12_DXIL_LIBRARY_DESC m_dxilData;
 		std::vector<D3D12_EXPORT_DESC> m_exportDescs;
 		std::wstring m_empty;
+		ComPtr<ID3D12ShaderReflection> m_rawReflection;
 	};
 }

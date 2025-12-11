@@ -6,8 +6,12 @@
 
 namespace QuantumEngine::Rendering {
 
+	/// <summary>
+	/// base class for integration of shaders making up a complete shader program pipeline
+	/// </summary>
 	class ShaderProgram {
 	public:
+		ShaderProgram() = default;
 		ShaderProgram(const std::initializer_list<ref<Shader>>& shaders) 
 			:m_shaders(shaders)
 		{
@@ -16,6 +20,11 @@ namespace QuantumEngine::Rendering {
 
 		virtual ~ShaderProgram(){}
 
+		/// <summary>
+		/// Gets the shader of specified enum type (VERTEX_SHADER, PIXEL_SHADER, etc.)
+		/// </summary>
+		/// <param name="index"></param>
+		/// <returns></returns>
 		ref<Shader> GetShader(Int32 index) {
 			auto it = std::find_if(m_shaders.begin(), m_shaders.end(), [index](ref<Shader>& item) {
 				return item->GetShaderTypeId() == index;

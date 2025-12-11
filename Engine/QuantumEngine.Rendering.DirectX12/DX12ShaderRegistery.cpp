@@ -2,8 +2,10 @@
 #include "DX12ShaderRegistery.h"
 #include "HLSLShaderProgram.h"
 #include "HLSLShaderImporter.h"
+#include <Shader/HLSLRasterizationProgram.h>
 
 namespace Render = QuantumEngine::Rendering;
+namespace HLSL = QuantumEngine::Rendering::DX12::Shader;
 
 void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPtr<ID3D12Device10>& device)
 {
@@ -54,13 +56,21 @@ ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering:
 
 void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::RegisterShaderProgram(const std::string& name, const ref<ShaderProgram>& program, bool isRT)
 {
+	ref<HLSL::HLSLRasterizationProgram> rasterProgram = std::dynamic_pointer_cast<HLSL::HLSLRasterizationProgram>(program);
+
+	if(rasterProgram != nullptr) {
+		if (rasterProgram->InitializeRootSignature(m_device))
+			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rasterProgram);
+		return;
+	}
+
 	ref<HLSLShaderProgram> hlslProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(program);
 
 	if (hlslProgram->Initialize(m_device, isRT))
 		m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(hlslProgram);
 }
 
-ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Shader>>& shaders, bool isRT)
+ref<Render::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Render::Shader>>& shaders, bool isRT)
 {
 	ref<HLSLShaderProgram> program = std::make_shared<HLSLShaderProgram>(shaders);
 

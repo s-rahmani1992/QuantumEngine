@@ -12,7 +12,7 @@
     <Filter Include="RayTracing">
       <UniqueIdentifier>{1401dd6d-26f5-4507-8445-5ef831e696e8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
+    <Filter Include="Shader">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
@@ -81,6 +81,18 @@
     <ClInclude Include="DX12RayTracingContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DX12MaterialFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DX12RasterizationMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader\HLSLRasterizationProgram.h">
+      <Filter>Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader\HLSLRasterizationProgramImporter.h">
+      <Filter>Shader</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -145,6 +157,18 @@
     </ClCompile>
     <ClCompile Include="DX12RayTracingContext.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12MaterialFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12RasterizationMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader\HLSLRasterizationProgram.cpp">
+      <Filter>Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader\HLSLRasterizationProgramImporter.cpp">
+      <Filter>Shader</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

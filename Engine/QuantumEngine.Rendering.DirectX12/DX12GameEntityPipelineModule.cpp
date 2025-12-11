@@ -9,6 +9,8 @@
 #include "HLSLShaderProgram.h"
 #include "DX12Utilities.h"
 #include "Rendering/MeshRenderer.h"
+#include "Shader/HLSLRasterizationProgram.h"
+#include "DX12RasterizationMaterial.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const DX12MeshRendererGPUData& meshRendererData, DXGI_FORMAT depthFormat)
 {
@@ -24,11 +26,11 @@ bool QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Initialize(co
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//Shader Part
-	m_material = std::dynamic_pointer_cast<HLSLMaterial>(meshRendererData.meshRenderer->GetMaterial());
-	auto program = std::dynamic_pointer_cast<HLSLShaderProgram>(m_material->GetProgram());
-	m_rootSignature = program->GetReflectionData()->rootSignature;
-	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(program->GetShader(VERTEX_SHADER));
-	auto pixelShader = program->GetShader(PIXEL_SHADER);
+	m_material = meshRendererData.material;
+	auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram>(m_material->GetMaterial()->GetProgram());
+	m_rootSignature = program->GetRootSignature();
+	auto vertexShader = program->GetVertexShader();
+	auto pixelShader = program->GetPixelShader();
 	pipelineStateDesc.VS.BytecodeLength = vertexShader->GetCodeSize();
 	pipelineStateDesc.VS.pShaderBytecode = vertexShader->GetByteCode();
 	pipelineStateDesc.PS.BytecodeLength = pixelShader->GetCodeSize();
@@ -140,10 +142,10 @@ void QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Render(ComPtr
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	//Set Material Variables
-	m_material->RegisterValues(commandList);
-	m_material->RegisterCameraDescriptor(commandList, camHandle);
-	m_material->RegisterLightDescriptor(commandList, lightHandle);
-	m_material->RegisterTransformDescriptor(commandList, m_transformHeapHandle);
+	m_material->BindParameters(commandList);
+	m_material->BindCameraDescriptor(commandList, camHandle);
+	m_material->BindLightDescriptor(commandList, lightHandle);
+	m_material->BindTransformDescriptor(commandList, m_transformHeapHandle);
 
 	//Draw Call
 	commandList->DrawIndexedInstanced(m_meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);

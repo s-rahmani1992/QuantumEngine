@@ -7,6 +7,8 @@
 #include "DX12GPUDeviceManager.h"
 #include "HLSLShader.h"
 #include "HLSLShaderImporter.h"
+#include "Shader/HLSLRasterizationProgramImporter.h"
+#include "Shader/HLSLRasterizationProgram.h"
 #include "HLSLMaterial.h"
 
 #include "Rendering/ShaderRegistery.h"
@@ -15,6 +17,7 @@
 #include <Rendering/GraphicContext.h>
 #include <Rendering/GBufferRTReflectionRenderer.h>
 #include <Rendering/RayTracingComponent.h>
+#include "Rendering/MaterialFactory.h"
 
 #include <Core/Light/Lights.h>
 #include <Core/WICTexture2DImporter.h>
@@ -31,6 +34,7 @@
 #include "FrameRateLogger.h"
 #include "EntityMover.h"
 #include "EntityRotator.h"
+#include "TextureAnimator.h"
 
 using namespace QuantumEngine;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -42,7 +46,7 @@ namespace DX12 = QuantumEngine::Rendering::DX12;
         return nullptr;                                                                                 \
     }
 
-ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, ref<Platform::GraphicWindow> win, std::string& error)
+ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, const ref<Render::MaterialFactory>& materialFactory, ref<Platform::GraphicWindow> win, std::string& error)
 {
 	std::string errorStr;
 
@@ -69,7 +73,21 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 
         auto rtSimpleLightProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Light_Program", { rtSimpleLightShader }, true);
 
-	////// Creating the camera
+    std::wstring rtSimpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
+	DX12::Shader::HLSLRasterizationProgramImportDesc lightRasterDesc;
+	lightRasterDesc.shaderModel = "6_6";
+	lightRasterDesc.vertexMainFunction = "vs_main";
+	lightRasterDesc.pixelMainFunction = "ps_main";
+	auto lightRasterProgram = DX12::Shader::HLSLRasterizationProgramImporter::ImportShader(rtSimpleLightRasterPath, lightRasterDesc, errorStr);
+
+    if(lightRasterProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightRasterPath) + "Error: \n" + errorStr;
+        return nullptr;
+	}
+
+	shaderRegistery->RegisterShaderProgram("RT_Simple_Light_Raster_Program", lightRasterProgram, false);
+	
+    ////// Creating the camera
 
     auto camtransform = std::make_shared<Transform>(Vector3(-6.0f, 2.6f, 1.8f), Vector3(1.0f), Vector3(0.0f, -0.85f, 0.12f), 111);
     ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
@@ -211,10 +229,17 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     groundRTMaterial->SetFloat("diffuse", 0.8f);
     groundRTMaterial->SetFloat("specular", 0.4f);
 
+    auto carMaterialNew = materialFactory->CreateMaterial(lightRasterProgram);
+	carMaterialNew->SetValue("ambient", 0.1f);
+	carMaterialNew->SetValue("diffuse", 0.5f);
+	carMaterialNew->SetValue("specular", 2.1f);
+	carMaterialNew->SetTexture2D("mainTexture", carTex1);
+    carMaterialNew->SetTexture2D("mainTexture1", groundBrickTex1);
+
 	////// Creating the entities
 
     auto carTransform1 = std::make_shared<Transform>(Vector3(-2.0f, 0.5f, -2.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(carMesh1, carMaterial1);
+    auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(carMesh1, carMaterialNew);
 	auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(carMesh1, carRTMaterial);
     auto carEntity1 = std::make_shared<QuantumEngine::GameEntity>(carTransform1, meshRenderer1, rtComponent1);
 
@@ -261,12 +286,12 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
         });
     
     auto frameLogger = std::make_shared<FrameRateLogger>();
-
+	auto textureAnimator = std::make_shared<TextureAnimator>(carMaterialNew, carTex1, lionStatueTex1, 1.0f);
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1};
-    scene->behaviours = { cameraController, frameLogger };
+    scene->entities = { carEntity1};
+    scene->behaviours = { cameraController, frameLogger, textureAnimator };
 	scene->rtGlobalProgram = rtGlobalProgram;
     
     return scene;
@@ -1348,10 +1373,10 @@ bool SceneBuilder::Run_LightSample_Hybrid(const ref<Render::GPUDeviceManager>& d
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
-
+	auto materialRegistery = device->CreateMaterialFactory();
 	std::string error;
 
-    ref<Scene> scene = BuildLightScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if(scene == nullptr) {
         errorStr = error;
@@ -1371,10 +1396,10 @@ bool SceneBuilder::Run_LightSample_RayTracing(const ref<Render::GPUDeviceManager
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
-
+    auto materialRegistery = device->CreateMaterialFactory();
     std::string error;
 
-    ref<Scene> scene = BuildLightScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if (scene == nullptr) {
         errorStr = error;

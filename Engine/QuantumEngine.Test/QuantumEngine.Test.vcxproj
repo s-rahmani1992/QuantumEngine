@@ -106,6 +106,7 @@
     <ClInclude Include="Resource.h" />
     <ClInclude Include="SceneBuilder.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TextureAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CameraController.cpp" />
@@ -114,6 +115,7 @@
     <ClCompile Include="FrameRateLogger.cpp" />
     <ClCompile Include="QuantumEngine.Test.cpp" />
     <ClCompile Include="SceneBuilder.cpp" />
+    <ClCompile Include="TextureAnimator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="QuantumEngine.Test.rc" />
@@ -240,6 +242,13 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="engine-icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

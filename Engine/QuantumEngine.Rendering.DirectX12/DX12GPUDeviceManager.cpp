@@ -6,6 +6,7 @@
 #include "DX12HybridContext.h"
 #include "DX12AssetManager.h"
 #include "DX12ShaderRegistery.h"
+#include "DX12MaterialFactory.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::Initialize()
 {
@@ -83,6 +84,11 @@ ref<QuantumEngine::Rendering::ShaderRegistery> QuantumEngine::Rendering::DX12::D
 	auto shaderReg = std::make_shared<DX12ShaderRegistery>();
 	shaderReg->Initialize(m_device);
 	return shaderReg;
+}
+
+ref<QuantumEngine::Rendering::MaterialFactory> QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::CreateMaterialFactory()
+{
+	return std::make_shared<DX12MaterialFactory>();
 }
 
 QuantumEngine::Rendering::DX12::DX12GPUDeviceManager::~DX12GPUDeviceManager()

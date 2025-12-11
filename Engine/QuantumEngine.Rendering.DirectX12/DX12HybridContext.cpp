@@ -9,6 +9,7 @@
 #include "HLSLMaterial.h"
 #include "HLSLShaderProgram.h"
 #include <set>
+#include <map>
 #include "Core/GameEntity.h"
 #include "Rendering/MeshRenderer.h"
 #include "Rendering/GBufferRTReflectionRenderer.h"
@@ -17,6 +18,8 @@
 #include "DX12MeshController.h"
 #include "Core/Mesh.h"
 #include "Core/Scene.h"
+#include "DX12RasterizationMaterial.h"
+#include "Shader/HLSLRasterizationProgram.h"
 
 bool QuantumEngine::Rendering::DX12::DX12HybridContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -182,12 +185,18 @@ bool QuantumEngine::Rendering::DX12::DX12HybridContext::InitializeDepthBuffer()
 void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 {
 	UInt32 rasterHeapSize = m_entityGPUData.size() + 1 + 1; // entity transforms + camera + light
-	std::set<ref<HLSLMaterial>> usedMaterials;
+	std::map<ref<Material>, ref<DX12RasterizationMaterial>> usedMaterials;
+
 	for (auto& entityGpu : m_entityGPUData) {
-		auto material = std::dynamic_pointer_cast<HLSLMaterial>(entityGpu.gameEntity->GetRenderer()->GetMaterial());
-		if (usedMaterials.emplace(material).second == false)
+		auto material = entityGpu.gameEntity->GetRenderer()->GetMaterial();
+
+		if (usedMaterials.emplace(material, nullptr).second == false)
 			continue;
-		rasterHeapSize += material->GetBoundResourceCount();
+		
+		auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram>(material->GetProgram());
+		auto rasterMaterial = std::make_shared<DX12RasterizationMaterial>(material, program);
+		usedMaterials[material] = rasterMaterial;
+		rasterHeapSize += material->GetTextureFieldCount();
 	}
 
 	D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc{
@@ -230,6 +239,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		if (meshRenderer != nullptr) {
 			m_meshRendererData.push_back(DX12MeshRendererGPUData{
 				.meshRenderer = meshRenderer,
+				.material = usedMaterials[meshRenderer->GetMaterial()],
 				.transformResource = entityGpu.transformResource,
 				.transformHandle = gpuHandle,
 				});
@@ -328,8 +338,8 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 
 	UInt32 offset = 2 + m_entityGPUData.size();
 	for (auto& mat : usedMaterials) {
-		mat->BindDescriptor(m_rasterHeap, offset);
-		offset += mat->GetBoundResourceCount();
+		mat.second->BindDescriptorToResources(m_rasterHeap, offset);
+		offset += mat.first->GetTextureFieldCount();
 	}
 }
 

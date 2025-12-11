@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -142,6 +142,8 @@
     <ClInclude Include="Rendering\GPUTexture2DController.h" />
     <ClInclude Include="Rendering\GraphicContext.h" />
     <ClInclude Include="Rendering\Material.h" />
+    <ClInclude Include="Rendering\MaterialBuilder.h" />
+    <ClInclude Include="Rendering\MaterialFactory.h" />
     <ClInclude Include="Rendering\MeshRenderer.h" />
     <ClInclude Include="Rendering\RayTracingComponent.h" />
     <ClInclude Include="Rendering\Renderer.h" />

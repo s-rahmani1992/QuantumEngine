@@ -5,10 +5,12 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12RayTracingPipelineModule;
 	class DX12GBufferPipelineModule;
 	class DX12GameEntityPipelineModule;
+	class DX12RasterizationMaterial;
 
 	struct DX12MeshRendererGPUData {
 	public:
-		ref<QuantumEngine::Rendering::MeshRenderer> meshRenderer;
+		ref<MeshRenderer> meshRenderer;
+		ref<DX12RasterizationMaterial> material;
 		ComPtr<ID3D12Resource2> transformResource;
 		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};

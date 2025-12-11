@@ -30,6 +30,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		virtual ref<GraphicContext> CreateRayTracingContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window) override;
 		virtual ref<GPUAssetManager> CreateAssetManager() override;
 		virtual ref<ShaderRegistery> CreateShaderRegistery() override;
+		virtual ref<MaterialFactory> CreateMaterialFactory() override;
 		~DX12GPUDeviceManager();
 		ref<DX12CommandExecuter> CreateCommandExecuter();
 	private:

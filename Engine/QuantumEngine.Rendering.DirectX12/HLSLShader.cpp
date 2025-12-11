@@ -6,7 +6,7 @@
 UInt32 QuantumEngine::Rendering::DX12::HLSLShader::m_shaderCounter = 0;
 
 QuantumEngine::Rendering::DX12::HLSLShader::HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType)
-    :Shader(byteCode, codeLength, shaderType), m_shaderType(shaderType)
+	:Shader(byteCode, codeLength, shaderType), m_shaderType(shaderType)
 {
     m_shaderCounter++;
 }
@@ -14,6 +14,7 @@ QuantumEngine::Rendering::DX12::HLSLShader::HLSLShader(Byte* byteCode, UInt64 co
 QuantumEngine::Rendering::DX12::HLSLShader::HLSLShader(Byte* byteCode, UInt64 codeLength, DX12_Shader_Type shaderType, ComPtr<ID3D12ShaderReflection>& shaderReflection)
 	:HLSLShader(byteCode, codeLength, shaderType)
 {
+	m_rawReflection = shaderReflection;
     FillReflection(shaderReflection);
 }
 

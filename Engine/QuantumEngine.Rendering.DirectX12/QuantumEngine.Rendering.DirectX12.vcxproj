@@ -78,7 +78,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Rendering.DirectX12;$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -100,7 +100,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Rendering.DirectX12;$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -122,7 +122,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Rendering.DirectX12;$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -144,7 +144,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Engine\QuantumEngine.Rendering.DirectX12;$(SolutionDir)Engine\QuantumEngine.Core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -167,7 +167,9 @@
     <ClInclude Include="DX12GraphicContext.h" />
     <ClInclude Include="DX12HybridContext.h" />
     <ClInclude Include="DX12LightManager.h" />
+    <ClInclude Include="DX12MaterialFactory.h" />
     <ClInclude Include="DX12MeshController.h" />
+    <ClInclude Include="DX12RasterizationMaterial.h" />
     <ClInclude Include="DX12RayTracingContext.h" />
     <ClInclude Include="Dx12RayTracingPipelineModule.h" />
     <ClInclude Include="DX12ShaderRegistery.h" />
@@ -180,6 +182,8 @@
     <ClInclude Include="HLSLShaderProgram.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RayTracing\RTAccelarationStructure.h" />
+    <ClInclude Include="Shader\HLSLRasterizationProgram.h" />
+    <ClInclude Include="Shader\HLSLRasterizationProgramImporter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DX12AssetManager.cpp" />
@@ -190,7 +194,9 @@
     <ClCompile Include="DX12GraphicContext.cpp" />
     <ClCompile Include="DX12HybridContext.cpp" />
     <ClCompile Include="DX12LightManager.cpp" />
+    <ClCompile Include="DX12MaterialFactory.cpp" />
     <ClCompile Include="DX12MeshController.cpp" />
+    <ClCompile Include="DX12RasterizationMaterial.cpp" />
     <ClCompile Include="DX12RayTracingContext.cpp" />
     <ClCompile Include="Dx12RayTracingPipelineModule.cpp" />
     <ClCompile Include="DX12ShaderRegistery.cpp" />
@@ -213,6 +219,8 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Shader\HLSLRasterizationProgram.cpp" />
+    <ClCompile Include="Shader\HLSLRasterizationProgramImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantumEngine.Core\QuantumEngine.Core.vcxproj">
