@@ -34,9 +34,9 @@ cbuffer _LightData : register(b2)
 }
 
 
-cbuffer CurveProperties : register(b3)
+cbuffer _CurveProperties : register(b3)
 {
-    float width;
+    float _width;
 };
 
 cbuffer MaterialProps : register(b4)
@@ -58,21 +58,21 @@ void gs_main(line VS_INPUT vertexIn[2], inout TriangleStream<GS_OUTPUT> triStrea
     float4x4 mat = mul(transformData.modelViewMatrix, cameraData.projectionMatrix);
     GS_OUTPUT gsOut[4];
     float3 edge1 = cross(vertexIn[0].norm, vertexIn[0].tangent);
-    gsOut[0].worldPos = vertexIn[0].pos + width * edge1;
+    gsOut[0].worldPos = vertexIn[0].pos + _width * edge1;
     gsOut[0].texCoord = float2(vertexIn[0].texCoord.x, 1);
     gsOut[0].norm = vertexIn[0].norm;
     gsOut[0].pos = mul(float4(gsOut[0].worldPos, 1.0f), mat);
-    gsOut[1].worldPos = vertexIn[0].pos - width * edge1;
+    gsOut[1].worldPos = vertexIn[0].pos - _width * edge1;
     gsOut[1].texCoord = float2(vertexIn[0].texCoord.x, 0);
     gsOut[1].norm = vertexIn[0].norm;
     gsOut[1].pos = mul(float4(gsOut[1].worldPos, 1.0f), mat);
     
     float3 edge2 = cross(vertexIn[1].norm, vertexIn[1].tangent);
-    gsOut[2].worldPos = vertexIn[1].pos + width * edge2;
+    gsOut[2].worldPos = vertexIn[1].pos + _width * edge2;
     gsOut[2].texCoord = float2(vertexIn[1].texCoord.x, 1);
     gsOut[2].norm = vertexIn[1].norm;
     gsOut[2].pos = mul(float4(gsOut[2].worldPos, 1.0f), mat);
-    gsOut[3].worldPos = vertexIn[1].pos - width * edge2;
+    gsOut[3].worldPos = vertexIn[1].pos - _width * edge2;
     gsOut[3].texCoord = float2(vertexIn[1].texCoord.x, 0);
     gsOut[3].norm = vertexIn[1].norm;
     gsOut[3].pos = mul(float4(gsOut[3].worldPos, 1.0f), mat);

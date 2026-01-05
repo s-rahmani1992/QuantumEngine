@@ -282,6 +282,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 	auto curveTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
 	auto curveRenderer = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, -4.0f), Vector3(0.0f, 4.0f, 0.0f), Vector3(4.0f, 0.0f, 4.0f) }, 2.2f, 10);
 	auto curveEntity = std::make_shared<QuantumEngine::GameEntity>(curveTransform, curveRenderer, rtComponent6);
+    
+    auto curveTransform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
+    auto curveRenderer1 = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, 0.0f), Vector3(0.0f, 12.0f, 0.0f), Vector3(4.0f, 0.0f, 0.0f) }, 0.8f, 20);
+    auto curveEntity1 = std::make_shared<QuantumEngine::GameEntity>(curveTransform1, curveRenderer1, rtComponent6);
+
     ////// Creating the lights
 
     SceneLightData lightData;
@@ -309,7 +314,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity};
+    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity, curveEntity1};
     scene->behaviours = { cameraController, textureAnimator };
 	scene->rtGlobalProgram = rtGlobalProgram;
     

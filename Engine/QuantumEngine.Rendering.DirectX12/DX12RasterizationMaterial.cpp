@@ -12,6 +12,9 @@ QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::DX12RasterizationMate
 	program->GetRootSignature()->GetDevice(IID_PPV_ARGS(&m_device));
 	auto reflectionData = program->GetReflectionData();
 	for (auto& cbData : reflectionData->rootConstants) {
+		if(cbData.rootConstants[0].name[0] == '_')
+			continue;
+
 		m_constantRegisterValues.push_back(constantBufferData{
 			.rootParamIndex = cbData.rootParameterIndex,
 			.location = material->GetValueLocation(cbData.rootConstants[0].name) - cbData.rootConstants[0].variableDesc.StartOffset / 4,

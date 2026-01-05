@@ -52,5 +52,8 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		static D3D12_INPUT_ELEMENT_DESC s_inputElementDescs[4];
 		static D3D12_INPUT_LAYOUT_DESC s_layoutDesc;
+
+		UInt32 m_widthRootIndex;
+		Float m_splineWidth;
 	};
 }

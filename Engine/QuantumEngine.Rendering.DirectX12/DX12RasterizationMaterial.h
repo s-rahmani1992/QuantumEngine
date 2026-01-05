@@ -28,6 +28,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void BindLightDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& lightHeapHandle);
 		
 		inline ref<Material> GetMaterial() const { return m_material; }
+		inline ref<Shader::HLSLRasterizationProgram> GetProgram() const { return m_program; }
 
 	private:
 		struct constantBufferData {

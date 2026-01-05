@@ -263,7 +263,6 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		auto splineRenderer = std::dynamic_pointer_cast<SplineRenderer>(entityGpu.gameEntity->GetRenderer());
 		if(splineRenderer != nullptr)
 		{
-			splineRenderer->GetMaterial()->SetValue("width", splineRenderer->GetWidth());
 			ref<DX12SplineRasterPipelineModule> splinePipeline = std::make_shared<DX12SplineRasterPipelineModule>(SplineRendererData{
 				.renderer = splineRenderer,
 				.material = usedMaterials[splineRenderer->GetMaterial()],

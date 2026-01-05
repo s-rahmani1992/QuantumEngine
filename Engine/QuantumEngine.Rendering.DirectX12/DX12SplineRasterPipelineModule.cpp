@@ -8,6 +8,9 @@
 #include "Shader/HLSLRasterizationProgram.h"
 #include "DX12HybridContext.h"
 
+#define SPLINE_WIDTH_FIELD_NAME "_width"
+#define SPLINE_WIDTH_BUFFER_NAME "_CurveProperties"
+
 D3D12_INPUT_ELEMENT_DESC QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::s_inputElementDescs[4] = {
 	{ "position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
@@ -22,8 +25,19 @@ D3D12_INPUT_LAYOUT_DESC QuantumEngine::Rendering::DX12::DX12SplineRasterPipeline
 
 QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRasterPipelineModule(const SplineRendererData& splineData, DXGI_FORMAT depthFormat)
 	:m_splineRenderer(splineData.renderer), m_transformHeapHandle(splineData.transformHandle), 
-	m_material(splineData.material), m_depthFormat(depthFormat)
+	m_material(splineData.material), m_depthFormat(depthFormat), m_splineWidth(splineData.renderer->GetWidth())
 {
+	auto program = m_material->GetProgram();
+	auto reflection = program->GetReflectionData();
+
+	auto widthIt = std::find_if(
+		reflection->rootConstants.begin(),
+		reflection->rootConstants.end(),
+		[](const Shader::RootConstantBufferData& binding) {
+			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
+		});
+
+	m_widthRootIndex = (*widthIt).rootParameterIndex;
 }
 
 bool QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device)
@@ -196,7 +210,8 @@ void QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Render(ComP
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP);
 
 	//Set Material Variables
-	m_material->BindParameters(commandList);
+	m_material->BindParameters(commandList); 
+	commandList->SetGraphicsRoot32BitConstants(m_widthRootIndex, 1, &m_splineWidth, 0);
 	m_material->BindCameraDescriptor(commandList, camHandle);
 	m_material->BindLightDescriptor(commandList, lightHandle);
 	m_material->BindTransformDescriptor(commandList, m_transformHeapHandle);
