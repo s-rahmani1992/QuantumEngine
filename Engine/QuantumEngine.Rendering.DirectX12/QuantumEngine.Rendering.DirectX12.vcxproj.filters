@@ -93,6 +93,9 @@
     <ClInclude Include="Shader\HLSLRasterizationProgramImporter.h">
       <Filter>Shader</Filter>
     </ClInclude>
+    <ClInclude Include="DX12SplineRasterPipelineModule.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -169,6 +172,9 @@
     </ClCompile>
     <ClCompile Include="Shader\HLSLRasterizationProgramImporter.cpp">
       <Filter>Shader</Filter>
+    </ClCompile>
+    <ClCompile Include="DX12SplineRasterPipelineModule.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

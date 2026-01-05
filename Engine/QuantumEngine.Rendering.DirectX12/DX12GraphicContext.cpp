@@ -179,7 +179,12 @@ void QuantumEngine::Rendering::DX12::DX12GraphicContext::UploadTexturesAndMeshes
 	std::set<ref<Mesh>> uniqueMeshes;
 
 	for (auto& entity : scene->entities) {
-		uniqueMeshes.insert(entity->GetRenderer()->GetMesh());
+		auto mesh = entity->GetRenderer()->GetMesh();
+		
+		if(mesh == nullptr)
+			continue;
+
+		uniqueMeshes.insert(mesh);
 
 		auto rtcomponent = entity->GetRayTracingComponent();
 

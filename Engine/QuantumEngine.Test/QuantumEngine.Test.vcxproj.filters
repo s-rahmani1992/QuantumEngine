@@ -123,6 +123,9 @@
     <Text Include="Assets\Shaders\simple_light_raster_program.hlsl">
       <Filter>Assets</Filter>
     </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Shaders\RTStructs.hlsli">

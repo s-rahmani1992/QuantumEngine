@@ -16,6 +16,7 @@
 #include <Rendering/MeshRenderer.h>
 #include <Rendering/GraphicContext.h>
 #include <Rendering/GBufferRTReflectionRenderer.h>
+#include <Rendering/SplineRenderer.h>
 #include <Rendering/RayTracingComponent.h>
 #include "Rendering/MaterialFactory.h"
 
@@ -87,6 +88,21 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 
 	shaderRegistery->RegisterShaderProgram("RT_Simple_Light_Raster_Program", lightRasterProgram, false);
 	
+	std::wstring curveRasterPath = root + L"\\Assets\\Shaders\\curve_raster_program.hlsl";
+    DX12::Shader::HLSLRasterizationProgramImportDesc curveRasterDesc;
+    curveRasterDesc.shaderModel = "6_6";
+    curveRasterDesc.vertexMainFunction = "vs_main";
+    curveRasterDesc.pixelMainFunction = "ps_main";
+	curveRasterDesc.geometryMainFunction = "gs_main";
+    auto curveRasterProgram = DX12::Shader::HLSLRasterizationProgramImporter::ImportShader(curveRasterPath, curveRasterDesc, errorStr);
+
+    if (curveRasterProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(curveRasterPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+	shaderRegistery->RegisterShaderProgram("Curve_Raster_Program", curveRasterProgram, false);
+
     ////// Creating the camera
 
     auto camtransform = std::make_shared<Transform>(Vector3(-6.0f, 2.6f, 1.8f), Vector3(1.0f), Vector3(0.0f, -0.85f, 0.12f), 111);
@@ -225,6 +241,12 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     groundRTMaterial->SetFloat("diffuse", 0.8f);
     groundRTMaterial->SetFloat("specular", 0.4f);
 
+	auto curveMaterial = materialFactory->CreateMaterial(curveRasterProgram);
+    curveMaterial->SetValue("ambient", 0.1f);
+    curveMaterial->SetValue("diffuse", 0.8f);
+    curveMaterial->SetValue("specular", 0.4f);
+	curveMaterial->SetValue("color", Color(0.5f, 0.2f, 0.6f, 1.0f));
+
 	////// Creating the entities
 
     auto carTransform1 = std::make_shared<Transform>(Vector3(-2.0f, 0.5f, -2.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
@@ -257,7 +279,10 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     auto rtComponent6 = std::make_shared<Render::RayTracingComponent>(chairMesh1, chairRTMaterial);
     auto chairEntity2 = std::make_shared<QuantumEngine::GameEntity>(chairTransform2, meshRenderer6, rtComponent6);
 
-	////// Creating the lights
+	auto curveTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
+	auto curveRenderer = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, -4.0f), Vector3(0.0f, 4.0f, 0.0f), Vector3(4.0f, 0.0f, 4.0f) }, 2.2f, 10);
+	auto curveEntity = std::make_shared<QuantumEngine::GameEntity>(curveTransform, curveRenderer, rtComponent6);
+    ////// Creating the lights
 
     SceneLightData lightData;
 
@@ -284,7 +309,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2};
+    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity};
     scene->behaviours = { cameraController, textureAnimator };
 	scene->rtGlobalProgram = rtGlobalProgram;
     

@@ -115,6 +115,7 @@
     <ClInclude Include="BasicTypes.h" />
     <ClInclude Include="Core\AssimpModel3DImporter.h" />
     <ClInclude Include="Core\Behaviour.h" />
+    <ClInclude Include="Core\BezierCurve.h" />
     <ClInclude Include="Core\Camera\Camera.h" />
     <ClInclude Include="Core\Camera\PerspectiveCamera.h" />
     <ClInclude Include="Core\Color.h" />
@@ -150,6 +151,7 @@
     <ClInclude Include="Rendering\Shader.h" />
     <ClInclude Include="Rendering\ShaderProgram.h" />
     <ClInclude Include="Rendering\ShaderRegistery.h" />
+    <ClInclude Include="Rendering\SplineRenderer.h" />
     <ClInclude Include="StringUtilities.h" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +163,7 @@
     <ClCompile Include="Core\Mesh.cpp" />
     <ClCompile Include="Core\Model3DAsset.cpp" />
     <ClCompile Include="Core\ShapeBuilder.cpp" />
+    <ClCompile Include="Core\BezierCurve.cpp" />
     <ClCompile Include="Core\Texture2D.cpp" />
     <ClCompile Include="Core\Vector2UInt.cpp" />
     <ClCompile Include="Core\WICTexture2DImporter.cpp" />

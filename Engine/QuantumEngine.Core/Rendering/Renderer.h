@@ -9,6 +9,9 @@ namespace QuantumEngine::Rendering {
 
 	class Renderer {
 	public:
+		Renderer(const ref<Material>& material) 
+			:material(material) { }
+
 		Renderer(const ref<Mesh>& mesh, const ref<Material>& material)
 			:m_mesh(mesh), material(material) { }
 		virtual ~Renderer() = default;

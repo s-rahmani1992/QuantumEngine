@@ -129,6 +129,12 @@
     <ClInclude Include="Rendering\MaterialFactory.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="Rendering\SplineRenderer.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\BezierCurve.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Platform\GraphicWindow.cpp">
@@ -178,6 +184,9 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\Vector2UInt.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\BezierCurve.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

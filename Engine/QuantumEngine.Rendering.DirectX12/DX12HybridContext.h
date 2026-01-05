@@ -1,11 +1,16 @@
 #pragma once
 #include "DX12GraphicContext.h"
 
+namespace QuantumEngine::Rendering {
+	class SplineRenderer;
+}
+
 namespace QuantumEngine::Rendering::DX12 {
 	class DX12RayTracingPipelineModule;
 	class DX12GBufferPipelineModule;
 	class DX12GameEntityPipelineModule;
 	class DX12RasterizationMaterial;
+	class DX12SplineRasterPipelineModule;
 
 	struct DX12MeshRendererGPUData {
 	public:
@@ -19,6 +24,13 @@ namespace QuantumEngine::Rendering::DX12 {
 	public:
 		ref<GBufferRTReflectionRenderer> renderer;
 		ComPtr<ID3D12Resource2> transformResource;
+		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
+	};
+
+	struct SplineRendererData {
+	public:
+		ref<SplineRenderer> renderer;
+		ref<DX12RasterizationMaterial> material;
 		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};
 
@@ -47,6 +59,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		std::vector<DX12MeshRendererGPUData> m_meshRendererData;
 		std::vector<ref<DX12GameEntityPipelineModule>> m_rasterizationPipelines;
+		std::vector<ref<DX12SplineRasterPipelineModule>> m_splinePipelines;
 
 		std::vector<EntityGBufferData> m_gBufferEntities;
 		ref<DX12GBufferPipelineModule> m_gBufferPipeline;

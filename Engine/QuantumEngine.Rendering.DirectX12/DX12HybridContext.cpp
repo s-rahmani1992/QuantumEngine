@@ -20,6 +20,8 @@
 #include "Core/Scene.h"
 #include "DX12RasterizationMaterial.h"
 #include "Shader/HLSLRasterizationProgram.h"
+#include <Rendering/SplineRenderer.h>
+#include "DX12SplineRasterPipelineModule.h"
 
 bool QuantumEngine::Rendering::DX12::DX12HybridContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -109,6 +111,10 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::Render()
 	m_commandList->SetDescriptorHeaps(1, m_rasterHeap.GetAddressOf());
 	for (auto& pipeline : m_rasterizationPipelines) {
 		pipeline->Render(m_commandList, m_cameraHandle, m_lightHandle);
+	}
+
+	for(auto& splinePipeline : m_splinePipelines) {
+		splinePipeline->Render(m_commandList, m_cameraHandle, m_lightHandle);
 	}
 
 	//draw
@@ -252,6 +258,19 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 				.transformResource = entityGpu.transformResource,
 				.transformHandle = gpuHandle,
 				});
+		}
+
+		auto splineRenderer = std::dynamic_pointer_cast<SplineRenderer>(entityGpu.gameEntity->GetRenderer());
+		if(splineRenderer != nullptr)
+		{
+			splineRenderer->GetMaterial()->SetValue("width", splineRenderer->GetWidth());
+			ref<DX12SplineRasterPipelineModule> splinePipeline = std::make_shared<DX12SplineRasterPipelineModule>(SplineRendererData{
+				.renderer = splineRenderer,
+				.material = usedMaterials[splineRenderer->GetMaterial()],
+				.transformHandle = gpuHandle
+				}, m_depthFormat);
+			splinePipeline->Initialize(m_device);
+			m_splinePipelines.push_back(splinePipeline);
 		}
 
 		firstHandle.ptr += incrementSize;
