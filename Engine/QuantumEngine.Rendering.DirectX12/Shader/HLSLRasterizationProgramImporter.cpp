@@ -159,6 +159,21 @@ ref<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram> QuantumEng
 		}
 	}
 
+	// Compile geometry shader if Exists
+    if (properties.geometryMainFunction.empty() == false)
+    {
+        mainName = CharToString(properties.geometryMainFunction.c_str());
+        targetModel = L"gs_" + CharToString(properties.shaderModel.c_str());
+        arguments[mainIndex] = (WCHAR*)mainName.c_str();
+        arguments[targetIndex] = (WCHAR*)targetModel.c_str();
+        bool ok = true;
+        compileFunc(DX12_Shader_Type::GEOMETRY_SHADER, error, ok);
+        if (ok == false)
+        {
+            return nullptr;
+        }
+	}
+
 	// Compile pixel shader if Exists
     if(properties.pixelMainFunction.empty() == false)
     {

@@ -14,6 +14,9 @@ QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram::HLSLRasterizat
 		if (shader->GetShaderTypeId() == VERTEX_SHADER) {
 			m_vertexShader = shader;
 		}
+		else if (shader->GetShaderTypeId() == GEOMETRY_SHADER) {
+            m_geometryShader = shader;
+		}
 		else if (shader->GetShaderTypeId() == PIXEL_SHADER) {
 			m_pixelShader = shader;
 		}

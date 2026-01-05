@@ -71,9 +71,17 @@ namespace QuantumEngine::Rendering::DX12::Shader {
 		/// <returns></returns>
 		inline ref<HLSLShader> GetPixelShader() const { return m_pixelShader; }
 
+		/// <summary>
+		/// Gets the geometry shader if exists
+		/// </summary>
+		/// <returns></returns>
+		inline ref<HLSLShader> GetGeometryShader() const { return m_geometryShader; }
+
 	private:
 		ref<HLSLShader> m_vertexShader;
 		ref<HLSLShader> m_pixelShader;
+		ref<HLSLShader> m_geometryShader;
+		
 		HLSLReflection m_reflection;
 		ComPtr<ID3D12RootSignature> m_rootSignature;
 	};

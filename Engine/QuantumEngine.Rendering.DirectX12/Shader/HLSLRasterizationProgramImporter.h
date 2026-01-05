@@ -9,6 +9,7 @@ namespace QuantumEngine::Rendering::DX12::Shader {
 		std::string shaderModel; //TODO : Use enum class if possible
 		std::string vertexMainFunction;
 		std::string pixelMainFunction;
+		std::string geometryMainFunction;
 	};
 
 	/// <summary>

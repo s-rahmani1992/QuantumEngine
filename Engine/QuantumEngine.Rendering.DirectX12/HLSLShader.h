@@ -16,7 +16,8 @@ namespace QuantumEngine::Rendering::DX12 {
 	enum DX12_Shader_Type { //TODO If possible, convert to enum class
 		VERTEX_SHADER = 0,
 		PIXEL_SHADER = 1,
-		LIB_SHADER = 2,
+		GEOMETRY_SHADER = 2,
+		LIB_SHADER = 3,
 	};
 
 	struct HLSLRootConstantVariableData {
