@@ -16,6 +16,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Compute">
+      <UniqueIdentifier>{f9536bdf-bd4c-42cf-bb76-ab52b063bb48}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -96,6 +99,12 @@
     <ClInclude Include="DX12SplineRasterPipelineModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Compute\HLSLComputeProgram.h">
+      <Filter>Compute</Filter>
+    </ClInclude>
+    <ClInclude Include="Compute\HLSLComputeProgramImporter.h">
+      <Filter>Compute</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -175,6 +184,12 @@
     </ClCompile>
     <ClCompile Include="DX12SplineRasterPipelineModule.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Compute\HLSLComputeProgramImporter.cpp">
+      <Filter>Compute</Filter>
+    </ClCompile>
+    <ClCompile Include="Compute\HLSLComputeProgram.cpp">
+      <Filter>Compute</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
