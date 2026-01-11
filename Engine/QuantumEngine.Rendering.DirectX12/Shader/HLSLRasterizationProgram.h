@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "Rendering/ShaderProgram.h"
 #include <string>
+#include "../Core/HLSLReflection.h"
 
 using namespace Microsoft::WRL;
 
@@ -10,31 +11,6 @@ namespace QuantumEngine::Rendering::DX12 {
 }
 
 namespace QuantumEngine::Rendering::DX12::Shader {
-	struct RootConstantVariableData {
-		std::string name;
-		D3D12_SHADER_VARIABLE_DESC variableDesc;
-	};
-
-	struct ResourceVariableData {
-		UInt32 rootParameterIndex;
-		std::string name;
-		D3D12_SHADER_INPUT_BIND_DESC resourceData;
-	};
-
-	struct RootConstantBufferData {
-		UInt32 rootParameterIndex;
-		std::string name;
-		D3D12_SHADER_INPUT_BIND_DESC resourceData;
-		D3D12_ROOT_CONSTANTS registerData;
-		std::vector<RootConstantVariableData> rootConstants;
-	};
-
-	struct HLSLReflection {
-		std::vector<RootConstantBufferData> rootConstants;
-		std::vector<ResourceVariableData> resourceVariables;
-		std::vector<ResourceVariableData> samplerVariables;
-	};
-
 	class HLSLRasterizationProgram : public ShaderProgram {
 	public:
 		HLSLRasterizationProgram(const std::vector<ref<HLSLShader>>& shaders);

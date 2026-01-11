@@ -31,11 +31,11 @@ QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRaster
 {
 	auto program = m_material->GetProgram();
 	auto reflection = program->GetReflectionData();
-
+	auto& rootConstantList = reflection->GetRootConstants();
 	auto widthIt = std::find_if(
-		reflection->rootConstants.begin(),
-		reflection->rootConstants.end(),
-		[](const Shader::RootConstantBufferData& binding) {
+		rootConstantList.begin(),
+		rootConstantList.end(),
+		[](const RootConstantBufferData& binding) {
 			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
 		});
 
@@ -44,18 +44,20 @@ QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRaster
 	auto computeReflection = computeProgram->GetReflectionData();
 
 	auto curveIt = std::find_if(
-		computeReflection->rootConstants.begin(),
-		computeReflection->rootConstants.end(),
-		[](const Shader::RootConstantBufferData& binding) {
+		rootConstantList.begin(),
+		rootConstantList.end(),
+		[](const RootConstantBufferData& binding) {
 			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
 		});
 
 	m_curveRootIndex = (*curveIt).rootParameterIndex;
 
+	auto& resourceVariableList = computeReflection->GetResourceVariables();
+
 	auto vertexIt = std::find_if(
-		computeReflection->resourceVariables.begin(),
-		computeReflection->resourceVariables.end(),
-		[](const Shader::ResourceVariableData& binding) {
+		resourceVariableList.begin(),
+		resourceVariableList.end(),
+		[](const ResourceVariableData& binding) {
 			return binding.name == "_vertexBuffer";
 		});
 

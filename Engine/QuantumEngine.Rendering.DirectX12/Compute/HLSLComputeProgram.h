@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "Rendering/ShaderProgram.h"
-#include "../Shader/HLSLRasterizationProgram.h"
+#include "../Core/HLSLReflection.h"
 
 using namespace Microsoft::WRL;
 
@@ -22,7 +22,7 @@ namespace QuantumEngine::Rendering::DX12::Compute {
 		/// Gets the parameter layout for this shader program
 		/// </summary>
 		/// <returns></returns>
-		inline Shader::HLSLReflection* GetReflectionData() { return &m_reflection; }
+		inline HLSLReflection* GetReflectionData() { return &m_reflection; }
 
 		/// <summary>
 		/// Gets the root signature for this shader program
@@ -46,7 +46,7 @@ namespace QuantumEngine::Rendering::DX12::Compute {
 		Byte* m_byteCode;
 		UInt64 m_codeLength;
 
-		Shader::HLSLReflection m_reflection;
+		HLSLReflection m_reflection;
 		ComPtr<ID3D12RootSignature> m_rootSignature;
 	};
 }

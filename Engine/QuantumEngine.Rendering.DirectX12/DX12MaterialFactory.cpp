@@ -17,7 +17,9 @@ ref<Render::Material> Render::DX12::DX12MaterialFactory::CreateMaterial(const re
 		MaterialReflection reflectionData;
 
 		// Value Fields are from Root Constants
-		for (auto& rootConst : hlslReflection->rootConstants) {
+		auto& rootConstantList = hlslReflection->GetRootConstants();
+
+		for (auto& rootConst : rootConstantList) {
 			if (rootConst.name[0] == '_') {// Skip internal root constants
 				fieldIndex++;
 				continue;
@@ -36,7 +38,9 @@ ref<Render::Material> Render::DX12::DX12MaterialFactory::CreateMaterial(const re
 		}
 
 		// Texture Fields
-		for (auto& resVar : hlslReflection->resourceVariables) {
+		auto& resourceVarList = hlslReflection->GetResourceVariables();
+
+		for (auto& resVar : resourceVarList) {
 			if (resVar.name[0] == '_') {// Skip internal variables
 				fieldIndex++;
 				continue;

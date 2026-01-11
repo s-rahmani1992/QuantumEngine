@@ -11,7 +11,8 @@ QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::DX12RasterizationMate
 {
 	program->GetRootSignature()->GetDevice(IID_PPV_ARGS(&m_device));
 	auto reflectionData = program->GetReflectionData();
-	for (auto& cbData : reflectionData->rootConstants) {
+	auto& rootConstantList = reflectionData->GetRootConstants();
+	for (auto& cbData : rootConstantList) {
 		if(cbData.rootConstants[0].name[0] == '_')
 			continue;
 
@@ -24,14 +25,14 @@ QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::DX12RasterizationMate
 
 	auto textureFields = material->GetTextureFields();
 	m_heapValues = std::vector<HeapData>(textureFields->size());
+	auto& resourceVariableList = reflectionData->GetResourceVariables();
 
 	for (auto& resVar : *textureFields) {
 		ref<DX12Texture2DController> dx12Texture = std::dynamic_pointer_cast<DX12Texture2DController>(resVar.second.texture->GetGPUHandle());
-
 		auto it = std::find_if(
-			reflectionData->resourceVariables.begin(),
-			reflectionData->resourceVariables.end(),
-			[&resVar](const Shader::ResourceVariableData& binding) {
+			resourceVariableList.begin(),
+			resourceVariableList.end(),
+			[&resVar](const ResourceVariableData& binding) {
 				return binding.name == resVar.first;
 			});
 
@@ -42,7 +43,7 @@ QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::DX12RasterizationMate
 	}
 
 	// Find Special Resource root parameter indices
-	for (auto& resVar : reflectionData->resourceVariables) {
+	for (auto& resVar : resourceVariableList) {
 		if (resVar.name == HLSL_OBJECT_TRANSFORM_DATA_NAME) {
 			m_transformRootIndex = resVar.rootParameterIndex;
 		}

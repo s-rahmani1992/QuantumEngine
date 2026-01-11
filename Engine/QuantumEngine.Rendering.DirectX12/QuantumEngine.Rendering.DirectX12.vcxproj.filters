@@ -19,6 +19,9 @@
     <Filter Include="Compute">
       <UniqueIdentifier>{f9536bdf-bd4c-42cf-bb76-ab52b063bb48}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{3bace6d7-9425-4bff-8caf-b70f6c0322d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -105,6 +108,9 @@
     <ClInclude Include="Compute\HLSLComputeProgramImporter.h">
       <Filter>Compute</Filter>
     </ClInclude>
+    <ClInclude Include="Core\HLSLReflection.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -190,6 +196,9 @@
     </ClCompile>
     <ClCompile Include="Compute\HLSLComputeProgram.cpp">
       <Filter>Compute</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\HLSLReflection.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
