@@ -45,6 +45,9 @@
     <ClInclude Include="TextureAnimator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CurveModifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Test.cpp">
@@ -66,6 +69,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TextureAnimator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CurveModifier.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -124,6 +130,9 @@
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\curve_raster_program.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl">
       <Filter>Assets</Filter>
     </Text>
   </ItemGroup>

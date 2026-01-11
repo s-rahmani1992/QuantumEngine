@@ -36,9 +36,19 @@ namespace QuantumEngine::Rendering {
 		/// <returns></returns>
 		inline Core::BezierCurve& GetCurve() { return m_curve; }
 
+		inline void SetDirty() { m_isDirty = true; }
+
+		inline bool IsDirty()
+		{ 
+			bool dirty = m_isDirty;
+			m_isDirty = false;
+			return dirty; 
+		}
+
 	private: // Fields
 		float m_width;
 		int m_segments;
+		bool m_isDirty = true;
 		Core::BezierCurve m_curve;
 	};
 }

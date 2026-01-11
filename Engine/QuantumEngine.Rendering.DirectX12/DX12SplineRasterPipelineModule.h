@@ -14,6 +14,10 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12RasterizationMaterial;
 	struct SplineRendererData;
 
+	namespace Compute {
+		class HLSLComputeProgram;
+	}
+
 	struct SplineVertex {
 		Vector3 position;
 		Vector2 uv;
@@ -30,19 +34,29 @@ namespace QuantumEngine::Rendering::DX12 {
 		}
 	};
 
+	struct SplineParameters {
+		Vector3 startPoint;
+		float width;
+		Vector3 midPoint;
+		float length;
+		Vector3 endPoint;
+		float padding;
+	};
+
 
 	class DX12SplineRasterPipelineModule
 	{
 	public: 		
-		DX12SplineRasterPipelineModule(const SplineRendererData& splineData, DXGI_FORMAT depthFormat);
+		DX12SplineRasterPipelineModule(const SplineRendererData& splineData, DXGI_FORMAT depthFormat, const ref<Compute::HLSLComputeProgram>& computeProgram);
 		bool Initialize(const ComPtr<ID3D12Device10>& device);		
 		void Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle);
-
+		UInt32 BindDescriptorToResources(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset);
 	private:
 		ref<SplineRenderer> m_splineRenderer;
 
 		ComPtr<ID3D12Resource2> m_vertexBuffer;
 		D3D12_VERTEX_BUFFER_VIEW m_bufferView;
+		ComPtr<ID3D12Device> m_device;
 
 		ref<DX12RasterizationMaterial> m_material;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_transformHeapHandle;
@@ -50,10 +64,18 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12PipelineState> m_pipeline;
 		DXGI_FORMAT m_depthFormat;
 
+		ref<Compute::HLSLComputeProgram> m_computeProgram;
+		ComPtr<ID3D12PipelineState> m_computePipeline;
+
 		static D3D12_INPUT_ELEMENT_DESC s_inputElementDescs[4];
 		static D3D12_INPUT_LAYOUT_DESC s_layoutDesc;
 
 		UInt32 m_widthRootIndex;
 		Float m_splineWidth;
+
+		SplineParameters m_splineParams;
+		UInt32 m_curveRootIndex;
+		UInt32 m_vertexRootIndex;
+		D3D12_GPU_DESCRIPTOR_HANDLE m_vertexBufferHandle;
 	};
 }

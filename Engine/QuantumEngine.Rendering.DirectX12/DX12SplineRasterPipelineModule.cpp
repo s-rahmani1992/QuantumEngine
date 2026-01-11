@@ -7,6 +7,7 @@
 #include "HLSLShader.h"
 #include "Shader/HLSLRasterizationProgram.h"
 #include "DX12HybridContext.h"
+#include "Compute/HLSLComputeProgram.h"
 
 #define SPLINE_WIDTH_FIELD_NAME "_width"
 #define SPLINE_WIDTH_BUFFER_NAME "_CurveProperties"
@@ -23,9 +24,10 @@ D3D12_INPUT_LAYOUT_DESC QuantumEngine::Rendering::DX12::DX12SplineRasterPipeline
 	.NumElements = 4,
 };
 
-QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRasterPipelineModule(const SplineRendererData& splineData, DXGI_FORMAT depthFormat)
+QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRasterPipelineModule(const SplineRendererData& splineData, DXGI_FORMAT depthFormat, const ref<Compute::HLSLComputeProgram>& computeProgram)
 	:m_splineRenderer(splineData.renderer), m_transformHeapHandle(splineData.transformHandle), 
-	m_material(splineData.material), m_depthFormat(depthFormat), m_splineWidth(splineData.renderer->GetWidth())
+	m_material(splineData.material), m_depthFormat(depthFormat), m_splineWidth(splineData.renderer->GetWidth()),
+	m_computeProgram(computeProgram)
 {
 	auto program = m_material->GetProgram();
 	auto reflection = program->GetReflectionData();
@@ -38,52 +40,62 @@ QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRaster
 		});
 
 	m_widthRootIndex = (*widthIt).rootParameterIndex;
+
+	auto computeReflection = computeProgram->GetReflectionData();
+
+	auto curveIt = std::find_if(
+		computeReflection->rootConstants.begin(),
+		computeReflection->rootConstants.end(),
+		[](const Shader::RootConstantBufferData& binding) {
+			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
+		});
+
+	m_curveRootIndex = (*curveIt).rootParameterIndex;
+
+	auto vertexIt = std::find_if(
+		computeReflection->resourceVariables.begin(),
+		computeReflection->resourceVariables.end(),
+		[](const Shader::ResourceVariableData& binding) {
+			return binding.name == "_vertexBuffer";
+		});
+
+	m_vertexRootIndex = (*vertexIt).rootParameterIndex;
+
+	m_splineParams.startPoint = m_splineRenderer->GetCurve().m_point1;
+	m_splineParams.midPoint = m_splineRenderer->GetCurve().m_point2;
+	m_splineParams.endPoint = m_splineRenderer->GetCurve().m_point3;
+	m_splineParams.width = m_splineWidth;
+	m_splineParams.length = m_splineRenderer->GetCurve().InterpolateLength(1.0f);
 }
 
 bool QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device)
 {
+	m_device = device;
 	//Create vertex buffer
 
 	D3D12_RESOURCE_DESC vbDesc = ResourceUtilities::GetCommonBufferResourceDesc(
-		sizeof(SplineVertex) * (m_splineRenderer->GetSegments() + 1), D3D12_RESOURCE_FLAG_NONE);
+		sizeof(SplineVertex) * (m_splineRenderer->GetSegments() + 1), D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
 
-	if (FAILED(device->CreateCommittedResource(&DescriptorUtilities::CommonUploadHeapProps, D3D12_HEAP_FLAG_NONE, &vbDesc,
+	if (FAILED(device->CreateCommittedResource(&DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &vbDesc,
 		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_vertexBuffer))))
 		return false;
+
+	m_vertexBuffer->SetName(L"Spline Vertex Buffer");
 
 	// Buffer views
 	m_bufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
 	m_bufferView.SizeInBytes = sizeof(SplineVertex) * (m_splineRenderer->GetSegments() + 1);
 	m_bufferView.StrideInBytes = sizeof(SplineVertex);
 
-	void* mappedData = nullptr;
-	m_vertexBuffer->Map(0, nullptr, reinterpret_cast<void**>(&mappedData));
-	
-	auto curve = m_splineRenderer->GetCurve();
-	int segments = m_splineRenderer->GetSegments();
-	float t = 0;
-	float step = 1.0f / static_cast<float>(segments);
-	float length = curve.InterpolateLength(1.0f);
-	SplineVertex* vertexPtr = static_cast<SplineVertex*>(mappedData);
+	// Compute Pipeline to generate spline vertices
+	D3D12_COMPUTE_PIPELINE_STATE_DESC computePipelineDesc = {};
+	computePipelineDesc.pRootSignature = m_computeProgram->GetRootSignature().Get();
+	computePipelineDesc.CS.BytecodeLength = m_computeProgram->GetCodeLength();
+	computePipelineDesc.CS.pShaderBytecode = m_computeProgram->GetByteCode();
+	computePipelineDesc.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 
-	for(int i = 0; i <= segments; ++i)
-	{
-		Vector3 position;
-		Vector3 tangent;
-		curve.Interpolate(t, &position, &tangent);
-		tangent = tangent.Normalize();
-		Vector3 normal(0.0f, 1.0f, 0.0f);
-		Vector3 bitangent = Vector3::Dot(tangent, normal) * tangent;
-		normal = (normal - bitangent).Normalize();
-
-		Vector2 uv(curve.InterpolateLength(t) / length, 0.0f);
-		SplineVertex vertex(position, uv, normal, tangent);
-		*vertexPtr = vertex;
-		t += step;
-		vertexPtr++;
-	}
-
-	m_vertexBuffer->Unmap(0, nullptr);
+	if (FAILED(device->CreateComputePipelineState(&computePipelineDesc, IID_PPV_ARGS(&m_computePipeline))))
+		return false;
 
 	// Create Pipeline State Object
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineStateDesc;
@@ -201,6 +213,40 @@ bool QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Initialize(
 
 void QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle)
 {
+	if (m_splineRenderer->IsDirty()) {
+		m_splineParams.startPoint = m_splineRenderer->GetCurve().m_point1;
+		m_splineParams.midPoint = m_splineRenderer->GetCurve().m_point2;
+		m_splineParams.endPoint = m_splineRenderer->GetCurve().m_point3;
+		m_splineParams.width = m_splineWidth;
+		m_splineParams.length = m_splineRenderer->GetCurve().InterpolateLength(1.0f);
+
+		commandList->SetComputeRootSignature(m_computeProgram->GetRootSignature().Get());
+		commandList->SetComputeRoot32BitConstants(m_curveRootIndex, 12, &m_splineParams, 0);
+		commandList->SetComputeRootDescriptorTable(m_vertexRootIndex, m_vertexBufferHandle);
+		commandList->SetPipelineState(m_computePipeline.Get());
+
+		D3D12_RESOURCE_BARRIER uavVertexBarrier
+		{
+		.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+		.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+		.Transition = D3D12_RESOURCE_TRANSITION_BARRIER
+			{
+			.pResource = m_vertexBuffer.Get(),
+			.Subresource = 0,
+			.StateBefore = D3D12_RESOURCE_STATE_COMMON,
+			.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+			},
+		};
+		commandList->ResourceBarrier(1, &uavVertexBarrier);
+
+		commandList->Dispatch(m_splineRenderer->GetSegments() + 1, 1, 1);
+
+		D3D12_RESOURCE_BARRIER uavVertexEndBarrier = uavVertexBarrier;
+		uavVertexEndBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
+		uavVertexEndBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_COMMON;
+		commandList->ResourceBarrier(1, &uavVertexEndBarrier);
+	}
+	
 	//Pipeline
 	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
 	commandList->SetPipelineState(m_pipeline.Get());
@@ -218,4 +264,25 @@ void QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Render(ComP
 
 	//Draw Call
 	commandList->DrawInstanced(m_splineRenderer->GetSegments() + 1, 1, 0, 0);
+}
+
+UInt32 QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::BindDescriptorToResources(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset)
+{
+	auto incrementSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	cpuHandle.ptr += offset * incrementSize;
+	gpuHandle.ptr += offset * incrementSize;
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
+	uavDesc.Format = DXGI_FORMAT_UNKNOWN;
+	uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
+	uavDesc.Buffer.FirstElement = 0;
+	uavDesc.Buffer.NumElements = m_splineRenderer->GetSegments() + 1;
+	uavDesc.Buffer.StructureByteStride = sizeof(SplineVertex);
+	uavDesc.Buffer.CounterOffsetInBytes = 0;
+	m_device->CreateUnorderedAccessView(m_vertexBuffer.Get(), nullptr, &uavDesc, cpuHandle);
+	m_vertexBufferHandle = gpuHandle;
+
+	return 1;
 }

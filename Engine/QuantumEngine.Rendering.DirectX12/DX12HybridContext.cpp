@@ -22,6 +22,7 @@
 #include "Shader/HLSLRasterizationProgram.h"
 #include <Rendering/SplineRenderer.h>
 #include "DX12SplineRasterPipelineModule.h"
+#include "Compute/HLSLComputeProgram.h"
 
 bool QuantumEngine::Rendering::DX12::DX12HybridContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -205,6 +206,13 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		rasterHeapSize += material->GetTextureFieldCount();
 	}
 
+	for (auto& entityGpu : m_entityGPUData) {
+		auto splineRenderer = std::dynamic_pointer_cast<SplineRenderer>(entityGpu.gameEntity->GetRenderer());
+		if (splineRenderer != nullptr) {
+			rasterHeapSize += 1;
+		}
+	}
+
 	D3D12_DESCRIPTOR_HEAP_DESC rtHeapDesc{
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		.NumDescriptors = rasterHeapSize,
@@ -267,7 +275,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 				.renderer = splineRenderer,
 				.material = usedMaterials[splineRenderer->GetMaterial()],
 				.transformHandle = gpuHandle
-				}, m_depthFormat);
+				}, m_depthFormat, std::dynamic_pointer_cast<Compute::HLSLComputeProgram>(m_shaderRegistery->GetGenericShaderProgram("Bezier_Curve_Compute_Program")));
 			splinePipeline->Initialize(m_device);
 			m_splinePipelines.push_back(splinePipeline);
 		}
@@ -358,6 +366,11 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 	for (auto& mat : usedMaterials) {
 		mat.second->BindDescriptorToResources(m_rasterHeap, offset);
 		offset += mat.first->GetTextureFieldCount();
+	}
+
+	for(auto& splinePipeline : m_splinePipelines) {
+		splinePipeline->BindDescriptorToResources(m_rasterHeap, offset);
+		offset += 1;
 	}
 }
 

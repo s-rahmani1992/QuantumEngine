@@ -25,7 +25,7 @@ class BezierCurve{
     private:
         Float Integral(Float t) const;
 
-    private:
+    public:
         Vector3 m_point1;
         Vector3 m_point2;
         Vector3 m_point3;

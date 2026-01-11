@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "DX12ShaderRegistery.h"
+#include "Rendering/ShaderProgram.h"
 #include "HLSLShaderProgram.h"
 #include "HLSLShaderImporter.h"
 #include <Shader/HLSLRasterizationProgram.h>
@@ -7,9 +8,12 @@
 #include "HLSLShader.h"
 #include <vector>
 #include <memory>
+#include "Compute/HLSLComputeProgramImporter.h"
+#include "Compute/HLSLComputeProgram.h"
 
 namespace Render = QuantumEngine::Rendering;
 namespace HLSL = QuantumEngine::Rendering::DX12::Shader;
+namespace Compute = QuantumEngine::Rendering::DX12::Compute;
 
 void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPtr<ID3D12Device10>& device)
 {
@@ -48,12 +52,34 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 	}
 
 	CreateAndRegisterShaderProgram("G_Buffer_RT_Global_Program", { rtGBufferShader }, true);
+
+	Compute::HLSLComputeProgramImportDesc computeDesc;
+	computeDesc.mainFunction = "cs_main";
+	computeDesc.shaderModel = "6_6";
+
+	ref<Compute::HLSLComputeProgram> computeProgram = Compute::HLSLComputeProgramImporter::Import(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", computeDesc, errorStr);
+
+	if (computeProgram == nullptr) {
+		return;
+	}
+
+	if (computeProgram->InitializeRootSignature(m_device)) {
+		m_shaderPrograms["Bezier_Curve_Compute_Program"] = computeProgram;
+	}
 }
 
 ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::GetShaderProgram(const std::string& name)
 {
 	auto it = m_shaders.find(name);
 	if (it != m_shaders.end())
+		return (*it).second;
+	return nullptr;
+}
+
+ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::GetGenericShaderProgram(const std::string& name)
+{
+	auto it = m_shaderPrograms.find(name);
+	if (it != m_shaderPrograms.end())
 		return (*it).second;
 	return nullptr;
 }

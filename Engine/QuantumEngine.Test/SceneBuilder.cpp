@@ -36,6 +36,7 @@
 #include "EntityMover.h"
 #include "EntityRotator.h"
 #include "TextureAnimator.h"
+#include "CurveModifier.h"
 
 using namespace QuantumEngine;
 namespace DX12 = QuantumEngine::Rendering::DX12;
@@ -311,11 +312,12 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     
     auto frameLogger = std::make_shared<FrameRateLogger>();
 	auto textureAnimator = std::make_shared<TextureAnimator>(carMaterial1, carTex1, lionStatueTex1, 1.0f);
+	auto curveModifier = std::make_shared<CurveModifier>(curveRenderer, 2.0f);
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
     scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity, curveEntity1};
-    scene->behaviours = { cameraController, textureAnimator };
+    scene->behaviours = { cameraController, curveModifier };
 	scene->rtGlobalProgram = rtGlobalProgram;
     
     return scene;
