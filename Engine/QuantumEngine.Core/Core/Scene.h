@@ -14,7 +14,8 @@ namespace QuantumEngine {
 		ref<Camera> mainCamera;
 		SceneLightData lightData;
 		std::vector<ref<GameEntity>> entities;
-		ref<Rendering::ShaderProgram> rtGlobalProgram;
+		ref<Rendering::ShaderProgram> rtGlobalProgram; //Remove
+		ref<Rendering::Material> rtGlobalMaterial;
 		std::vector<ref<Behaviour>> behaviours;
 	};
 }

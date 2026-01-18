@@ -185,6 +185,9 @@
     <ClInclude Include="HLSLShaderImporter.h" />
     <ClInclude Include="HLSLShaderProgram.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="RayTracing\DX12RayTracingMaterial.h" />
+    <ClInclude Include="RayTracing\HLSLRayTracingProgram.h" />
+    <ClInclude Include="RayTracing\HLSLRayTracingProgramImporter.h" />
     <ClInclude Include="RayTracing\RTAccelarationStructure.h" />
     <ClInclude Include="Shader\HLSLRasterizationProgram.h" />
     <ClInclude Include="Shader\HLSLRasterizationProgramImporter.h" />
@@ -221,6 +224,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp" />
+    <ClCompile Include="RayTracing\DX12RayTracingMaterial.cpp" />
+    <ClCompile Include="RayTracing\HLSLRayTracingProgram.cpp" />
+    <ClCompile Include="RayTracing\HLSLRayTracingProgramImporter.cpp" />
     <ClCompile Include="RayTracing\RTAccelarationStructure.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>

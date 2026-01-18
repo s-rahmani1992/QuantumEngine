@@ -16,6 +16,7 @@ namespace QuantumEngine {
 
 namespace QuantumEngine::Rendering::DX12::RayTracing {
 	struct EntityBLASDesc {
+		UInt32 hitGroupIndex;
 		ref<DX12MeshController> mesh;
 		ref<Transform> transform;
 	};
@@ -28,7 +29,8 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		inline ComPtr<ID3D12Resource2> GetResource() { return m_topLevelAccelerationStructure; }
 	private:
 		struct EntityBLAS {
-			ref<Transform> transform;
+			ref<Transform> transform; 
+			UInt32 hitIndex;
 			ComPtr<ID3D12Resource2> BLASResource;
 		};
 		std::vector<D3D12_RAYTRACING_INSTANCE_DESC> m_instanceDescs;

@@ -10,25 +10,25 @@ cbuffer MaterialProps : register(b0, space1)
     uint castShadow = 0;
 };
 
-cbuffer ObjectTransformData : register(b1, space1)
+cbuffer _ObjectTransformData : register(b1, space1)
 {
     TransformData transformData;
 };
 
-cbuffer CameraData : register(b2, space1)
+cbuffer _CameraData : register(b2, space1)
 {
     CameraData cameraData;
 };
 
-cbuffer LightData : register(b3, space1) {
+cbuffer _LightData : register(b3, space1) {
     LightData lightData;
 }
 
 Texture2D mainTexture : register(t0, space1);
 sampler mainSampler : register(s0, space1);
 
-StructuredBuffer<uint> g_indices : register(t1, space1);
-StructuredBuffer<Vertex> g_vertices : register(t2, space1);
+StructuredBuffer<uint> _indexBuffer : register(t1, space1);
+StructuredBuffer<Vertex> _vertexBuffer : register(t2, space1);
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
@@ -39,8 +39,8 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         return;
     }
     
-    float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
-    float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
+    float2 uv = CalculateUV(_indexBuffer, _vertexBuffer, attribs.barycentrics);
+    float3 normal = CalculateNormal(_indexBuffer, _vertexBuffer, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
     float3 position = CalculeteHitPosition();
     

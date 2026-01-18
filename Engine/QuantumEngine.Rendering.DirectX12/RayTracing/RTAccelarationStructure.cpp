@@ -17,7 +17,7 @@ bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initia
 
 	for(auto& entity : entities) {
 		auto r = entity.mesh->CreateBLASResource(commandList, scratchBuffers[index]);
-		m_entities.push_back({ entity.transform, r });
+		m_entities.push_back({ entity.transform, entity.hitGroupIndex, r });
 		index++;
 	}
 
@@ -62,8 +62,8 @@ bool QuantumEngine::Rendering::DX12::RayTracing::RTAccelarationStructure::Initia
 		D3D12_RAYTRACING_INSTANCE_DESC desc1;
 		m = entity.transform->Matrix();
 		std::memcpy(desc1.Transform, &m, 12 * sizeof(Float));
-		desc1.InstanceID = id;
-		desc1.InstanceContributionToHitGroupIndex = id;
+		desc1.InstanceID = entity.hitIndex;
+		desc1.InstanceContributionToHitGroupIndex = entity.hitIndex;
 		desc1.InstanceMask = 1;
 		desc1.Flags = D3D12_RAYTRACING_INSTANCE_FLAG_NONE;
 		desc1.AccelerationStructure = entity.BLASResource->GetGPUVirtualAddress();

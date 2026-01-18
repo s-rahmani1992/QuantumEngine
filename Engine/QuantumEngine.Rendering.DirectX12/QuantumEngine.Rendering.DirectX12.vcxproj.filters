@@ -111,6 +111,15 @@
     <ClInclude Include="Core\HLSLReflection.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="RayTracing\HLSLRayTracingProgram.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracing\HLSLRayTracingProgramImporter.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracing\DX12RayTracingMaterial.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -199,6 +208,15 @@
     </ClCompile>
     <ClCompile Include="Core\HLSLReflection.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\HLSLRayTracingProgram.cpp">
+      <Filter>RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\HLSLRayTracingProgramImporter.cpp">
+      <Filter>RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\DX12RayTracingMaterial.cpp">
+      <Filter>RayTracing</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,13 +1,24 @@
 #include "TransformStructs.hlsli"
 #include "RTStructs.hlsli"
 
-cbuffer CameraData : register(b0)
+cbuffer _CameraData : register(b0)
 {
     CameraData cameraData;
 };
 
-RaytracingAccelerationStructure gRtScene : register(t0);
-RWTexture2D<float4> gOutput : register(u0);
+cbuffer ColorProperties : register(b1)
+{
+    float4 missColor;
+    float4 hitColor;
+};
+
+cbuffer _RTProperties : register(b2)
+{
+    uint _missIndex;
+};
+
+RaytracingAccelerationStructure _RTScene : register(t1);
+RWTexture2D<float4> _OutputTexture : register(u0);
 
 [shader("raygeneration")]
 void rayGen()
@@ -23,14 +34,20 @@ void rayGen()
     GeneralPayload payLoad;
     payLoad.recursionCount = 1;
     payLoad.targetMode = 0;
-    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payLoad);
+    TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, _missIndex, 0, ray, payLoad);
     
     uint3 launchIndex = DispatchRaysIndex();
-    gOutput[launchIndex.xy] = float4(payLoad.color, 1);
+    _OutputTexture[launchIndex.xy] = float4(payLoad.color, 1);
+}
+
+[shader("closesthit")]
+void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
+{
+    payload.color = hitColor.xyz;
 }
 
 [shader("miss")]
 void miss(inout GeneralPayload payload)
 {
-    payload.color = float3(0.1f, 0.7f, 0.3f);
+    payload.color = missColor.xyz;
 }

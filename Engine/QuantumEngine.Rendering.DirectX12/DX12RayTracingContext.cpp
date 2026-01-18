@@ -11,6 +11,7 @@
 #include "Platform/GraphicWindow.h"
 #include "DX12CommandExecuter.h"
 #include "Core/Scene.h"
+#include "DX12LightManager.h"
 
 bool QuantumEngine::Rendering::DX12::DX12RayTracingContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -33,7 +34,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareScene(const r
 
 	UploadTexturesAndMeshes(scene);
 	InitializeEntityGPUData(scene->entities);
-	PrepareRayTracingPipeline(scene->rtGlobalProgram);
+	PrepareRayTracingPipeline(scene->rtGlobalProgram, scene->rtGlobalMaterial);
     return true;
 }
 
@@ -114,7 +115,7 @@ void QuantumEngine::Rendering::DX12::DX12RayTracingContext::Render()
 	m_swapChain->Present(1, 0);
 }
 
-void QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareRayTracingPipeline(const ref<ShaderProgram>& rtProgram)
+void QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareRayTracingPipeline(const ref<ShaderProgram>& rtProgram, const ref<Material>& rtGlobalMaterial)
 {
 	for (auto& entity : m_entityGPUData) {
 		auto rtComponent = entity.gameEntity->GetRayTracingComponent();
@@ -125,6 +126,7 @@ void QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareRayTracingPip
 		m_rtEntityData.push_back(DX12RayTracingGPUData{
 			.meshController = std::dynamic_pointer_cast<DX12MeshController>(rtComponent->GetMesh()->GetGPUHandle()),
 			.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(rtComponent->GetRTMaterial()),
+			.material = rtComponent->GetRTMaterial(),
 			.transformResource = entity.transformResource,
 			.transform = entity.gameEntity->GetTransform(),
 			});
@@ -143,7 +145,7 @@ void QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareRayTracingPip
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);
 	m_rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
 	m_rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
-	m_rayTracingPipeline->Initialize(m_commandList, m_rtEntityData, m_window->GetWidth(), m_window->GetHeight(), m_rtMaterial);
+	m_rayTracingPipeline->Initialize(m_commandList, m_rtEntityData, m_window->GetWidth(), m_window->GetHeight(), m_rtMaterial, rtGlobalMaterial, m_cameraBuffer, m_lightManager.GetResource());
 
 	m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 }

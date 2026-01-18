@@ -10,6 +10,7 @@
 #include <memory>
 #include "Compute/HLSLComputeProgramImporter.h"
 #include "Compute/HLSLComputeProgram.h"
+#include "RayTracing/HLSLRayTracingProgram.h"
 
 namespace Render = QuantumEngine::Rendering;
 namespace HLSL = QuantumEngine::Rendering::DX12::Shader;
@@ -91,6 +92,14 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::RegisterShaderProgram(
 	if(rasterProgram != nullptr) {
 		if (rasterProgram->InitializeRootSignature(m_device))
 			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rasterProgram);
+		return;
+	}
+
+	ref<RayTracing::HLSLRayTracingProgram> rtProgram = std::dynamic_pointer_cast<RayTracing::HLSLRayTracingProgram>(program);
+
+	if(rtProgram != nullptr) {
+		if (rtProgram->InitializeRootSignature(m_device)) 
+			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram);
 		return;
 	}
 

@@ -16,7 +16,7 @@ namespace QuantumEngine::Rendering::DX12
 		virtual void Render() override;
 
 	private:
-		void PrepareRayTracingPipeline(const ref<ShaderProgram>& rtProgram);
+		void PrepareRayTracingPipeline(const ref<ShaderProgram>& rtProgram, const ref<Material>& rtGlobalMaterial);
 
 	private:
 		std::vector<DX12RayTracingGPUData> m_rtEntityData;

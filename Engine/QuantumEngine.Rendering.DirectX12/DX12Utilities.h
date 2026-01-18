@@ -8,10 +8,10 @@
 #define HLSL_OBJECT_TRANSFORM_DATA_NAME "_ObjectTransformData"
 #define HLSL_CAMERA_DATA_NAME "_CameraData"
 #define HLSL_LIGHT_DATA_NAME "_LightData"
-#define HLSL_RT_TLAS_SCENE_NAME "gRtScene"
-#define HLSL_RT_OUTPUT_TEXTURE_NAME "gOutput"
-#define HLSL_VERTEX_SRV_NAME "g_vertices"
-#define HLSL_INDEX_SRV_NAME "g_indices"
+#define HLSL_RT_TLAS_SCENE_NAME "_RTScene"
+#define HLSL_RT_OUTPUT_TEXTURE_NAME "_OutputTexture"
+#define HLSL_VERTEX_SRV_NAME "_vertexBuffer"
+#define HLSL_INDEX_SRV_NAME "_indexBuffer"
 
 namespace QuantumEngine::Rendering::DX12 {
 	using namespace Microsoft::WRL;

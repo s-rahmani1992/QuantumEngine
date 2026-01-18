@@ -9,6 +9,8 @@
 #include "HLSLShaderImporter.h"
 #include "Shader/HLSLRasterizationProgramImporter.h"
 #include "Shader/HLSLRasterizationProgram.h"
+#include "RayTracing/HLSLRayTracingProgramImporter.h"
+#include "RayTracing/HLSLRayTracingProgram.h"
 #include "HLSLMaterial.h"
 
 #include "Rendering/ShaderRegistery.h"
@@ -104,6 +106,34 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 
 	shaderRegistery->RegisterShaderProgram("Curve_Raster_Program", curveRasterProgram, false);
 
+	DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
+	simpleRTDesc.shaderModel = "6_6";
+	simpleRTDesc.rayGenerationFunction = "rayGen";
+	simpleRTDesc.missFunction = "miss";
+    simpleRTDesc.closestHitFunction = "chs";
+
+	auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+
+    if (globalRTProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+	shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
+    simpleLocalRTDesc.shaderModel = "6_6";
+    simpleLocalRTDesc.closestHitFunction = "chs";
+
+	auto simpleRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleLightShaderPath, simpleLocalRTDesc, errorStr);
+
+    if(simpleRTLightProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+	}
+
+	shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", simpleRTLightProgram, true);
+
     ////// Creating the camera
 
     auto camtransform = std::make_shared<Transform>(Vector3(-6.0f, 2.6f, 1.8f), Vector3(1.0f), Vector3(0.0f, -0.85f, 0.12f), 111);
@@ -176,6 +206,10 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 
     ////// Creating the materials
 
+	auto rtGlobalMaterial = materialFactory->CreateMaterial(globalRTProgram);
+	rtGlobalMaterial->SetValue("missColor", Color(0.2f, 0.4f, 0.6f, 1.0f));
+    rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
+
     auto carMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     carMaterial1->SetValue("ambient", 0.1f);
     carMaterial1->SetValue("diffuse", 0.5f);
@@ -183,12 +217,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     carMaterial1->SetTexture2D("mainTexture", carTex1);
     carMaterial1->SetTexture2D("mainTexture1", groundBrickTex1);
 
-	ref<DX12::HLSLMaterial> carRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-	carRTMaterial->Initialize(true);
+	auto carRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
 	carRTMaterial->SetTexture2D("mainTexture", carTex1);
-	carRTMaterial->SetFloat("ambient", 0.1f);
-	carRTMaterial->SetFloat("diffuse", 1.0f);
-	carRTMaterial->SetFloat("specular", 0.1f);
+	carRTMaterial->SetValue("ambient", 0.1f);
+	carRTMaterial->SetValue("diffuse", 1.0f);
+	carRTMaterial->SetValue("specular", 0.1f);
 
     auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
     rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
@@ -196,12 +229,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     rabbitStatueMaterial1->SetValue("diffuse", 0.8f);
     rabbitStatueMaterial1->SetValue("specular", 0.1f);
 
-	ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-	rabbitStatueRTMaterial->Initialize(true);
+	auto rabbitStatueRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
 	rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
-	rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
-	rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
-	rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
+	rabbitStatueRTMaterial->SetValue("ambient", 0.1f);
+	rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
+	rabbitStatueRTMaterial->SetValue("specular", 0.1f);
 
     auto lionStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
     lionStatueMaterial1->SetTexture2D("mainTexture", lionStatueTex1);
@@ -209,12 +241,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     lionStatueMaterial1->SetValue("diffuse", 0.8f);
     lionStatueMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> lionStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    lionStatueRTMaterial->Initialize(true);
+    auto lionStatueRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     lionStatueRTMaterial->SetTexture2D("mainTexture", lionStatueTex1);
-    lionStatueRTMaterial->SetFloat("ambient", 0.1f);
-    lionStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    lionStatueRTMaterial->SetFloat("specular", 0.1f);
+    lionStatueRTMaterial->SetValue("ambient", 0.1f);
+    lionStatueRTMaterial->SetValue("diffuse", 0.8f);
+    lionStatueRTMaterial->SetValue("specular", 0.1f);
 
     auto chairMaterial1 = materialFactory->CreateMaterial(lightProgram);
     chairMaterial1->SetTexture2D("mainTexture", chairTex1);
@@ -222,12 +253,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     chairMaterial1->SetValue("diffuse", 0.8f);
     chairMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> chairRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    chairRTMaterial->Initialize(true);
+    auto chairRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
-    chairRTMaterial->SetFloat("ambient", 0.1f);
-    chairRTMaterial->SetFloat("diffuse", 0.8f);
-    chairRTMaterial->SetFloat("specular", 0.3f);
+    chairRTMaterial->SetValue("ambient", 0.1f);
+    chairRTMaterial->SetValue("diffuse", 0.8f);
+    chairRTMaterial->SetValue("specular", 0.3f);
 
     auto groundMaterial1 = materialFactory->CreateMaterial(lightProgram);
     groundMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
@@ -235,12 +265,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     groundMaterial1->SetValue("diffuse", 0.8f);
     groundMaterial1->SetValue("specular", 0.4f);
 
-    ref<DX12::HLSLMaterial> groundRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    groundRTMaterial->Initialize(true);
+    auto groundRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     groundRTMaterial->SetTexture2D("mainTexture", groundBrickTex1);
-    groundRTMaterial->SetFloat("ambient", 0.1f);
-    groundRTMaterial->SetFloat("diffuse", 0.8f);
-    groundRTMaterial->SetFloat("specular", 0.4f);
+    groundRTMaterial->SetValue("ambient", 0.1f);
+    groundRTMaterial->SetValue("diffuse", 0.8f);
+    groundRTMaterial->SetValue("specular", 0.4f);
 
 	auto curveMaterial = materialFactory->CreateMaterial(curveRasterProgram);
     curveMaterial->SetValue("ambient", 0.1f);
@@ -282,11 +311,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 
 	auto curveTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
 	auto curveRenderer = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, -4.0f), Vector3(0.0f, 4.0f, 0.0f), Vector3(4.0f, 0.0f, 4.0f) }, 2.2f, 10);
-	auto curveEntity = std::make_shared<QuantumEngine::GameEntity>(curveTransform, curveRenderer, rtComponent6);
+	auto curveEntity = std::make_shared<QuantumEngine::GameEntity>(curveTransform, curveRenderer, nullptr);
     
     auto curveTransform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
     auto curveRenderer1 = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, 0.0f), Vector3(0.0f, 12.0f, 0.0f), Vector3(4.0f, 0.0f, 0.0f) }, 0.8f, 20);
-    auto curveEntity1 = std::make_shared<QuantumEngine::GameEntity>(curveTransform1, curveRenderer1, rtComponent6);
+    auto curveEntity1 = std::make_shared<QuantumEngine::GameEntity>(curveTransform1, curveRenderer1, nullptr);
 
     ////// Creating the lights
 
@@ -319,6 +348,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity, curveEntity1};
     scene->behaviours = { cameraController, curveModifier };
 	scene->rtGlobalProgram = rtGlobalProgram;
+	scene->rtGlobalMaterial = rtGlobalMaterial;
     
     return scene;
 }

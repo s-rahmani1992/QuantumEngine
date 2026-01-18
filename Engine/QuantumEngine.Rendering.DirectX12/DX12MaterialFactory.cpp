@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "DX12MaterialFactory.h"
 #include "Shader/HLSLRasterizationProgram.h"
+#include "RayTracing/HLSLRayTracingProgram.h"
 #include "Rendering/Material.h"
 
 namespace Render = QuantumEngine::Rendering;
@@ -11,51 +12,16 @@ ref<Render::Material> Render::DX12::DX12MaterialFactory::CreateMaterial(const re
 	auto hlslProgram = std::dynamic_pointer_cast<Render::DX12::Shader::HLSLRasterizationProgram>(program);
 
 	if(hlslProgram != nullptr) {
-		// Extract Reflection Data from HLSL Program
-		auto hlslReflection = hlslProgram->GetReflectionData();
-		UInt32 fieldIndex = 0;
-		MaterialReflection reflectionData;
+		MaterialReflection reflectionData = hlslProgram->GetReflectionData()->CreateMaterialReflection(false);
+		
+		return std::make_shared<Render::Material>(program, &reflectionData);
+	}
 
-		// Value Fields are from Root Constants
-		auto& rootConstantList = hlslReflection->GetRootConstants();
+	auto hlslRTProgram = std::dynamic_pointer_cast<Render::DX12::RayTracing::HLSLRayTracingProgram>(program);
 
-		for (auto& rootConst : rootConstantList) {
-			if (rootConst.name[0] == '_') {// Skip internal root constants
-				fieldIndex++;
-				continue;
-			}
+	if (hlslRTProgram != nullptr) {
+		MaterialReflection reflectionData = hlslRTProgram->GetReflectionData()->CreateMaterialReflection(true);
 
-			for(auto& rootVar : rootConst.rootConstants) {
-				UInt32 varSize = rootVar.variableDesc.Size;
-				MaterialValueFieldInfo valueFieldInfo{
-					.name = rootVar.name,
-					.fieldIndex = fieldIndex,
-					.size = varSize,
-				};
-				reflectionData.valueFields.push_back(valueFieldInfo);
-				fieldIndex++;
-			}
-		}
-
-		// Texture Fields
-		auto& resourceVarList = hlslReflection->GetResourceVariables();
-
-		for (auto& resVar : resourceVarList) {
-			if (resVar.name[0] == '_') {// Skip internal variables
-				fieldIndex++;
-				continue;
-			}
-
-			// Only textures are considered for material texture fields
-			if (resVar.resourceData.Type == D3D_SIT_TEXTURE) {
-				MaterialTextureFieldInfo textureFieldInfo{
-					.name = resVar.name,
-					.fieldIndex = fieldIndex,
-				};
-				reflectionData.textureFields.push_back(textureFieldInfo);
-				fieldIndex++;
-			}
-		}
 		return std::make_shared<Render::Material>(program, &reflectionData);
 	}
 

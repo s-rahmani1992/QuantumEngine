@@ -333,7 +333,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		gBufferRTMaterial->SetDescriptorHeap("gNormalTex", m_gBufferPipeline->GetNormalHeap());
 		gBufferRTMaterial->SetDescriptorHeap("gMaskTex", m_gBufferPipeline->GetMaskHeap());
 
-		m_GBufferrayTracingPipeline->Initialize(m_commandList, rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial);
+		m_GBufferrayTracingPipeline->Initialize(m_commandList, rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial, nullptr, nullptr, nullptr);
 
 		m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 
