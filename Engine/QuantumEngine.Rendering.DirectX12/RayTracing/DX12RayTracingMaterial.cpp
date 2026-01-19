@@ -233,7 +233,7 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::CopyVar
 			});
 
 		if (cbData != m_constantRegisterValues.end()) {
-			std::memcpy(dst, (*cbData).dataLocation, 4 * (*cbData).size);
+			std::memcpy(data, (*cbData).dataLocation, 4 * (*cbData).size);
 			data += 4 * (*cbData).size;
 			continue;
 		}

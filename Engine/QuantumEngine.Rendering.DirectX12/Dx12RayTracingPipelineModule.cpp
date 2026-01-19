@@ -229,16 +229,21 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::InitializeSha
 
 		if (missSize > missResordSize)
 			missResordSize = missSize;
+
+		rtMissCount++;
 	}
 
 	UInt32 missSectionSize = SBT_SECTION_ALIGHT(rtMissCount * missResordSize);
+
+	while (missSectionSize % missResordSize)
+		missSectionSize += D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 
 	UInt32 hitRecordSize = 0;
 	UInt32 rtEntityCount = 0;
 
 	if (m_globalRTProgram->HasHitGroup()) {
-		UInt32 hitGroupSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + m_globalRTProgram->GetReflectionData()->GetTotalVariableSize();
-		hitGroupSize = SBT_SHADER_RECORD_ALIGHT(hitGroupSize);
+		hitRecordSize = D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES + m_globalRTProgram->GetReflectionData()->GetTotalVariableSize();
+		hitRecordSize = SBT_SHADER_RECORD_ALIGHT(hitRecordSize);
 		rtEntityCount++;
 	}
 
@@ -255,6 +260,9 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::InitializeSha
 	}
 
 	UInt32 hitSectionSize = SBT_SECTION_ALIGHT(rtEntityCount * hitRecordSize);
+
+	while (hitSectionSize % hitRecordSize > 0)
+		hitSectionSize += D3D12_RAYTRACING_SHADER_TABLE_BYTE_ALIGNMENT;
 
 	ComPtr<ID3D12StateObjectProperties> rtProperties;
 	if (FAILED(m_rtStateObject->QueryInterface(IID_PPV_ARGS(&rtProperties))))
@@ -301,7 +309,7 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::InitializeSha
 		if (rtPair.second->GetProgram()->HasMissStage() == false)
 			continue;
 
-		std::memcpy(pMissData, rtProperties->GetShaderIdentifier(m_globalRTProgram->GetMissExportName().c_str()),
+		std::memcpy(pMissData, rtProperties->GetShaderIdentifier(rtPair.second->GetProgram()->GetMissExportName().c_str()),
 			D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);
 
 		rtPair.second->CopyVariableData(pMissData + D3D12_SHADER_IDENTIFIER_SIZE_IN_BYTES);

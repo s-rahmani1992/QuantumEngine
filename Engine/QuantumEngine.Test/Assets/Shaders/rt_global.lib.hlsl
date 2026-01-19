@@ -34,7 +34,7 @@ void rayGen()
     GeneralPayload payLoad;
     payLoad.recursionCount = 1;
     payLoad.targetMode = 0;
-    TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, _missIndex, 0, ray, payLoad);
+    TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, payLoad);
     
     uint3 launchIndex = DispatchRaysIndex();
     _OutputTexture[launchIndex.xy] = float4(payLoad.color, 1);
