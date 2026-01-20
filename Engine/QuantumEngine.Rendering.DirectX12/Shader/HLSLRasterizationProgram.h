@@ -1,8 +1,7 @@
 #pragma once
 #include "pch.h"
-#include "Rendering/ShaderProgram.h"
 #include <string>
-#include "../Core/HLSLReflection.h"
+#include "../HLSLShaderProgram.h"
 
 using namespace Microsoft::WRL;
 
@@ -11,7 +10,7 @@ namespace QuantumEngine::Rendering::DX12 {
 }
 
 namespace QuantumEngine::Rendering::DX12::Shader {
-	class HLSLRasterizationProgram : public ShaderProgram {
+	class HLSLRasterizationProgram : public HLSLShaderProgram {
 	public:
 		HLSLRasterizationProgram(const std::vector<ref<HLSLShader>>& shaders);
 		virtual ~HLSLRasterizationProgram() = default;
@@ -21,19 +20,7 @@ namespace QuantumEngine::Rendering::DX12::Shader {
 		/// </summary>
 		/// <param name="device"></param>
 		/// <returns></returns>
-		bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device);
-
-		/// <summary>
-		/// Gets the parameter layout for this shader program
-		/// </summary>
-		/// <returns></returns>
-		inline HLSLReflection* GetReflectionData() { return &m_reflection; }
-
-		/// <summary>
-		/// Gets the root signature for this shader program
-		/// </summary>
-		/// <returns></returns>
-		inline ComPtr<ID3D12RootSignature> GetRootSignature() const { return m_rootSignature; }
+		bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device) override;
 
 		/// <summary>
 		/// Gets the vertex shader if exists
@@ -57,8 +44,5 @@ namespace QuantumEngine::Rendering::DX12::Shader {
 		ref<HLSLShader> m_vertexShader;
 		ref<HLSLShader> m_pixelShader;
 		ref<HLSLShader> m_geometryShader;
-		
-		HLSLReflection m_reflection;
-		ComPtr<ID3D12RootSignature> m_rootSignature;
 	};
 }

@@ -60,12 +60,8 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 
 	ref<Compute::HLSLComputeProgram> computeProgram = Compute::HLSLComputeProgramImporter::Import(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", computeDesc, errorStr);
 
-	if (computeProgram == nullptr) {
-		return;
-	}
-
-	if (computeProgram->InitializeRootSignature(m_device)) {
-		m_shaderPrograms["Bezier_Curve_Compute_Program"] = computeProgram;
+	if (computeProgram != nullptr) {
+		RegisterShaderProgram("Bezier_Curve_Compute_Program", computeProgram);
 	}
 }
 
@@ -77,36 +73,15 @@ ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering:
 	return nullptr;
 }
 
-ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::GetGenericShaderProgram(const std::string& name)
-{
-	auto it = m_shaderPrograms.find(name);
-	if (it != m_shaderPrograms.end())
-		return (*it).second;
-	return nullptr;
-}
-
 void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::RegisterShaderProgram(const std::string& name, const ref<ShaderProgram>& program, bool isRT)
 {
-	ref<HLSL::HLSLRasterizationProgram> rasterProgram = std::dynamic_pointer_cast<HLSL::HLSLRasterizationProgram>(program);
-
-	if(rasterProgram != nullptr) {
-		if (rasterProgram->InitializeRootSignature(m_device))
-			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rasterProgram);
-		return;
-	}
-
-	ref<RayTracing::HLSLRayTracingProgram> rtProgram = std::dynamic_pointer_cast<RayTracing::HLSLRayTracingProgram>(program);
-
-	if(rtProgram != nullptr) {
-		if (rtProgram->InitializeRootSignature(m_device)) 
-			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rtProgram);
-		return;
-	}
-
 	ref<HLSLShaderProgram> hlslProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(program);
 
-	if (hlslProgram->Initialize(m_device, isRT))
-		m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(hlslProgram);
+	if(hlslProgram != nullptr) {
+		if (hlslProgram->InitializeRootSignature(m_device))
+			m_shaders[name] = hlslProgram;
+		return;
+	}
 }
 
 ref<Render::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Render::Shader>>& shaders, bool isRT)
@@ -127,10 +102,6 @@ ref<Render::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::
 
 		return nullptr;
 	}
-	ref<HLSLShaderProgram> program = std::make_shared<HLSLShaderProgram>(shaders);
 
-	if (program->Initialize(m_device, isRT))
-		m_shaders[name] = program;
-
-	return program;
+	return nullptr;
 }

@@ -275,7 +275,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 				.renderer = splineRenderer,
 				.material = usedMaterials[splineRenderer->GetMaterial()],
 				.transformHandle = gpuHandle
-				}, m_depthFormat, std::dynamic_pointer_cast<Compute::HLSLComputeProgram>(m_shaderRegistery->GetGenericShaderProgram("Bezier_Curve_Compute_Program")));
+				}, m_depthFormat, std::dynamic_pointer_cast<Compute::HLSLComputeProgram>(m_shaderRegistery->GetShaderProgram("Bezier_Curve_Compute_Program")));
 			splinePipeline->Initialize(m_device);
 			m_splinePipelines.push_back(splinePipeline);
 		}

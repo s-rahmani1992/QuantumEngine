@@ -24,7 +24,7 @@ QuantumEngine::Rendering::DX12::HLSLMaterial::~HLSLMaterial()
 bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize(bool isRayTrace)
 {
     auto reflection = std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData();
-    reflection->rootSignature->GetDevice(IID_PPV_ARGS(&m_device));
+    /*reflection->rootSignature->GetDevice(IID_PPV_ARGS(&m_device));
     m_variableData = new Byte[reflection->totalVariableSize];
     Byte* startPoint = m_variableData;
 
@@ -71,7 +71,7 @@ bool QuantumEngine::Rendering::DX12::HLSLMaterial::Initialize(bool isRayTrace)
         }
 
         return false;
-    }
+    }*/
 
 	return true;
 }
@@ -184,7 +184,7 @@ void QuantumEngine::Rendering::DX12::HLSLMaterial::SetDescriptorHeap(const std::
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::CopyVariableData(void* dest)
 {
-    std::memcpy(dest, m_variableData, std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData()->totalVariableSize);
+    //std::memcpy(dest, m_variableData, std::dynamic_pointer_cast<HLSLShaderProgram>(m_program)->GetReflectionData()->totalVariableSize);
 }
 
 void QuantumEngine::Rendering::DX12::HLSLMaterial::BindDescriptor(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset)

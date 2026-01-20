@@ -1,12 +1,11 @@
 #pragma once
 #include "pch.h"
-#include "Rendering/ShaderProgram.h"
-#include "../Core/HLSLReflection.h"
+#include "../HLSLShaderProgram.h"
 
 namespace QuantumEngine::Rendering::DX12::RayTracing {
 	struct HLSLRayTracingProgramProperties;
 
-	class HLSLRayTracingProgram : public ShaderProgram {
+	class HLSLRayTracingProgram : public HLSLShaderProgram {
 	public:
 		HLSLRayTracingProgram(Byte* byteCode, UInt64 codeLength, const HLSLRayTracingProgramProperties& properties, ComPtr<ID3D12LibraryReflection>& shaderReflection);
 		
@@ -15,19 +14,7 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		/// </summary>
 		/// <param name="device"></param>
 		/// <returns></returns>
-		bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device);
-
-		/// <summary>
-		/// Gets pointer to the reflection data of this program
-		/// </summary>
-		/// <returns></returns>
-		inline HLSLReflection* GetReflectionData() { return &m_reflection; }
-
-		/// <summary>
-		/// Gets root signature of this program
-		/// </summary>
-		/// <returns></returns>
-		inline ComPtr<ID3D12RootSignature> GetRootSignature() const { return m_rootSignature; }
+		bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device) override;
 
 		/// <summary>
 		/// Gets pointer to DXIL data of this program
@@ -98,9 +85,6 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		std::wstring m_hitGroupExportName;
 
 		D3D12_HIT_GROUP_DESC m_hitDesc;
-
-		HLSLReflection m_reflection;
-		ComPtr<ID3D12RootSignature> m_rootSignature;
 
 		D3D12_DXIL_LIBRARY_DESC m_dxilData;
 		std::vector<D3D12_EXPORT_DESC> m_exportDescs;

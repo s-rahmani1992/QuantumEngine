@@ -309,7 +309,7 @@ bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::CreatePipelineSt
 	pipelineStateDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	//Shader Part
-	m_rootSignature = m_program->GetReflectionData()->rootSignature;
+	//m_rootSignature = m_program->GetReflectionDatas()->rootSignature;
 	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(m_program->GetShader(VERTEX_SHADER));
 	auto pixelShader = m_program->GetShader(PIXEL_SHADER);
 	pipelineStateDesc.VS.BytecodeLength = vertexShader->GetCodeSize();
