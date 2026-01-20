@@ -35,7 +35,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class DX12RayTracingPipelineModule
 	{
 	public:
-		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial, const ref<Material> globalRTMaterial, const ComPtr<ID3D12Resource2>& camera, const ComPtr<ID3D12Resource2>& light);
+		bool Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<Material> globalRTMaterial, const ComPtr<ID3D12Resource2>& camera, const ComPtr<ID3D12Resource2>& light);
 		void RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera);
 		ComPtr<ID3D12Resource2> GetOutputBuffer() const { return m_outputBuffer; }
 		ComPtr<ID3D12DescriptorHeap> GetOutputHeap() const { return m_outputHeap; }

@@ -46,7 +46,6 @@ namespace QuantumEngine::Rendering::DX12 {
 	struct DX12RayTracingGPUData {
 	public:
 		ref<QuantumEngine::Rendering::DX12::DX12MeshController> meshController;
-		ref<QuantumEngine::Rendering::DX12::HLSLMaterial> rtMaterial; // Remove it later
 		ref<Material> material;
 		ComPtr<ID3D12Resource2> transformResource;
 		ref<Transform> transform;

@@ -2,40 +2,42 @@
 #include "RTStructs.hlsli"
 #include "LightStructs.hlsli"
 
-cbuffer ObjectTransformData : register(b4)
+cbuffer _ObjectTransformData : register(b0, space1)
 {
     TransformData transformData;
 };
 
-cbuffer MaterialProps : register(b0, space1)
+cbuffer MaterialProps : register(b4, space1)
 {
-    uint missIndex;
     uint castShadow = 0;
     float reflectivity;
-    uint maxRecursion;
     float ambient;
     float diffuse;
     float specular;
-    float padding; // Padding
 };
 
-cbuffer CameraData : register(b2)
+cbuffer _CameraData : register(b1, space1)
 {
     CameraData cameraData;
 };
 
-cbuffer LightData : register(b3, space0)
+cbuffer _LightData : register(b2, space1)
 {
     LightData lightData;
 }
 
-RaytracingAccelerationStructure gRtScene : register(t3, space1);
+cbuffer _RTProperties : register(b3, space1)
+{
+    uint _missIndex;
+};
+
+RaytracingAccelerationStructure _RTScene : register(t3, space1);
 
 Texture2D mainTexture : register(t0, space1);
 sampler mainSampler : register(s0, space1);
 
-StructuredBuffer<uint> g_indices : register(t1, space1);
-StructuredBuffer<Vertex> g_vertices : register(t2, space1);
+StructuredBuffer<uint> _indexBuffer : register(t1, space1);
+StructuredBuffer<Vertex> _vertexBuffer : register(t2, space1);
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
@@ -48,16 +50,16 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
     
     payload.hit = 1;
     
-    float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
+    float3 normal = CalculateNormal(_indexBuffer, _vertexBuffer, attribs.barycentrics);
     normal = mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz;
-    float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
+    float2 uv = CalculateUV(_indexBuffer, _vertexBuffer, attribs.barycentrics);
     float3 position = CalculeteHitPosition();
     
     float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);
     float3 ads = float3(ambient, diffuse, specular);
     float3 lightFactor = PhongLight(lightData, cameraData.position, position, normal, ads);
     
-    if (payload.recursionCount <= maxRecursion)
+    if (payload.recursionCount <= 3)
     {
         float3 rayDirection = WorldRayDirection();
         
@@ -70,7 +72,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         GeneralPayload innerPayload;
         innerPayload.targetMode = 1;
         innerPayload.recursionCount = payload.recursionCount + 1;
-        TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, missIndex, ray, innerPayload);
+        TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, innerPayload);
         
         if(innerPayload.hit == 0)
             payload.color = lightFactor * texColor.xyz;

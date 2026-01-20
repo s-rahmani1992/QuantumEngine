@@ -11,7 +11,6 @@
 #include "Shader/HLSLRasterizationProgram.h"
 #include "RayTracing/HLSLRayTracingProgramImporter.h"
 #include "RayTracing/HLSLRayTracingProgram.h"
-#include "HLSLMaterial.h"
 
 #include "Rendering/ShaderRegistery.h"
 #include "Rendering/GPUAssetManager.h"
@@ -68,15 +67,9 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
         auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    IMPORT_SHADER(rtGlobalShaderPath, rtGlobalShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtGlobalProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Global_Program", { rtGlobalShader }, true);
-
+    
     std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    IMPORT_SHADER(rtSimpleLightShaderPath, rtSimpleLightShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtSimpleLightProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Light_Program", { rtSimpleLightShader }, true);
-
+    
     std::wstring rtSimpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
 	DX12::Shader::HLSLRasterizationProgramImportDesc lightRasterDesc;
 	lightRasterDesc.shaderModel = "6_6";
@@ -347,13 +340,12 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     scene->lightData = lightData;
     scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity, curveEntity1};
     scene->behaviours = { cameraController, curveModifier };
-	scene->rtGlobalProgram = rtGlobalProgram;
 	scene->rtGlobalMaterial = rtGlobalMaterial;
     
     return scene;
 }
 
-ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, ref<Platform::GraphicWindow> win, std::string& error)
+ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, const ref<Render::MaterialFactory>& materialFactory, ref<Platform::GraphicWindow> win, std::string& error)
 {
     std::string errorStr;
 
@@ -371,20 +363,11 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
         auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    IMPORT_SHADER(rtGlobalShaderPath, rtGlobalShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtGlobalProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Global_Program", { rtGlobalShader }, false);
-
+    
     std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    IMPORT_SHADER(rtSimpleLightShaderPath, rtSimpleLightShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtSimpleLightProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Light_Program", { rtSimpleLightShader }, true);
-
+    
     std::wstring rtReflectionShaderPath = root + L"\\Assets\\Shaders\\reflection_rt.lib.hlsl";
-    IMPORT_SHADER(rtReflectionShaderPath, rtReflectionShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtReflectionProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Reflection_Program", { rtReflectionShader }, true);
-
+    
     std::wstring gBufferReflectionVertPath = root + L"\\Assets\\Shaders\\reflection_g_buffer.vert.hlsl";
     IMPORT_SHADER(gBufferReflectionVertPath, gBufferReflectionVertexShader, DX12::VERTEX_SHADER, errorStr)
 
@@ -392,6 +375,48 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     IMPORT_SHADER(gBufferReflectionPixPath, gBufferReflectionPixelShader, DX12::PIXEL_SHADER, errorStr)
 
         auto gBufferReflectionProgram = shaderRegistery->CreateAndRegisterShaderProgram("G_Buffer_Reflection_Program", { gBufferReflectionVertexShader, gBufferReflectionPixelShader }, false);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
+    simpleRTDesc.shaderModel = "6_6";
+    simpleRTDesc.rayGenerationFunction = "rayGen";
+    simpleRTDesc.missFunction = "miss";
+    simpleRTDesc.closestHitFunction = "chs";
+
+    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+
+    if (globalRTProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
+    simpleLocalRTDesc.shaderModel = "6_6";
+    simpleLocalRTDesc.closestHitFunction = "chs";
+
+    auto simpleRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleLightShaderPath, simpleLocalRTDesc, errorStr);
+
+    if (simpleRTLightProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", simpleRTLightProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties reflectionLocalRTDesc;
+    reflectionLocalRTDesc.shaderModel = "6_6";
+    reflectionLocalRTDesc.closestHitFunction = "chs";
+    reflectionLocalRTDesc.missFunction = "miss";
+
+    auto reflectionRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtReflectionShaderPath, reflectionLocalRTDesc, errorStr);
+
+    if (reflectionRTLightProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtReflectionShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", reflectionRTLightProgram, true);
 
     ////// Creating the camera
 
@@ -471,109 +496,98 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
 
     ////// Creating the materials
 
-    ref<DX12::HLSLMaterial> carMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    carMaterial1->Initialize(false);
+    auto rtGlobalMaterial = materialFactory->CreateMaterial(globalRTProgram);
+    rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
+    rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
+
+    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
-    carMaterial1->SetFloat("ambient", 0.1f);
-    carMaterial1->SetFloat("diffuse", 1.0f);
-    carMaterial1->SetFloat("specular", 0.1f);
+    carMaterial1->SetValue("ambient", 0.1f);
+    carMaterial1->SetValue("diffuse", 1.0f);
+    carMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> carRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    carRTMaterial->Initialize(true);
+    auto carRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     carRTMaterial->SetTexture2D("mainTexture", carTex1);
-    carRTMaterial->SetFloat("ambient", 0.1f);
-    carRTMaterial->SetFloat("diffuse", 1.0f);
-    carRTMaterial->SetFloat("specular", 0.1f);
+    carRTMaterial->SetValue("ambient", 0.1f);
+    carRTMaterial->SetValue("diffuse", 1.0f);
+    carRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> rabbitStatueMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    rabbitStatueMaterial1->Initialize(false);
+    auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
     rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
-    rabbitStatueMaterial1->SetFloat("ambient", 0.1f);
-    rabbitStatueMaterial1->SetFloat("diffuse", 0.8f);
-    rabbitStatueMaterial1->SetFloat("specular", 0.1f);
+    rabbitStatueMaterial1->SetValue("ambient", 0.1f);
+    rabbitStatueMaterial1->SetValue("diffuse", 0.8f);
+    rabbitStatueMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    rabbitStatueRTMaterial->Initialize(true);
+    auto rabbitStatueRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
-    rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
-    rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
+    rabbitStatueRTMaterial->SetValue("ambient", 0.1f);
+    rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
+    rabbitStatueRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> lionStatueMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    lionStatueMaterial1->Initialize(false);
+    auto lionStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
     lionStatueMaterial1->SetTexture2D("mainTexture", lionStatueTex1);
-    lionStatueMaterial1->SetFloat("ambient", 0.1f);
-    lionStatueMaterial1->SetFloat("diffuse", 0.8f);
-    lionStatueMaterial1->SetFloat("specular", 0.1f);
+    lionStatueMaterial1->SetValue("ambient", 0.1f);
+    lionStatueMaterial1->SetValue("diffuse", 0.8f);
+    lionStatueMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> lionStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    lionStatueRTMaterial->Initialize(true);
+    auto lionStatueRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     lionStatueRTMaterial->SetTexture2D("mainTexture", lionStatueTex1);
-    lionStatueRTMaterial->SetFloat("ambient", 0.1f);
-    lionStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    lionStatueRTMaterial->SetFloat("specular", 0.1f);
+    lionStatueRTMaterial->SetValue("ambient", 0.1f);
+    lionStatueRTMaterial->SetValue("diffuse", 0.8f);
+    lionStatueRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> chairMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    chairMaterial1->Initialize(false);
+    auto chairMaterial1 = materialFactory->CreateMaterial(lightProgram);
     chairMaterial1->SetTexture2D("mainTexture", chairTex1);
-    chairMaterial1->SetFloat("ambient", 0.1f);
-    chairMaterial1->SetFloat("diffuse", 0.8f);
-    chairMaterial1->SetFloat("specular", 0.1f);
+    chairMaterial1->SetValue("ambient", 0.1f);
+    chairMaterial1->SetValue("diffuse", 0.8f);
+    chairMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> chairRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    chairRTMaterial->Initialize(true);
+    auto chairRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
-    chairRTMaterial->SetFloat("ambient", 0.1f);
-    chairRTMaterial->SetFloat("diffuse", 0.8f);
-    chairRTMaterial->SetFloat("specular", 0.3f);
+    chairRTMaterial->SetValue("ambient", 0.1f);
+    chairRTMaterial->SetValue("diffuse", 0.8f);
+    chairRTMaterial->SetValue("specular", 0.3f);
 
-    ref<DX12::HLSLMaterial> groundMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    groundMaterial1->Initialize(false);
+    auto groundMaterial1 = materialFactory->CreateMaterial(lightProgram);
     groundMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
-    groundMaterial1->SetFloat("ambient", 0.1f);
-    groundMaterial1->SetFloat("diffuse", 0.8f);
-    groundMaterial1->SetFloat("specular", 0.4f);
+    groundMaterial1->SetValue("ambient", 0.1f);
+    groundMaterial1->SetValue("diffuse", 0.8f);
+    groundMaterial1->SetValue("specular", 0.4f);
 
-    ref<DX12::HLSLMaterial> groundRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    groundRTMaterial->Initialize(true);
+    auto groundRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     groundRTMaterial->SetTexture2D("mainTexture", groundBrickTex1);
-    groundRTMaterial->SetFloat("ambient", 0.1f);
-    groundRTMaterial->SetFloat("diffuse", 0.8f);
-    groundRTMaterial->SetFloat("specular", 0.4f);
+    groundRTMaterial->SetValue("ambient", 0.1f);
+    groundRTMaterial->SetValue("diffuse", 0.8f);
+    groundRTMaterial->SetValue("specular", 0.4f);
 
-    ref<DX12::HLSLMaterial> gBufferReflectionMaterial1 = std::make_shared<DX12::HLSLMaterial>(gBufferReflectionProgram);
-    gBufferReflectionMaterial1->Initialize(false);
+    auto gBufferReflectionMaterial1 = materialFactory->CreateMaterial(gBufferReflectionProgram);
     gBufferReflectionMaterial1->SetTexture2D("mainTexture", swampTex1);
-    gBufferReflectionMaterial1->SetFloat("reflectivity", 0.8f);
-    gBufferReflectionMaterial1->SetFloat("ambient", 0.1f);
-    gBufferReflectionMaterial1->SetFloat("diffuse", 0.8f);
-    gBufferReflectionMaterial1->SetFloat("specular", 0.1f);
+    gBufferReflectionMaterial1->SetValue("reflectivity", 0.8f);
+    gBufferReflectionMaterial1->SetValue("ambient", 0.1f);
+    gBufferReflectionMaterial1->SetValue("diffuse", 0.8f);
+    gBufferReflectionMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> reflectionRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtReflectionProgram);
-    reflectionRTMaterial1->Initialize(true);
+    auto reflectionRTMaterial1 = materialFactory->CreateMaterial(reflectionRTLightProgram);
     reflectionRTMaterial1->SetTexture2D("mainTexture", swampTex1);
-    reflectionRTMaterial1->SetFloat("reflectivity", 0.8f);
-    reflectionRTMaterial1->SetUInt32("maxRecursion", 3);
-    reflectionRTMaterial1->SetFloat("ambient", 0.1f);
-    reflectionRTMaterial1->SetFloat("diffuse", 0.8f);
-    reflectionRTMaterial1->SetFloat("specular", 0.1f);
+    reflectionRTMaterial1->SetValue("castShadow", 0);
+    reflectionRTMaterial1->SetValue("reflectivity", 0.5f);
+    reflectionRTMaterial1->SetValue("ambient", 0.1f);
+    reflectionRTMaterial1->SetValue("diffuse", 0.8f);
+    reflectionRTMaterial1->SetValue("specular", 0.8f);
 
-    ref<DX12::HLSLMaterial> gBufferReflectionMaterial2 = std::make_shared<DX12::HLSLMaterial>(gBufferReflectionProgram);
-    gBufferReflectionMaterial2->Initialize(false);
+    auto gBufferReflectionMaterial2 = materialFactory->CreateMaterial(gBufferReflectionProgram); 
     gBufferReflectionMaterial2->SetTexture2D("mainTexture", waterTex1);
-    gBufferReflectionMaterial2->SetFloat("reflectivity", 0.8f);
-    gBufferReflectionMaterial2->SetFloat("ambient", 0.1f);
-    gBufferReflectionMaterial2->SetFloat("diffuse", 0.9f);
-    gBufferReflectionMaterial2->SetFloat("specular", 0.6f);
+    gBufferReflectionMaterial2->SetValue("reflectivity", 0.8f);
+    gBufferReflectionMaterial2->SetValue("ambient", 0.1f);
+    gBufferReflectionMaterial2->SetValue("diffuse", 0.9f);
+    gBufferReflectionMaterial2->SetValue("specular", 0.6f);
 
-    ref<DX12::HLSLMaterial> reflectionRTMaterial2 = std::make_shared<DX12::HLSLMaterial>(rtReflectionProgram);
-    reflectionRTMaterial2->Initialize(true);
+    auto reflectionRTMaterial2 = materialFactory->CreateMaterial(reflectionRTLightProgram);
     reflectionRTMaterial2->SetTexture2D("mainTexture", waterTex1);
-    reflectionRTMaterial2->SetFloat("reflectivity", 0.8f);
-    reflectionRTMaterial2->SetUInt32("maxRecursion", 3);
-    reflectionRTMaterial2->SetFloat("ambient", 0.1f);
-    reflectionRTMaterial2->SetFloat("diffuse", 0.9f);
-    reflectionRTMaterial2->SetFloat("specular", 0.6f);
+    reflectionRTMaterial2->SetValue("reflectivity", 0.8f);
+    reflectionRTMaterial2->SetValue("ambient", 0.1f);
+    reflectionRTMaterial2->SetValue("diffuse", 0.9f);
+    reflectionRTMaterial2->SetValue("specular", 0.6f);
 
 
     ////// Creating the entities
@@ -641,14 +655,13 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, grountEntity1, mirrorEntity1, mirrorEntity2 };
-    scene->behaviours = { cameraController, frameLogger };
-    scene->rtGlobalProgram = rtGlobalProgram;
-
+    scene->entities = {carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, grountEntity1, mirrorEntity1, mirrorEntity2 };
+    scene->behaviours = { cameraController};
+    scene->rtGlobalMaterial = rtGlobalMaterial;
     return scene;
 }
 
-ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, ref<Platform::GraphicWindow> win, std::string& errorStr)
+ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, const ref<Render::MaterialFactory>& materialFactory, ref<Platform::GraphicWindow> win, std::string& errorStr)
 {
     std::string error;
 
@@ -666,15 +679,38 @@ ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& as
         auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    IMPORT_SHADER(rtGlobalShaderPath, rtGlobalShader, DX12::LIB_SHADER, errorStr)
+    
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
+    simpleRTDesc.shaderModel = "6_6";
+    simpleRTDesc.rayGenerationFunction = "rayGen";
+    simpleRTDesc.missFunction = "miss";
+    simpleRTDesc.closestHitFunction = "chs";
 
-        auto rtGlobalProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Global_Program", { rtGlobalShader }, false);
+    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+
+    if (globalRTProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
 
     std::wstring rtShadowShaderPath = root + L"\\Assets\\Shaders\\shadow_rt.lib.hlsl";
-    IMPORT_SHADER(rtShadowShaderPath, rtShadowShader, DX12::LIB_SHADER, errorStr)
 
-        auto rtShadowProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Shadow_Program", { rtShadowShader }, true);
+    DX12::RayTracing::HLSLRayTracingProgramProperties shadowRTDesc;
+    shadowRTDesc.shaderModel = "6_6";
+    shadowRTDesc.closestHitFunction = "chs";
+    shadowRTDesc.missFunction = "miss";
 
+    auto rtShadowProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtShadowShaderPath, shadowRTDesc, errorStr);
+
+    if (rtShadowProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtShadowShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("RT_Shadow_Program", rtShadowProgram, true);
+    
     ////// Creating the camera
 
     auto camtransform = std::make_shared<Transform>(Vector3(4.85f, 5.4f, 7.7f), Vector3(1.0f), Vector3(0.0f, 0.21f, -0.05f), 151);
@@ -747,53 +783,49 @@ ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& as
 
     ////// Creating the materials
 
-    ref<DX12::HLSLMaterial> carMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    carMaterial1->Initialize(false);
+    auto rtGlobalMaterial = materialFactory->CreateMaterial(globalRTProgram);
+    rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
+    rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
+
+    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
-    carMaterial1->SetFloat("ambient", 0.1f);
-    carMaterial1->SetFloat("diffuse", 1.0f);
-    carMaterial1->SetFloat("specular", 0.1f);
+    carMaterial1->SetValue("ambient", 0.1f);
+    carMaterial1->SetValue("diffuse", 1.0f);
+    carMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> carRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    carRTMaterial->Initialize(true);
+    auto carRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     carRTMaterial->SetTexture2D("mainTexture", carTex1);
-    carRTMaterial->SetFloat("ambient", 0.1f);
-    carRTMaterial->SetFloat("diffuse", 1.0f);
-    carRTMaterial->SetFloat("specular", 0.1f);
-    carRTMaterial->SetUInt32("castShadow", 1);
+    carRTMaterial->SetValue("ambient", 0.1f);
+    carRTMaterial->SetValue("diffuse", 1.0f);
+    carRTMaterial->SetValue("specular", 0.1f);
+    carRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    rabbitStatueRTMaterial->Initialize(true);
+    auto rabbitStatueRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
-    rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
-    rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
-    rabbitStatueRTMaterial->SetUInt32("castShadow", 1);
+    rabbitStatueRTMaterial->SetValue("ambient", 0.1f);
+    rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
+    rabbitStatueRTMaterial->SetValue("specular", 0.1f);
+    rabbitStatueRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> lionStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    lionStatueRTMaterial->Initialize(true);
+    auto lionStatueRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     lionStatueRTMaterial->SetTexture2D("mainTexture", lionStatueTex1);
-    lionStatueRTMaterial->SetFloat("ambient", 0.1f);
-    lionStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    lionStatueRTMaterial->SetFloat("specular", 0.1f);
-    lionStatueRTMaterial->SetUInt32("castShadow", 1);
+    lionStatueRTMaterial->SetValue("ambient", 0.1f);
+    lionStatueRTMaterial->SetValue("diffuse", 0.8f);
+    lionStatueRTMaterial->SetValue("specular", 0.1f);
+    lionStatueRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> chairRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    chairRTMaterial->Initialize(true);
+    auto chairRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
-    chairRTMaterial->SetFloat("ambient", 0.1f);
-    chairRTMaterial->SetFloat("diffuse", 0.8f);
-    chairRTMaterial->SetFloat("specular", 0.1f);
-    chairRTMaterial->SetUInt32("castShadow", 1);
+    chairRTMaterial->SetValue("ambient", 0.1f);
+    chairRTMaterial->SetValue("diffuse", 0.8f);
+    chairRTMaterial->SetValue("specular", 0.1f);
+    chairRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> groundShadowMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    groundShadowMaterial1->Initialize(true);
+    auto groundShadowMaterial1 = materialFactory->CreateMaterial(rtShadowProgram);
     groundShadowMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
-    groundShadowMaterial1->SetFloat("ambient", 0.1f);
-    groundShadowMaterial1->SetFloat("diffuse", 0.8f);
-    groundShadowMaterial1->SetFloat("specular", 0.1f);
-    chairRTMaterial->SetUInt32("castShadow", 1);
-
+    groundShadowMaterial1->SetValue("ambient", 0.1f);
+    groundShadowMaterial1->SetValue("diffuse", 0.8f);
+    groundShadowMaterial1->SetValue("specular", 0.1f);
 
     ////// Creating the entities
 
@@ -862,13 +894,13 @@ ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& as
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
     scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, groundEntity1 };
-    scene->behaviours = { cameraController, frameLogger };
-    scene->rtGlobalProgram = rtGlobalProgram;
+    scene->behaviours = { cameraController };
+    scene->rtGlobalMaterial = rtGlobalMaterial;
 
     return scene;
 }
 
-ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, ref<Platform::GraphicWindow> win, std::string& errorStr)
+ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, const ref<Render::MaterialFactory>& materialFactory, ref<Platform::GraphicWindow> win, std::string& errorStr)
 {
     std::string error;
 
@@ -886,19 +918,53 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
         auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    IMPORT_SHADER(rtGlobalShaderPath, rtGlobalShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtGlobalProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Global_Program", { rtGlobalShader }, false);
-
+    
     std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    IMPORT_SHADER(rtSimpleLightShaderPath, rtSimpleLightShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtSimpleLightProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Light_Program", { rtSimpleLightShader }, true);
-
+    
     std::wstring rtRefractionShaderPath = root + L"\\Assets\\Shaders\\refractor_rt.lib.hlsl";
-    IMPORT_SHADER(rtRefractionShaderPath, rtRefractionShader, DX12::LIB_SHADER, errorStr)
+    
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
+    simpleRTDesc.shaderModel = "6_6";
+    simpleRTDesc.rayGenerationFunction = "rayGen";
+    simpleRTDesc.missFunction = "miss";
+    simpleRTDesc.closestHitFunction = "chs";
 
-        auto rtRefractionProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Reflection_Program", { rtRefractionShader }, true);
+    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+
+    if (globalRTProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
+    simpleLocalRTDesc.shaderModel = "6_6";
+    simpleLocalRTDesc.closestHitFunction = "chs";
+
+    auto simpleRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleLightShaderPath, simpleLocalRTDesc, errorStr);
+
+    if (simpleRTLightProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", simpleRTLightProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties refractionLocalRTDesc;
+    refractionLocalRTDesc.shaderModel = "6_6";
+    refractionLocalRTDesc.closestHitFunction = "chs";
+    refractionLocalRTDesc.missFunction = "miss";
+
+    auto rtRefractionProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtRefractionShaderPath, refractionLocalRTDesc, errorStr);
+
+    if (rtRefractionProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtRefractionShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", rtRefractionProgram, true);
+
 
     ////// Creating the camera
 
@@ -975,52 +1041,49 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
 
     ////// Creating the materials
 
-    ref<DX12::HLSLMaterial> carMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    carMaterial1->Initialize(false);
+    auto rtGlobalMaterial = materialFactory->CreateMaterial(globalRTProgram);
+    rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
+    rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
+
+    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
-    carMaterial1->SetFloat("ambient", 0.1f);
-    carMaterial1->SetFloat("diffuse", 1.0f);
-    carMaterial1->SetFloat("specular", 0.1f);
+    carMaterial1->SetValue("ambient", 0.1f);
+    carMaterial1->SetValue("diffuse", 1.0f);
+    carMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> carRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    carRTMaterial->Initialize(true);
+    auto carRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     carRTMaterial->SetTexture2D("mainTexture", carTex1);
-    carRTMaterial->SetFloat("ambient", 0.1f);
-    carRTMaterial->SetFloat("diffuse", 1.0f);
-    carRTMaterial->SetFloat("specular", 0.1f);
+    carRTMaterial->SetValue("ambient", 0.1f);
+    carRTMaterial->SetValue("diffuse", 1.0f);
+    carRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    rabbitStatueRTMaterial->Initialize(true);
+    auto rabbitStatueRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
-    rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
-    rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
+    rabbitStatueRTMaterial->SetValue("ambient", 0.1f);
+    rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
+    rabbitStatueRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> lionStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    lionStatueRTMaterial->Initialize(true);
+    auto lionStatueRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     lionStatueRTMaterial->SetTexture2D("mainTexture", lionStatueTex1);
-    lionStatueRTMaterial->SetFloat("ambient", 0.1f);
-    lionStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    lionStatueRTMaterial->SetFloat("specular", 0.1f);
+    lionStatueRTMaterial->SetValue("ambient", 0.1f);
+    lionStatueRTMaterial->SetValue("diffuse", 0.8f);
+    lionStatueRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> chairRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    chairRTMaterial->Initialize(true);
+    auto chairRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
     chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
-    chairRTMaterial->SetFloat("ambient", 0.1f);
-    chairRTMaterial->SetFloat("diffuse", 0.8f);
-    chairRTMaterial->SetFloat("specular", 0.1f);
+    chairRTMaterial->SetValue("ambient", 0.1f);
+    chairRTMaterial->SetValue("diffuse", 0.8f);
+    chairRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> groundRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtSimpleLightProgram);
-    groundRTMaterial1->Initialize(true);
+    auto groundRTMaterial1 = materialFactory->CreateMaterial(simpleRTLightProgram);
     groundRTMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
-    groundRTMaterial1->SetFloat("ambient", 0.1f);
-    groundRTMaterial1->SetFloat("diffuse", 0.8f);
-    groundRTMaterial1->SetFloat("specular", 0.1f);
+    groundRTMaterial1->SetValue("ambient", 0.1f);
+    groundRTMaterial1->SetValue("diffuse", 0.8f);
+    groundRTMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> refractionRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtRefractionProgram);
-    refractionRTMaterial1->Initialize(true);
-    refractionRTMaterial1->SetFloat("refractionFactor", 1.3f);
-    refractionRTMaterial1->SetUInt32("maxRecursion", 5);
+    auto refractionRTMaterial1 = materialFactory->CreateMaterial(rtRefractionProgram);
+    refractionRTMaterial1->SetValue("refractionFactor", 1.3f);
+    refractionRTMaterial1->SetValue("maxRecursion", 5);
 
     ////// Creating the entities
 
@@ -1087,13 +1150,13 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
     scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, groundEntity1, glassEntity1, glassEntity2 };
-    scene->behaviours = { cameraController, frameLogger };
-    scene->rtGlobalProgram = rtGlobalProgram;
+    scene->behaviours = { cameraController };
+    scene->rtGlobalMaterial = rtGlobalMaterial;
 
     return scene;
 }
 
-ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, ref<Platform::GraphicWindow> win, std::string& errorStr)
+ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, const ref<Render::MaterialFactory>& materialFactory, ref<Platform::GraphicWindow> win, std::string& errorStr)
 {
     std::string error;
 
@@ -1111,34 +1174,86 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
         auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    IMPORT_SHADER(rtGlobalShaderPath, rtGlobalShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtGlobalProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Global_Program", { rtGlobalShader }, false);
-
+    
     std::wstring rtSimpleShaderPath = root + L"\\Assets\\Shaders\\simple_rt.lib.hlsl";
-    IMPORT_SHADER(rtSimpleShaderPath, rtSimpleShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtSimpleProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Program", { rtSimpleShader }, true);
-
+    
     std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    IMPORT_SHADER(rtSimpleLightShaderPath, rtSimpleLightShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtSimpleLightProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Simple_Light_Program", { rtSimpleLightShader }, true);
-
+    
     std::wstring rtReflectionShaderPath = root + L"\\Assets\\Shaders\\reflection_rt.lib.hlsl";
-    IMPORT_SHADER(rtReflectionShaderPath, rtReflectionShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtReflectionProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Reflection_Program", { rtReflectionShader }, true);
-
+    
     std::wstring rtShadowShaderPath = root + L"\\Assets\\Shaders\\shadow_rt.lib.hlsl";
-    IMPORT_SHADER(rtShadowShaderPath, rtShadowShader, DX12::LIB_SHADER, errorStr)
-
-        auto rtShadowProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Shadow_Program", { rtShadowShader }, true);
-
+    
     std::wstring rtRefractionShaderPath = root + L"\\Assets\\Shaders\\refractor_rt.lib.hlsl";
-    IMPORT_SHADER(rtRefractionShaderPath, rtRefractionShader, DX12::LIB_SHADER, errorStr)
+    
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
+    simpleRTDesc.shaderModel = "6_6";
+    simpleRTDesc.rayGenerationFunction = "rayGen";
+    simpleRTDesc.missFunction = "miss";
+    simpleRTDesc.closestHitFunction = "chs";
 
-        auto rtRefractionProgram = shaderRegistery->CreateAndRegisterShaderProgram("RT_Reflection_Program", { rtRefractionShader }, true);
+    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+
+    if (globalRTProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
+    simpleLocalRTDesc.shaderModel = "6_6";
+    simpleLocalRTDesc.closestHitFunction = "chs";
+
+    auto rtSimpleProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleShaderPath, simpleLocalRTDesc, errorStr);
+
+    if (rtSimpleProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", rtSimpleProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties reflectionLocalRTDesc;
+    reflectionLocalRTDesc.shaderModel = "6_6";
+    reflectionLocalRTDesc.closestHitFunction = "chs";
+    reflectionLocalRTDesc.missFunction = "miss";
+
+    auto reflectionRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtReflectionShaderPath, reflectionLocalRTDesc, errorStr);
+
+    if (reflectionRTLightProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtReflectionShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", reflectionRTLightProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties shadowRTDesc;
+    shadowRTDesc.shaderModel = "6_6";
+    shadowRTDesc.closestHitFunction = "chs";
+    shadowRTDesc.missFunction = "miss";
+
+    auto rtShadowProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtShadowShaderPath, shadowRTDesc, errorStr);
+
+    if (rtShadowProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtShadowShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("RT_Shadow_Program", rtShadowProgram, true);
+
+    DX12::RayTracing::HLSLRayTracingProgramProperties refractionLocalRTDesc;
+    refractionLocalRTDesc.shaderModel = "6_6";
+    refractionLocalRTDesc.closestHitFunction = "chs";
+    refractionLocalRTDesc.missFunction = "miss";
+
+    auto rtRefractionProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtRefractionShaderPath, refractionLocalRTDesc, errorStr);
+
+    if (rtRefractionProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(rtRefractionShaderPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+
+    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", rtRefractionProgram, true);
 
     ////// Creating the camera
 
@@ -1247,75 +1362,67 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
 
     ////// Creating the materials
 
-    ref<DX12::HLSLMaterial> carMaterial1 = std::make_shared<DX12::HLSLMaterial>(lightProgram);
-    carMaterial1->Initialize(false);
+    auto rtGlobalMaterial = materialFactory->CreateMaterial(globalRTProgram);
+    rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
+    rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
+
+    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
-    carMaterial1->SetFloat("ambient", 0.1f);
-    carMaterial1->SetFloat("diffuse", 1.0f);
-    carMaterial1->SetFloat("specular", 0.1f);
+    carMaterial1->SetValue("ambient", 0.1f);
+    carMaterial1->SetValue("diffuse", 1.0f);
+    carMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> carRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtReflectionProgram);
-    carRTMaterial->Initialize(true);
+    auto carRTMaterial = materialFactory->CreateMaterial(reflectionRTLightProgram);
     carRTMaterial->SetTexture2D("mainTexture", carTex1);
-    carRTMaterial->SetFloat("reflectivity", 0.5f);
-    carRTMaterial->SetUInt32("maxRecursion", 3);
-    carRTMaterial->SetUInt32("castShadow", 1);
-    carRTMaterial->SetFloat("ambient", 0.1f);
-    carRTMaterial->SetFloat("diffuse", 1.0f);
-    carRTMaterial->SetFloat("specular", 0.1f);
-    carRTMaterial->SetUInt32("castShadow", 1);
+    carRTMaterial->SetValue("reflectivity", 0.5f);
+    carRTMaterial->SetValue("castShadow", 1);
+    carRTMaterial->SetValue("ambient", 0.1f);
+    carRTMaterial->SetValue("diffuse", 1.0f);
+    carRTMaterial->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> rabbitStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    rabbitStatueRTMaterial->Initialize(true);
+    auto rabbitStatueRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     rabbitStatueRTMaterial->SetTexture2D("mainTexture", rabbitStatueTex1);
-    rabbitStatueRTMaterial->SetFloat("ambient", 0.1f);
-    rabbitStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    rabbitStatueRTMaterial->SetFloat("specular", 0.1f);
-    rabbitStatueRTMaterial->SetUInt32("castShadow", 1);
+    rabbitStatueRTMaterial->SetValue("ambient", 0.1f);
+    rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
+    rabbitStatueRTMaterial->SetValue("specular", 0.1f);
+    rabbitStatueRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> lionStatueRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    lionStatueRTMaterial->Initialize(true);
+    auto lionStatueRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     lionStatueRTMaterial->SetTexture2D("mainTexture", lionStatueTex1);
-    lionStatueRTMaterial->SetFloat("ambient", 0.1f);
-    lionStatueRTMaterial->SetFloat("diffuse", 0.8f);
-    lionStatueRTMaterial->SetFloat("specular", 0.1f);
-    lionStatueRTMaterial->SetUInt32("castShadow", 1);
+    lionStatueRTMaterial->SetValue("ambient", 0.1f);
+    lionStatueRTMaterial->SetValue("diffuse", 0.8f);
+    lionStatueRTMaterial->SetValue("specular", 0.1f);
+    lionStatueRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> chairRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    chairRTMaterial->Initialize(true);
+    auto chairRTMaterial = materialFactory->CreateMaterial(rtShadowProgram);
     chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
-    chairRTMaterial->SetFloat("ambient", 0.1f);
-    chairRTMaterial->SetFloat("diffuse", 0.8f);
-    chairRTMaterial->SetFloat("specular", 0.1f);
-    chairRTMaterial->SetUInt32("castShadow", 1);
+    chairRTMaterial->SetValue("ambient", 0.1f);
+    chairRTMaterial->SetValue("diffuse", 0.8f);
+    chairRTMaterial->SetValue("specular", 0.1f);
+    chairRTMaterial->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> groundRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtShadowProgram);
-    groundRTMaterial1->Initialize(true);
+    auto groundRTMaterial1 = materialFactory->CreateMaterial(rtShadowProgram);
     groundRTMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
-    groundRTMaterial1->SetFloat("ambient", 0.1f);
-    groundRTMaterial1->SetFloat("diffuse", 0.8f);
-    groundRTMaterial1->SetFloat("specular", 0.1f);
-    groundRTMaterial1->SetUInt32("castShadow", 1);
+    groundRTMaterial1->SetValue("ambient", 0.1f);
+    groundRTMaterial1->SetValue("diffuse", 0.8f);
+    groundRTMaterial1->SetValue("specular", 0.1f);
+    groundRTMaterial1->SetValue("castShadow", 1);
 
-    ref<DX12::HLSLMaterial> skyboxRTMaterial = std::make_shared<DX12::HLSLMaterial>(rtSimpleProgram);
-    skyboxRTMaterial->Initialize(true);
-    skyboxRTMaterial->SetColor("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
+    auto skyboxRTMaterial = materialFactory->CreateMaterial(rtSimpleProgram);
+    skyboxRTMaterial->SetValue("color", Color(1.0f, 1.0f, 1.0f, 1.0f));
     skyboxRTMaterial->SetTexture2D("mainTexture", skyBoxTex);
 
-    ref<DX12::HLSLMaterial> reflectionRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtReflectionProgram);
-    reflectionRTMaterial1->Initialize(true);
+    auto reflectionRTMaterial1 = materialFactory->CreateMaterial(reflectionRTLightProgram);
     reflectionRTMaterial1->SetTexture2D("mainTexture", waterTex1);
-    reflectionRTMaterial1->SetFloat("reflectivity", 0.8f);
-    reflectionRTMaterial1->SetUInt32("maxRecursion", 3);
-    reflectionRTMaterial1->SetUInt32("castShadow", 1);
-    reflectionRTMaterial1->SetFloat("ambient", 0.4f);
-    reflectionRTMaterial1->SetFloat("diffuse", 0.8f);
-    reflectionRTMaterial1->SetFloat("specular", 0.1f);
+    reflectionRTMaterial1->SetValue("reflectivity", 0.8f);
+    reflectionRTMaterial1->SetValue("castShadow", 1);
+    reflectionRTMaterial1->SetValue("ambient", 0.4f);
+    reflectionRTMaterial1->SetValue("diffuse", 0.8f);
+    reflectionRTMaterial1->SetValue("specular", 0.1f);
 
-    ref<DX12::HLSLMaterial> refractionRTMaterial1 = std::make_shared<DX12::HLSLMaterial>(rtRefractionProgram);
-    refractionRTMaterial1->Initialize(true);
-    refractionRTMaterial1->SetFloat("refractionFactor", 1.2f);
-    refractionRTMaterial1->SetUInt32("maxRecursion", 5);
+    auto refractionRTMaterial1 = materialFactory->CreateMaterial(rtRefractionProgram);
+    refractionRTMaterial1->SetValue("refractionFactor", 1.2f);
+    refractionRTMaterial1->SetValue("maxRecursion", 5);
 
     ////// Entities
     auto carTransform1 = std::make_shared<Transform>(Vector3(-1.0f, 1.0f, 1.0f), Vector3(0.8f), Vector3(0.0f, 1.0f, 0.0f), -45);
@@ -1415,9 +1522,8 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
         lionRotator, 
         mirrorMover,
         glassMover,
-        frameLogger,
     };
-    scene->rtGlobalProgram = rtGlobalProgram;
+    scene->rtGlobalMaterial = rtGlobalMaterial;
 
     return scene;
 }
@@ -1475,10 +1581,11 @@ bool SceneBuilder::Run_ReflectionSample_RayTracing(const ref<Render::GPUDeviceMa
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
+    auto materialRegistery = device->CreateMaterialFactory();
 
     std::string error;
 
-    ref<Scene> scene = BuildReflectionScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildReflectionScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if (scene == nullptr) {
         errorStr = error;
@@ -1498,10 +1605,11 @@ bool SceneBuilder::Run_ReflectionSample_Hybrid(const ref<Render::GPUDeviceManage
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
+    auto materialRegistery = device->CreateMaterialFactory();
 
     std::string error;
 
-    ref<Scene> scene = BuildReflectionScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildReflectionScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if (scene == nullptr) {
         errorStr = error;
@@ -1521,10 +1629,11 @@ bool SceneBuilder::Run_ShadowSample_RayTracing(const ref<Render::GPUDeviceManage
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
+    auto materialRegistery = device->CreateMaterialFactory();
 
     std::string error;
 
-    ref<Scene> scene = BuildShadowScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildShadowScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if (scene == nullptr) {
         errorStr = error;
@@ -1544,10 +1653,11 @@ bool SceneBuilder::Run_RefractionSample_RayTracing(const ref<Render::GPUDeviceMa
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
+    auto materialRegistery = device->CreateMaterialFactory();
 
     std::string error;
 
-    ref<Scene> scene = BuildRefractionScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildRefractionScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if (scene == nullptr) {
         errorStr = error;
@@ -1567,10 +1677,11 @@ bool SceneBuilder::Run_ComplexScene_RayTracing(const ref<Render::GPUDeviceManage
     gpuContext->RegisterAssetManager(assetManager);
     auto shaderRegistery = device->CreateShaderRegistery();
     gpuContext->RegisterShaderRegistery(shaderRegistery);
+    auto materialRegistery = device->CreateMaterialFactory();
 
     std::string error;
 
-    ref<Scene> scene = BuildComplexScene(assetManager, shaderRegistery, win, error);
+    ref<Scene> scene = BuildComplexScene(assetManager, shaderRegistery, materialRegistery, win, error);
 
     if (scene == nullptr) {
         errorStr = error;

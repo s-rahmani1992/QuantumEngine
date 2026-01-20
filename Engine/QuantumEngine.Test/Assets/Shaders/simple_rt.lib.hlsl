@@ -2,12 +2,12 @@
 #include "LightStructs.hlsli"
 #include "RTStructs.hlsli"
 
-cbuffer ObjectTransformData : register(b1, space1)
+cbuffer _ObjectTransformData : register(b1, space1)
 {
     TransformData transformData;
 };
 
-cbuffer CameraData : register(b2, space1)
+cbuffer _CameraData : register(b2, space1)
 {
     CameraData cameraData;
 };
@@ -15,13 +15,13 @@ cbuffer CameraData : register(b2, space1)
 Texture2D mainTexture : register(t0, space1);
 sampler mainSampler : register(s0, space1);
 
-StructuredBuffer<uint> g_indices : register(t1, space1);
-StructuredBuffer<Vertex> g_vertices : register(t2, space1);
+StructuredBuffer<uint> _indexBuffer : register(t1, space1);
+StructuredBuffer<Vertex> _vertexBuffer : register(t2, space1);
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
 {
-    float2 uv = CalculateUV(g_indices, g_vertices, attribs.barycentrics);
+    float2 uv = CalculateUV(_indexBuffer, _vertexBuffer, attribs.barycentrics);
     float3 position = CalculeteHitPosition();
     
     float4 texColor = mainTexture.SampleLevel(mainSampler, uv, 0);

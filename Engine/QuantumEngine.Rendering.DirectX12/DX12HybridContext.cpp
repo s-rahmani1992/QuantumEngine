@@ -310,7 +310,6 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 
 			rtEntityData.push_back(DX12RayTracingGPUData{
 				.meshController = std::dynamic_pointer_cast<DX12MeshController>(rtComponent->GetMesh()->GetGPUHandle()),
-				.rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(rtComponent->GetRTMaterial()),
 				.transformResource = entity.transformResource,
 				.transform = entity.gameEntity->GetTransform(),
 				});
@@ -333,7 +332,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		gBufferRTMaterial->SetDescriptorHeap("gNormalTex", m_gBufferPipeline->GetNormalHeap());
 		gBufferRTMaterial->SetDescriptorHeap("gMaskTex", m_gBufferPipeline->GetMaskHeap());
 
-		m_GBufferrayTracingPipeline->Initialize(m_commandList, rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial, nullptr, nullptr, nullptr);
+		m_GBufferrayTracingPipeline->Initialize(m_commandList, rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial, nullptr, nullptr);
 
 		m_commandExecuter->ExecuteAndWait(m_commandList.Get());
 

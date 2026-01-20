@@ -1,22 +1,25 @@
 #include "TransformStructs.hlsli"
 #include "RTStructs.hlsli"
 
-cbuffer ObjectTransformData : register(b2, space1)
+cbuffer _ObjectTransformData : register(b2, space1)
 {
     TransformData transformData;
 };
 
-cbuffer MaterialProps : register(b0, space1)
+cbuffer _RTProperties : register(b1, space1)
 {
-    uint missIndex;
-    float refractionFactor;
-    uint maxRecursion;
-    float dummy;
+    uint _missIndex;
 };
 
-RaytracingAccelerationStructure gRtScene : register(t3, space1);
-StructuredBuffer<uint> g_indices : register(t1, space1);
-StructuredBuffer<Vertex> g_vertices : register(t2, space1);
+cbuffer MaterialProps : register(b0, space1)
+{
+    float refractionFactor;
+    uint maxRecursion;
+};
+
+RaytracingAccelerationStructure _RTScene : register(t3, space1);
+StructuredBuffer<uint> _indexBuffer : register(t1, space1);
+StructuredBuffer<Vertex> _vertexBuffer : register(t2, space1);
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)
@@ -28,7 +31,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
     }
     
     float3 rayDirection = normalize(WorldRayDirection());
-    float3 normal = CalculateNormal(g_indices, g_vertices, attribs.barycentrics);
+    float3 normal = CalculateNormal(_indexBuffer, _vertexBuffer, attribs.barycentrics);
     normal = normalize(mul(float4(normal, 1.0f), transformData.rotationMatrix).xyz);
     
     if (payload.recursionCount <= maxRecursion)
@@ -43,7 +46,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         GeneralPayload innerPayload;
         innerPayload.targetMode = 1;
         innerPayload.recursionCount = payload.recursionCount + 1;
-        TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, missIndex, ray, innerPayload);
+        TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, innerPayload);
         payload.color = innerPayload.color.xyz;
     }
     else

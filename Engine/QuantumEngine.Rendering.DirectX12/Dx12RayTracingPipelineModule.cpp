@@ -15,7 +15,7 @@
 #include <Rendering/Material.h>
 #include "RayTracing/DX12RayTracingMaterial.h"
 
-bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<HLSLMaterial>& rtMaterial, const ref<Material> globalRTMaterial, const ComPtr<ID3D12Resource2>& camera, const ComPtr<ID3D12Resource2>& light)
+bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::Initialize(const ComPtr<ID3D12GraphicsCommandList7>& commandList, const std::vector<DX12RayTracingGPUData>& entities, UInt32 width, UInt32 height, const ref<Material> globalRTMaterial, const ComPtr<ID3D12Resource2>& camera, const ComPtr<ID3D12Resource2>& light)
 {
 	m_raytraceDesc.Width = width;
 	m_raytraceDesc.Height = height;
@@ -92,8 +92,6 @@ bool QuantumEngine::Rendering::DX12::DX12RayTracingPipelineModule::Initialize(co
 	UInt32 hitIndex = m_globalRTProgram->HasHitGroup() ? 1 : 0;
 
 	for (auto& entity : entities) {
-		auto rtMaterial = entity.rtMaterial;
-
 		rtEntities.push_back(RayTracing::EntityBLASDesc{
 			.hitGroupIndex = hitIndex,
 			.mesh = entity.meshController,
