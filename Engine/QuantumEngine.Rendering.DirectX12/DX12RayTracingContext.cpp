@@ -6,7 +6,7 @@
 #include "Core/Mesh.h"
 #include "HLSLShaderProgram.h"
 #include "DX12Utilities.h"
-#include "DX12RayTracingPipelineModule.h"
+#include "RayTracing/DX12RayTracingPipelineModule.h"
 #include "Platform/GraphicWindow.h"
 #include "DX12CommandExecuter.h"
 #include "Core/Scene.h"
@@ -130,7 +130,7 @@ void QuantumEngine::Rendering::DX12::DX12RayTracingContext::PrepareRayTracingPip
 			});
 	}
 
-	m_rayTracingPipeline = std::make_shared<DX12RayTracingPipelineModule>();
+	m_rayTracingPipeline = std::make_shared<RayTracing::DX12RayTracingPipelineModule>();
 
 	m_commandAllocator->Reset();
 	m_commandList->Reset(m_commandAllocator.Get(), nullptr);

@@ -21,16 +21,15 @@ namespace QuantumEngine {
 using namespace Microsoft::WRL;
 
 namespace QuantumEngine::Rendering::DX12 {
-	namespace RayTracing {
-		class RTAccelarationStructure;
-		struct EntityBLASDesc;
-		class HLSLRayTracingProgram;
-		class DX12RayTracingMaterial;
-	}
-
 	struct DX12RayTracingGPUData;
-	class HLSLMaterial;
-	class HLSLShaderProgram;
+	//class HLSLShaderProgram;
+}
+
+namespace QuantumEngine::Rendering::DX12::RayTracing {
+	class RTAccelarationStructure;
+	struct EntityBLASDesc;
+	class HLSLRayTracingProgram;
+	class DX12RayTracingMaterial;
 
 	class DX12RayTracingPipelineModule
 	{

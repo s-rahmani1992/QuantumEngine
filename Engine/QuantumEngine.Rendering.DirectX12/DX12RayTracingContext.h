@@ -3,7 +3,9 @@
 
 namespace QuantumEngine::Rendering::DX12
 {
-	class DX12RayTracingPipelineModule;
+	namespace RayTracing {
+		class DX12RayTracingPipelineModule;
+	}
 
 	class DX12RayTracingContext : public DX12GraphicContext
 	{
@@ -20,7 +22,7 @@ namespace QuantumEngine::Rendering::DX12
 
 	private:
 		std::vector<DX12RayTracingGPUData> m_rtEntityData;
-		ref<DX12RayTracingPipelineModule> m_rayTracingPipeline;
+		ref<RayTracing::DX12RayTracingPipelineModule> m_rayTracingPipeline;
 	};
 }
 

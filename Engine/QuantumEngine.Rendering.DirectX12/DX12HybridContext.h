@@ -6,7 +6,10 @@ namespace QuantumEngine::Rendering {
 }
 
 namespace QuantumEngine::Rendering::DX12 {
-	class DX12RayTracingPipelineModule;
+	namespace RayTracing {
+		class DX12RayTracingPipelineModule;
+	}
+
 	class DX12GBufferPipelineModule;
 	class DX12GameEntityPipelineModule;
 	class DX12RasterizationMaterial;
@@ -63,7 +66,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		std::vector<EntityGBufferData> m_gBufferEntities;
 		ref<DX12GBufferPipelineModule> m_gBufferPipeline;
-		ref<DX12RayTracingPipelineModule> m_GBufferrayTracingPipeline;
+		ref<RayTracing::DX12RayTracingPipelineModule> m_GBufferrayTracingPipeline;
 	};
 }
 

@@ -4,7 +4,7 @@
 #include "DX12Utilities.h"
 #include "DX12CommandExecuter.h"
 #include "DX12GameEntityPipelineModule.h"
-#include "Dx12RayTracingPipelineModule.h"
+#include "RayTracing/Dx12RayTracingPipelineModule.h"
 #include "DX12GBufferPipelineModule.h"
 #include "HLSLShaderProgram.h"
 #include <set>
@@ -318,7 +318,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		}
 		auto gBufferRTMaterial = DX12MaterialFactory::BuildMaterial(m_shaderRegistery->GetShaderProgram("G_Buffer_RT_Global_Program"));
 
-		m_GBufferrayTracingPipeline = std::make_shared<DX12RayTracingPipelineModule>();
+		m_GBufferrayTracingPipeline = std::make_shared<RayTracing::DX12RayTracingPipelineModule>();
 
 		m_commandAllocator->Reset();
 		m_commandList->Reset(m_commandAllocator.Get(), nullptr);

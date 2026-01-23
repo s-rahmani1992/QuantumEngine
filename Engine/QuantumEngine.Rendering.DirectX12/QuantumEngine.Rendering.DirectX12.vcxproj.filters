@@ -66,9 +66,6 @@
     <ClInclude Include="DX12GameEntityPipelineModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Dx12RayTracingPipelineModule.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DX12ShaderRegistery.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -117,6 +114,9 @@
     <ClInclude Include="Core\HLSLShaderProgram.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="RayTracing\DX12RayTracingPipelineModule.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp">
@@ -159,9 +159,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DX12GameEntityPipelineModule.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Dx12RayTracingPipelineModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DX12ShaderRegistery.cpp">
@@ -211,6 +208,9 @@
     </ClCompile>
     <ClCompile Include="Core\HLSLShaderProgram.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\DX12RayTracingPipelineModule.cpp">
+      <Filter>RayTracing</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

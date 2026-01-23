@@ -175,7 +175,6 @@
     <ClInclude Include="DX12MeshController.h" />
     <ClInclude Include="DX12RasterizationMaterial.h" />
     <ClInclude Include="DX12RayTracingContext.h" />
-    <ClInclude Include="Dx12RayTracingPipelineModule.h" />
     <ClInclude Include="DX12ShaderRegistery.h" />
     <ClInclude Include="DX12SplineRasterPipelineModule.h" />
     <ClInclude Include="DX12Texture2DController.h" />
@@ -185,6 +184,7 @@
     <ClInclude Include="HLSLShaderImporter.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="RayTracing\DX12RayTracingMaterial.h" />
+    <ClInclude Include="RayTracing\DX12RayTracingPipelineModule.h" />
     <ClInclude Include="RayTracing\HLSLRayTracingProgram.h" />
     <ClInclude Include="RayTracing\HLSLRayTracingProgramImporter.h" />
     <ClInclude Include="RayTracing\RTAccelarationStructure.h" />
@@ -208,7 +208,6 @@
     <ClCompile Include="DX12MeshController.cpp" />
     <ClCompile Include="DX12RasterizationMaterial.cpp" />
     <ClCompile Include="DX12RayTracingContext.cpp" />
-    <ClCompile Include="Dx12RayTracingPipelineModule.cpp" />
     <ClCompile Include="DX12ShaderRegistery.cpp" />
     <ClCompile Include="DX12SplineRasterPipelineModule.cpp" />
     <ClCompile Include="DX12Texture2DController.cpp" />
@@ -223,6 +222,7 @@
     </ClCompile>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp" />
     <ClCompile Include="RayTracing\DX12RayTracingMaterial.cpp" />
+    <ClCompile Include="RayTracing\DX12RayTracingPipelineModule.cpp" />
     <ClCompile Include="RayTracing\HLSLRayTracingProgram.cpp" />
     <ClCompile Include="RayTracing\HLSLRayTracingProgramImporter.cpp" />
     <ClCompile Include="RayTracing\RTAccelarationStructure.cpp">
