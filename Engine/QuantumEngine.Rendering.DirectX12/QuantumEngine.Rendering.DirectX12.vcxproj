@@ -180,7 +180,6 @@
     <ClInclude Include="DX12Texture2DController.h" />
     <ClInclude Include="DX12Utilities.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="HLSLMaterial.h" />
     <ClInclude Include="HLSLShader.h" />
     <ClInclude Include="HLSLShaderImporter.h" />
     <ClInclude Include="HLSLShaderProgram.h" />
@@ -213,7 +212,6 @@
     <ClCompile Include="DX12SplineRasterPipelineModule.cpp" />
     <ClCompile Include="DX12Texture2DController.cpp" />
     <ClCompile Include="DX12Utilities.cpp" />
-    <ClCompile Include="HLSLMaterial.cpp" />
     <ClCompile Include="HLSLShader.cpp" />
     <ClCompile Include="HLSLShaderImporter.cpp" />
     <ClCompile Include="HLSLShaderProgram.cpp" />

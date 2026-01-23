@@ -3,7 +3,6 @@
 #include "RayTracing/RTAccelarationStructure.h"
 #include "DX12GraphicContext.h"
 #include "Core/GameEntity.h"
-#include "HLSLMaterial.h"
 #include "Core/Mesh.h"
 #include "DX12Utilities.h"
 #include <set>

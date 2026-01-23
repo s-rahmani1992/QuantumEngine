@@ -6,7 +6,6 @@
 #include "DX12GameEntityPipelineModule.h"
 #include "Dx12RayTracingPipelineModule.h"
 #include "DX12GBufferPipelineModule.h"
-#include "HLSLMaterial.h"
 #include "HLSLShaderProgram.h"
 #include <set>
 #include <map>
