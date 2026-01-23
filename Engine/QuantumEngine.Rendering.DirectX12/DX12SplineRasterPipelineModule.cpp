@@ -3,9 +3,9 @@
 #include "DX12utilities.h"
 #include "Rendering/SplineRenderer.h"
 #include <Rendering/Material.h>
-#include "DX12RasterizationMaterial.h"
+#include "Rasterization/DX12RasterizationMaterial.h"
 #include "HLSLShader.h"
-#include "Shader/HLSLRasterizationProgram.h"
+#include "Rasterization/HLSLRasterizationProgram.h"
 #include "DX12HybridContext.h"
 #include "Compute/HLSLComputeProgram.h"
 
@@ -109,7 +109,7 @@ bool QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::Initialize(
 
 	//Shader Part
 
-	auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram>(m_material->GetMaterial()->GetProgram());
+	auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Rasterization::HLSLRasterizationProgram>(m_material->GetMaterial()->GetProgram());
 	m_rootSignature = program->GetRootSignature();
 	auto vertexShader = program->GetVertexShader();
 	auto pixelShader = program->GetPixelShader();

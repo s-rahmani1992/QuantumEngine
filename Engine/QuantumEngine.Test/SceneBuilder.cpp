@@ -8,7 +8,7 @@
 #include "Core/HLSLShaderProgram.h"
 #include "HLSLShader.h"
 #include "HLSLShaderImporter.h"
-#include "Shader/HLSLRasterizationProgramImporter.h"
+#include "Rasterization/HLSLRasterizationProgramImporter.h"
 #include "RayTracing/HLSLRayTracingProgramImporter.h"
 
 #include "Rendering/ShaderRegistery.h"
@@ -70,11 +70,11 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
     
     std::wstring rtSimpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
-	DX12::Shader::HLSLRasterizationProgramImportDesc lightRasterDesc;
+	DX12::Rasterization::HLSLRasterizationProgramImportDesc lightRasterDesc;
 	lightRasterDesc.shaderModel = "6_6";
 	lightRasterDesc.vertexMainFunction = "vs_main";
 	lightRasterDesc.pixelMainFunction = "ps_main";
-	auto lightRasterProgram = DX12::Shader::HLSLRasterizationProgramImporter::ImportShader(rtSimpleLightRasterPath, lightRasterDesc, errorStr);
+	auto lightRasterProgram = DX12::Rasterization::HLSLRasterizationProgramImporter::ImportShader(rtSimpleLightRasterPath, lightRasterDesc, errorStr);
 
     if(lightRasterProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightRasterPath) + "Error: \n" + errorStr;
@@ -84,12 +84,12 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 	shaderRegistery->RegisterShaderProgram("RT_Simple_Light_Raster_Program", lightRasterProgram, false);
 	
 	std::wstring curveRasterPath = root + L"\\Assets\\Shaders\\curve_raster_program.hlsl";
-    DX12::Shader::HLSLRasterizationProgramImportDesc curveRasterDesc;
+    DX12::Rasterization::HLSLRasterizationProgramImportDesc curveRasterDesc;
     curveRasterDesc.shaderModel = "6_6";
     curveRasterDesc.vertexMainFunction = "vs_main";
     curveRasterDesc.pixelMainFunction = "ps_main";
 	curveRasterDesc.geometryMainFunction = "gs_main";
-    auto curveRasterProgram = DX12::Shader::HLSLRasterizationProgramImporter::ImportShader(curveRasterPath, curveRasterDesc, errorStr);
+    auto curveRasterProgram = DX12::Rasterization::HLSLRasterizationProgramImporter::ImportShader(curveRasterPath, curveRasterDesc, errorStr);
 
     if (curveRasterProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(curveRasterPath) + "Error: \n" + errorStr;

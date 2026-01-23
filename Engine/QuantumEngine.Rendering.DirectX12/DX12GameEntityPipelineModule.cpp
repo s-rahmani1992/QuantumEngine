@@ -5,11 +5,10 @@
 #include "DX12MeshController.h"
 #include "DX12HybridContext.h"
 #include "HLSLShader.h"
-#include "HLSLShaderProgram.h"
 #include "DX12Utilities.h"
 #include "Rendering/MeshRenderer.h"
-#include "Shader/HLSLRasterizationProgram.h"
-#include "DX12RasterizationMaterial.h"
+#include "Rasterization/HLSLRasterizationProgram.h"
+#include "Rasterization/DX12RasterizationMaterial.h"
 
 bool QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const DX12MeshRendererGPUData& meshRendererData, DXGI_FORMAT depthFormat)
 {
@@ -26,7 +25,7 @@ bool QuantumEngine::Rendering::DX12::DX12GameEntityPipelineModule::Initialize(co
 
 	//Shader Part
 	m_material = meshRendererData.material;
-	auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram>(m_material->GetMaterial()->GetProgram());
+	auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Rasterization::HLSLRasterizationProgram>(m_material->GetMaterial()->GetProgram());
 	m_rootSignature = program->GetRootSignature();
 	auto vertexShader = program->GetVertexShader();
 	auto pixelShader = program->GetPixelShader();

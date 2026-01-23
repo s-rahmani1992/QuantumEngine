@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "DX12ShaderRegistery.h"
 #include "HLSLShaderImporter.h"
-#include <Shader/HLSLRasterizationProgram.h>
+#include <Rasterization/HLSLRasterizationProgram.h>
 #include <Rendering/Shader.h>
 #include "HLSLShader.h"
 #include <vector>
@@ -12,7 +12,7 @@
 #include "RayTracing/HLSLRayTracingProgramImporter.h"
 
 namespace Render = QuantumEngine::Rendering;
-namespace HLSL = QuantumEngine::Rendering::DX12::Shader;
+namespace HLSL = QuantumEngine::Rendering::DX12::Rasterization;
 namespace Compute = QuantumEngine::Rendering::DX12::Compute;
 
 void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPtr<ID3D12Device10>& device)
@@ -95,7 +95,7 @@ ref<Render::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::
 			ref<HLSLShader> hlsl = std::dynamic_pointer_cast<HLSLShader>(shader);
 			hlslShaders.push_back(hlsl);
 		}
-		ref<HLSL::HLSLRasterizationProgram> rasterProgram = std::make_shared<Shader::HLSLRasterizationProgram>(hlslShaders);
+		ref<HLSL::HLSLRasterizationProgram> rasterProgram = std::make_shared<Rasterization::HLSLRasterizationProgram>(hlslShaders);
 
 		if (rasterProgram->InitializeRootSignature(m_device)) {
 			m_shaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rasterProgram);

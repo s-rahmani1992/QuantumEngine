@@ -17,8 +17,8 @@
 #include "DX12MeshController.h"
 #include "Core/Mesh.h"
 #include "Core/Scene.h"
-#include "DX12RasterizationMaterial.h"
-#include "Shader/HLSLRasterizationProgram.h"
+#include "Rasterization/DX12RasterizationMaterial.h"
+#include "Rasterization/HLSLRasterizationProgram.h"
 #include <Rendering/SplineRenderer.h>
 #include "DX12SplineRasterPipelineModule.h"
 #include "Compute/HLSLComputeProgram.h"
@@ -193,7 +193,7 @@ bool QuantumEngine::Rendering::DX12::DX12HybridContext::InitializeDepthBuffer()
 void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 {
 	UInt32 rasterHeapSize = m_entityGPUData.size() + 1 + 1 + 1; // entity transforms + camera + light + gbuffer output?
-	std::map<ref<Material>, ref<DX12RasterizationMaterial>> usedMaterials;
+	std::map<ref<Material>, ref<Rasterization::DX12RasterizationMaterial>> usedMaterials;
 
 	for (auto& entityGpu : m_entityGPUData) {
 		auto material = entityGpu.gameEntity->GetRenderer()->GetMaterial();
@@ -201,8 +201,8 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 		if (usedMaterials.emplace(material, nullptr).second == false)
 			continue;
 		
-		auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram>(material->GetProgram());
-		auto rasterMaterial = std::make_shared<DX12RasterizationMaterial>(material, program);
+		auto program = std::dynamic_pointer_cast<QuantumEngine::Rendering::DX12::Rasterization::HLSLRasterizationProgram>(material->GetProgram());
+		auto rasterMaterial = std::make_shared<Rasterization::DX12RasterizationMaterial>(material, program);
 		usedMaterials[material] = rasterMaterial;
 		rasterHeapSize += material->GetTextureFieldCount();
 	}
@@ -297,7 +297,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 	if (m_gBufferEntities.size() > 0) {
 		m_gBufferPipeline = std::make_shared<DX12GBufferPipelineModule>();
 
-		if (m_gBufferPipeline->Initialize(m_device, Vector2UInt(m_window->GetWidth(), m_window->GetHeight()), std::dynamic_pointer_cast<Shader::HLSLRasterizationProgram>(m_shaderRegistery->GetShaderProgram("G_Buffer_Program"))))
+		if (m_gBufferPipeline->Initialize(m_device, Vector2UInt(m_window->GetWidth(), m_window->GetHeight()), std::dynamic_pointer_cast<Rasterization::HLSLRasterizationProgram>(m_shaderRegistery->GetShaderProgram("G_Buffer_Program"))))
 			m_gBufferPipeline->PrepareEntities(m_gBufferEntities);
 
 		// Initialize Ray Tracing Stage of Reflection Renderer

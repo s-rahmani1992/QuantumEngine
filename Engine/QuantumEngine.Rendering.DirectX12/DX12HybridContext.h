@@ -10,15 +10,18 @@ namespace QuantumEngine::Rendering::DX12 {
 		class DX12RayTracingPipelineModule;
 	}
 
+	namespace Rasterization {
+		class DX12RasterizationMaterial;
+	}
+
 	class DX12GBufferPipelineModule;
 	class DX12GameEntityPipelineModule;
-	class DX12RasterizationMaterial;
 	class DX12SplineRasterPipelineModule;
 
 	struct DX12MeshRendererGPUData {
 	public:
 		ref<MeshRenderer> meshRenderer;
-		ref<DX12RasterizationMaterial> material;
+		ref<Rasterization::DX12RasterizationMaterial> material;
 		ComPtr<ID3D12Resource2> transformResource;
 		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};
@@ -33,7 +36,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	struct SplineRendererData {
 	public:
 		ref<SplineRenderer> renderer;
-		ref<DX12RasterizationMaterial> material;
+		ref<Rasterization::DX12RasterizationMaterial> material;
 		D3D12_GPU_DESCRIPTOR_HANDLE transformHandle;
 	};
 

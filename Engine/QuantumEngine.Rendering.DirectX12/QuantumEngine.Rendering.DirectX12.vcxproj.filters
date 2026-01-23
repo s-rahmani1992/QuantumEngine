@@ -12,15 +12,15 @@
     <Filter Include="RayTracing">
       <UniqueIdentifier>{1401dd6d-26f5-4507-8445-5ef831e696e8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="Compute">
       <UniqueIdentifier>{f9536bdf-bd4c-42cf-bb76-ab52b063bb48}</UniqueIdentifier>
     </Filter>
     <Filter Include="Core">
       <UniqueIdentifier>{3bace6d7-9425-4bff-8caf-b70f6c0322d6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rasterization">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -81,15 +81,6 @@
     <ClInclude Include="DX12MaterialFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DX12RasterizationMaterial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader\HLSLRasterizationProgram.h">
-      <Filter>Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="Shader\HLSLRasterizationProgramImporter.h">
-      <Filter>Shader</Filter>
-    </ClInclude>
     <ClInclude Include="DX12SplineRasterPipelineModule.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -116,6 +107,15 @@
     </ClInclude>
     <ClInclude Include="RayTracing\DX12RayTracingPipelineModule.h">
       <Filter>RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="Rasterization\HLSLRasterizationProgram.h">
+      <Filter>Rasterization</Filter>
+    </ClInclude>
+    <ClInclude Include="Rasterization\HLSLRasterizationProgramImporter.h">
+      <Filter>Rasterization</Filter>
+    </ClInclude>
+    <ClInclude Include="Rasterization\DX12RasterizationMaterial.h">
+      <Filter>Rasterization</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -176,15 +176,6 @@
     <ClCompile Include="DX12MaterialFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DX12RasterizationMaterial.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader\HLSLRasterizationProgram.cpp">
-      <Filter>Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="Shader\HLSLRasterizationProgramImporter.cpp">
-      <Filter>Shader</Filter>
-    </ClCompile>
     <ClCompile Include="DX12SplineRasterPipelineModule.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -211,6 +202,15 @@
     </ClCompile>
     <ClCompile Include="RayTracing\DX12RayTracingPipelineModule.cpp">
       <Filter>RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterization\HLSLRasterizationProgram.cpp">
+      <Filter>Rasterization</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterization\HLSLRasterizationProgramImporter.cpp">
+      <Filter>Rasterization</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterization\DX12RasterizationMaterial.cpp">
+      <Filter>Rasterization</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

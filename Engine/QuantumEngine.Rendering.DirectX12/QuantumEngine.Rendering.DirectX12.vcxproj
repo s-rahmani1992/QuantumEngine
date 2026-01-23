@@ -173,7 +173,6 @@
     <ClInclude Include="DX12LightManager.h" />
     <ClInclude Include="DX12MaterialFactory.h" />
     <ClInclude Include="DX12MeshController.h" />
-    <ClInclude Include="DX12RasterizationMaterial.h" />
     <ClInclude Include="DX12RayTracingContext.h" />
     <ClInclude Include="DX12ShaderRegistery.h" />
     <ClInclude Include="DX12SplineRasterPipelineModule.h" />
@@ -183,13 +182,14 @@
     <ClInclude Include="HLSLShader.h" />
     <ClInclude Include="HLSLShaderImporter.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="Rasterization\DX12RasterizationMaterial.h" />
+    <ClInclude Include="Rasterization\HLSLRasterizationProgram.h" />
+    <ClInclude Include="Rasterization\HLSLRasterizationProgramImporter.h" />
     <ClInclude Include="RayTracing\DX12RayTracingMaterial.h" />
     <ClInclude Include="RayTracing\DX12RayTracingPipelineModule.h" />
     <ClInclude Include="RayTracing\HLSLRayTracingProgram.h" />
     <ClInclude Include="RayTracing\HLSLRayTracingProgramImporter.h" />
     <ClInclude Include="RayTracing\RTAccelarationStructure.h" />
-    <ClInclude Include="Shader\HLSLRasterizationProgram.h" />
-    <ClInclude Include="Shader\HLSLRasterizationProgramImporter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compute\HLSLComputeProgram.cpp" />
@@ -206,7 +206,6 @@
     <ClCompile Include="DX12LightManager.cpp" />
     <ClCompile Include="DX12MaterialFactory.cpp" />
     <ClCompile Include="DX12MeshController.cpp" />
-    <ClCompile Include="DX12RasterizationMaterial.cpp" />
     <ClCompile Include="DX12RayTracingContext.cpp" />
     <ClCompile Include="DX12ShaderRegistery.cpp" />
     <ClCompile Include="DX12SplineRasterPipelineModule.cpp" />
@@ -221,6 +220,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="QuantumEngine.Rendering.DirectX12.cpp" />
+    <ClCompile Include="Rasterization\DX12RasterizationMaterial.cpp" />
+    <ClCompile Include="Rasterization\HLSLRasterizationProgram.cpp" />
+    <ClCompile Include="Rasterization\HLSLRasterizationProgramImporter.cpp" />
     <ClCompile Include="RayTracing\DX12RayTracingMaterial.cpp" />
     <ClCompile Include="RayTracing\DX12RayTracingPipelineModule.cpp" />
     <ClCompile Include="RayTracing\HLSLRayTracingProgram.cpp" />
@@ -231,8 +233,6 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Shader\HLSLRasterizationProgram.cpp" />
-    <ClCompile Include="Shader\HLSLRasterizationProgramImporter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantumEngine.Core\QuantumEngine.Core.vcxproj">

@@ -13,14 +13,12 @@ namespace QuantumEngine {
 	}
 }
 
-namespace QuantumEngine::Rendering::DX12 {
-	namespace Shader {
-		class HLSLRasterizationProgram;
-	}
+namespace QuantumEngine::Rendering::DX12::Rasterization {
+	class HLSLRasterizationProgram;
 
 	class DX12RasterizationMaterial {
 	public:
-		DX12RasterizationMaterial(const ref<Material>& material, const ref<DX12::Shader::HLSLRasterizationProgram>& program);
+		DX12RasterizationMaterial(const ref<Material>& material, const ref<HLSLRasterizationProgram>& program);
 
 		void BindDescriptorToResources(const ComPtr<ID3D12DescriptorHeap>& descriptorHeap, UInt32 offset);
 		void BindParameters(ComPtr<ID3D12GraphicsCommandList7>& commandList);
@@ -29,7 +27,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void BindLightDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& lightHeapHandle);
 		void SetDescriptorHandles(const std::string& name, const D3D12_GPU_DESCRIPTOR_HANDLE& handle);
 		inline ref<Material> GetMaterial() const { return m_material; }
-		inline ref<Shader::HLSLRasterizationProgram> GetProgram() const { return m_program; }
+		inline ref<Rasterization::HLSLRasterizationProgram> GetProgram() const { return m_program; }
 
 	private:
 		struct constantBufferData {
@@ -47,7 +45,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		};
 
 		ref<Material> m_material;
-		ref<DX12::Shader::HLSLRasterizationProgram> m_program;
+		ref<DX12::Rasterization::HLSLRasterizationProgram> m_program;
 		std::vector<constantBufferData> m_constantRegisterValues;
 		std::vector<HeapData> m_heapValues;
 		ComPtr<ID3D12Device> m_device;

@@ -7,8 +7,11 @@
 namespace QuantumEngine::Rendering::DX12 {
 	using namespace Microsoft::WRL;
 	struct DX12MeshRendererGPUData;
-	class DX12RasterizationMaterial;
 	class DX12MeshController;
+
+	namespace Rasterization {
+		class DX12RasterizationMaterial;
+	}
 
 	class DX12GameEntityPipelineModule
 	{
@@ -17,7 +20,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void Render(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle, D3D12_GPU_DESCRIPTOR_HANDLE lightHandle);
 
 	private:
-		ref<DX12RasterizationMaterial> m_material;
+		ref<Rasterization::DX12RasterizationMaterial> m_material;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_transformHeapHandle;
 		ref<DX12MeshController> m_meshController;
 		ComPtr<ID3D12RootSignature> m_rootSignature;

@@ -11,11 +11,14 @@ namespace QuantumEngine::Rendering{
 }
 
 namespace QuantumEngine::Rendering::DX12 {
-	class DX12RasterizationMaterial;
 	struct SplineRendererData;
 
 	namespace Compute {
 		class HLSLComputeProgram;
+	}
+
+	namespace Rasterization {
+		class DX12RasterizationMaterial;
 	}
 
 	struct SplineVertex {
@@ -58,7 +61,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		D3D12_VERTEX_BUFFER_VIEW m_bufferView;
 		ComPtr<ID3D12Device> m_device;
 
-		ref<DX12RasterizationMaterial> m_material;
+		ref<Rasterization::DX12RasterizationMaterial> m_material;
 		D3D12_GPU_DESCRIPTOR_HANDLE m_transformHeapHandle;
 		ComPtr<ID3D12RootSignature> m_rootSignature;
 		ComPtr<ID3D12PipelineState> m_pipeline;

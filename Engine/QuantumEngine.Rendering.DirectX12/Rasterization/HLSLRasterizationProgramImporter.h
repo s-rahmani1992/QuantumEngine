@@ -6,7 +6,7 @@ namespace QuantumEngine::Rendering {
 	class ShaderProgram;
 }
 
-namespace QuantumEngine::Rendering::DX12::Shader {
+namespace QuantumEngine::Rendering::DX12::Rasterization {
 	struct HLSLRasterizationProgramImportDesc {
 		std::string shaderModel; //TODO : Use enum class if possible
 		std::string vertexMainFunction;

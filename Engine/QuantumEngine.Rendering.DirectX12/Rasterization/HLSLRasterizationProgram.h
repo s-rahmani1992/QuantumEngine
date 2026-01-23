@@ -9,7 +9,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	class HLSLShader;
 }
 
-namespace QuantumEngine::Rendering::DX12::Shader {
+namespace QuantumEngine::Rendering::DX12::Rasterization {
 	class HLSLRasterizationProgram : public HLSLShaderProgram {
 	public:
 		HLSLRasterizationProgram(const std::vector<ref<HLSLShader>>& shaders);

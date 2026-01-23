@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "DX12MaterialFactory.h"
-#include "Shader/HLSLRasterizationProgram.h"
+#include "Rasterization/HLSLRasterizationProgram.h"
 #include "RayTracing/HLSLRayTracingProgram.h"
 #include "Rendering/Material.h"
 
@@ -14,7 +14,7 @@ ref<Render::Material> Render::DX12::DX12MaterialFactory::CreateMaterial(const re
 ref<Render::Material> QuantumEngine::Rendering::DX12::DX12MaterialFactory::BuildMaterial(const ref<ShaderProgram>& program)
 {
 	// check if program is HLSL Rasterization Program
-	auto hlslProgram = std::dynamic_pointer_cast<Render::DX12::Shader::HLSLRasterizationProgram>(program);
+	auto hlslProgram = std::dynamic_pointer_cast<Render::DX12::Rasterization::HLSLRasterizationProgram>(program);
 
 	if (hlslProgram != nullptr) {
 		MaterialReflection reflectionData = hlslProgram->GetReflectionData()->CreateMaterialReflection(false);

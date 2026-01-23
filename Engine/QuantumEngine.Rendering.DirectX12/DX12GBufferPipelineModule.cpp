@@ -3,13 +3,13 @@
 #include "DX12Utilities.h"
 #include "Core/Vector2UInt.h"
 #include "Core/HLSLReflection.h"
-#include "Shader/HLSLRasterizationProgram.h"
+#include "Rasterization/HLSLRasterizationProgram.h"
 #include "DX12MeshController.h"
 #include "Core/Mesh.h"
 #include "Rendering/GBufferRTReflectionRenderer.h"
 #include "DX12HybridContext.h"
 
-bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<Shader::HLSLRasterizationProgram>& gBufferProgram)
+bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<Rasterization::HLSLRasterizationProgram>& gBufferProgram)
 {
 	m_program = gBufferProgram;
 	auto r = m_program->GetReflectionData();
