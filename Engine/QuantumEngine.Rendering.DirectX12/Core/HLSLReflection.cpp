@@ -176,7 +176,7 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::DX12::HLS
     return reflectionData;
 }
 
-inline UInt32 QuantumEngine::Rendering::DX12::HLSLReflection::GetRootParameterIndexByName(const std::string& name) const
+UInt32 QuantumEngine::Rendering::DX12::HLSLReflection::GetRootParameterIndexByName(const std::string& name) const
 {
     for (const auto& rc : m_rootConstants) {
         if (rc.name == name) {

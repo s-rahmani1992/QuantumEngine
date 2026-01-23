@@ -2,20 +2,20 @@
 #include "DX12GBufferPipelineModule.h"
 #include "DX12Utilities.h"
 #include "Core/Vector2UInt.h"
-#include "HLSLShaderProgram.h"
+#include "Core/HLSLReflection.h"
+#include "Shader/HLSLRasterizationProgram.h"
 #include "DX12MeshController.h"
 #include "Core/Mesh.h"
-#include "HLSLMaterial.h"
 #include "Rendering/GBufferRTReflectionRenderer.h"
 #include "DX12HybridContext.h"
 
-bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<HLSLShaderProgram>& gBufferProgram)
+bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<Shader::HLSLRasterizationProgram>& gBufferProgram)
 {
 	m_program = gBufferProgram;
-
-	m_material = std::make_shared<HLSLMaterial>(m_program);
-	m_material->Initialize(false);
-
+	auto r = m_program->GetReflectionData();
+	m_cameraRootIndex = r->GetRootParameterIndexByName(HLSL_CAMERA_DATA_NAME);
+	m_transformRootIndex = m_program->GetReflectionData()->GetRootParameterIndexByName(HLSL_OBJECT_TRANSFORM_DATA_NAME);
+	m_rootSignature = m_program->GetRootSignature();
 	m_size = size;
 
 	/////// Create GBuffer Resources
@@ -110,7 +110,7 @@ bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::Initialize(const
 	D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc{
 		.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV,
 		.NumDescriptors = 1,
-		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE,
+		.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE,
 		.NodeMask = 0,
 	};
 
@@ -244,21 +244,19 @@ void QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::RenderCommand(Co
 	scissorRect.bottom = m_size.y;
 	commandList->RSSetScissorRects(1, &scissorRect);
 
+	//Pipeline
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+	commandList->SetPipelineState(m_pipeline.Get());
 
 	for(auto& entity : m_entities) {
-		//Pipeline
-		commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-		commandList->SetPipelineState(m_pipeline.Get());
-
 		//Input Assembler
 		commandList->IASetVertexBuffers(0, 1, entity.meshController->GetVertexView());
 		commandList->IASetIndexBuffer(entity.meshController->GetIndexView());
-		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		//Set Material Variables
-		m_material->RegisterValues(commandList);
-		m_material->RegisterCameraDescriptor(commandList, camHandle);
-		m_material->RegisterTransformDescriptor(commandList, entity.transformHandle);
+		commandList->SetGraphicsRootDescriptorTable(m_cameraRootIndex, camHandle);
+		commandList->SetGraphicsRootDescriptorTable(m_transformRootIndex, entity.transformHandle);
 
 		//Draw Call
 		commandList->DrawIndexedInstanced(entity.meshController->GetMesh()->GetIndexCount(), 1, 0, 0, 0);
@@ -310,8 +308,8 @@ bool QuantumEngine::Rendering::DX12::DX12GBufferPipelineModule::CreatePipelineSt
 
 	//Shader Part
 	//m_rootSignature = m_program->GetReflectionDatas()->rootSignature;
-	auto vertexShader = std::dynamic_pointer_cast<HLSLShader>(m_program->GetShader(VERTEX_SHADER));
-	auto pixelShader = m_program->GetShader(PIXEL_SHADER);
+	auto vertexShader = m_program->GetVertexShader();
+	auto pixelShader = m_program->GetPixelShader();
 	pipelineStateDesc.VS.BytecodeLength = vertexShader->GetCodeSize();
 	pipelineStateDesc.VS.pShaderBytecode = vertexShader->GetByteCode();
 	pipelineStateDesc.PS.BytecodeLength = pixelShader->GetCodeSize();

@@ -7,5 +7,6 @@ namespace QuantumEngine::Rendering::DX12 {
 	{
 		public:
 			virtual ref<Material> CreateMaterial(const ref<ShaderProgram>& program) override;
+			static ref<Material> BuildMaterial(const ref<ShaderProgram>& program);
 	};
 }

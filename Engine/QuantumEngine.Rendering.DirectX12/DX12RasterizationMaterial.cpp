@@ -38,6 +38,7 @@ QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::DX12RasterizationMate
 
 		m_heapValues[resVar.second.fieldIndex] = HeapData{
 			.rootParamIndex = (*it).rootParameterIndex,
+			.name = resVar.first,
 			.originalCpuHandle = dx12Texture->GetShaderView()->GetCPUDescriptorHandleForHeapStart(),
 		};
 	}
@@ -52,6 +53,12 @@ QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::DX12RasterizationMate
 		}
 		else if (resVar.name == HLSL_LIGHT_DATA_NAME) {
 			m_lightRootIndex = resVar.rootParameterIndex;
+		}
+		else if (resVar.name[0] == '_') {
+			m_heapValues.push_back(HeapData{
+			.rootParamIndex = resVar.rootParameterIndex,
+			.name = resVar.name,
+			});
 		}
 	}
 }
@@ -68,6 +75,9 @@ void QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::BindDescriptorTo
 
 	// Bind material-specific textures to the descriptor handles
     for (auto& heap : m_heapValues) {
+		if (heap.name[0] == '_')
+			continue;
+
         heap.cpuHandle = cpuHandle;
         heap.gpuHandle = gpuHandle;
 
@@ -86,9 +96,6 @@ void QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::BindParameters(C
             heapData.cpuHandle,
             std::dynamic_pointer_cast<DX12Texture2DController>(modified->texture->GetGPUHandle())->GetShaderView()->GetCPUDescriptorHandleForHeapStart(),
 			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        commandList->SetGraphicsRootDescriptorTable(
-            heapData.rootParamIndex,
-            heapData.gpuHandle);
 	}
 
 	m_material->ClearModifiedTextures();
@@ -129,4 +136,18 @@ void QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::BindLightDescrip
     if(m_lightRootIndex == -1)
         return;
 	commandList->SetGraphicsRootDescriptorTable(m_lightRootIndex, lightHeapHandle);
+}
+
+void QuantumEngine::Rendering::DX12::DX12RasterizationMaterial::SetDescriptorHandles(const std::string& fieldName, const D3D12_GPU_DESCRIPTOR_HANDLE& handle)
+{
+	auto it = std::find_if(
+		m_heapValues.begin(),
+		m_heapValues.end(),
+		[&fieldName, this](const HeapData& binding) {
+			auto resVar = m_program->GetReflectionData()->GetResourceVariableByRootIndex(binding.rootParamIndex);
+			return resVar != nullptr && resVar->name == fieldName;
+		});
+
+	if (it != m_heapValues.end())
+		(*it).gpuHandle = handle;
 }

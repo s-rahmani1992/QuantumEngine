@@ -11,15 +11,18 @@ namespace QuantumEngine::Rendering {
 }
 
 namespace QuantumEngine::Rendering::DX12 {
-	class HLSLShaderProgram;
 	class DX12MeshController;
 	class HLSLMaterial;
 	struct EntityGBufferData;
 
+	namespace Shader {
+		class HLSLRasterizationProgram;
+	}
+
 	class DX12GBufferPipelineModule
 	{
 	public:
-		bool Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<HLSLShaderProgram>& gBufferProgram);
+		bool Initialize(const ComPtr<ID3D12Device10>& device, const Vector2UInt& size, const ref<Shader::HLSLRasterizationProgram>& gBufferProgram);
 		void RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, D3D12_GPU_DESCRIPTOR_HANDLE camHandle);
 		void PrepareEntities(const std::vector<EntityGBufferData>& entities);
 		ComPtr<ID3D12DescriptorHeap> GetPositionHeap() { return m_positionHeap; }
@@ -50,8 +53,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12DescriptorHeap> m_normalHeap;
 		ComPtr<ID3D12DescriptorHeap> m_maskHeap;
 
-		ref<DX12::HLSLMaterial> m_material;
-		ref<HLSLShaderProgram> m_program;
+		UInt32 m_cameraRootIndex;
+		UInt32 m_transformRootIndex;
+		ref<Shader::HLSLRasterizationProgram> m_program;
 		ComPtr<ID3D12RootSignature> m_rootSignature;
 		ComPtr<ID3D12PipelineState> m_pipeline;
 

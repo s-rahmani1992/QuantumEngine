@@ -39,6 +39,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera);
 		ComPtr<ID3D12Resource2> GetOutputBuffer() const { return m_outputBuffer; }
 		ComPtr<ID3D12DescriptorHeap> GetOutputHeap() const { return m_outputHeap; }
+		ref<RayTracing::DX12RayTracingMaterial> GetMaterialInterface() { return m_globalRTMaterial; }
 	private:
 		bool InitializeShaderTable(const std::vector<DX12RayTracingGPUData>& entities, UInt32 heapOffset);
 		bool InitializePipeline();

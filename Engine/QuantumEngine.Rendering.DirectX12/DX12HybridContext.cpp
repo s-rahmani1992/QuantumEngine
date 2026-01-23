@@ -23,6 +23,8 @@
 #include <Rendering/SplineRenderer.h>
 #include "DX12SplineRasterPipelineModule.h"
 #include "Compute/HLSLComputeProgram.h"
+#include "DX12MaterialFactory.h"
+#include "RayTracing/DX12RayTracingMaterial.h"
 
 bool QuantumEngine::Rendering::DX12::DX12HybridContext::Initialize(const ComPtr<ID3D12Device10>& device, const ComPtr<IDXGIFactory7>& factory)
 {
@@ -191,7 +193,7 @@ bool QuantumEngine::Rendering::DX12::DX12HybridContext::InitializeDepthBuffer()
 
 void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 {
-	UInt32 rasterHeapSize = m_entityGPUData.size() + 1 + 1; // entity transforms + camera + light
+	UInt32 rasterHeapSize = m_entityGPUData.size() + 1 + 1 + 1; // entity transforms + camera + light + gbuffer output?
 	std::map<ref<Material>, ref<DX12RasterizationMaterial>> usedMaterials;
 
 	for (auto& entityGpu : m_entityGPUData) {
@@ -296,7 +298,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 	if (m_gBufferEntities.size() > 0) {
 		m_gBufferPipeline = std::make_shared<DX12GBufferPipelineModule>();
 
-		if (m_gBufferPipeline->Initialize(m_device, Vector2UInt(m_window->GetWidth(), m_window->GetHeight()), m_shaderRegistery->GetShaderProgram("G_Buffer_Program")))
+		if (m_gBufferPipeline->Initialize(m_device, Vector2UInt(m_window->GetWidth(), m_window->GetHeight()), std::dynamic_pointer_cast<Shader::HLSLRasterizationProgram>(m_shaderRegistery->GetShaderProgram("G_Buffer_Program"))))
 			m_gBufferPipeline->PrepareEntities(m_gBufferEntities);
 
 		// Initialize Ray Tracing Stage of Reflection Renderer
@@ -310,47 +312,53 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::InitializePipelines()
 
 			rtEntityData.push_back(DX12RayTracingGPUData{
 				.meshController = std::dynamic_pointer_cast<DX12MeshController>(rtComponent->GetMesh()->GetGPUHandle()),
+				.material = rtComponent->GetRTMaterial(),
 				.transformResource = entity.transformResource,
 				.transform = entity.gameEntity->GetTransform(),
 				});
-			auto rtMaterial = std::dynamic_pointer_cast<HLSLMaterial>(entity.gameEntity->GetRayTracingComponent()->GetRTMaterial());
-			if (rtMaterial == nullptr)
-				continue;
-			rtMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
-			rtMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
 		}
-		auto gBufferRTMaterial = std::make_shared<HLSLMaterial>(std::dynamic_pointer_cast<HLSLShaderProgram>(m_shaderRegistery->GetShaderProgram("G_Buffer_RT_Global_Program")));
-		gBufferRTMaterial->Initialize(true);
+		auto gBufferRTMaterial = DX12MaterialFactory::BuildMaterial(m_shaderRegistery->GetShaderProgram("G_Buffer_RT_Global_Program"));
 
 		m_GBufferrayTracingPipeline = std::make_shared<DX12RayTracingPipelineModule>();
 
 		m_commandAllocator->Reset();
 		m_commandList->Reset(m_commandAllocator.Get(), nullptr);
-		gBufferRTMaterial->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
-		gBufferRTMaterial->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
-		gBufferRTMaterial->SetDescriptorHeap("gPositionTex", m_gBufferPipeline->GetPositionHeap());
-		gBufferRTMaterial->SetDescriptorHeap("gNormalTex", m_gBufferPipeline->GetNormalHeap());
-		gBufferRTMaterial->SetDescriptorHeap("gMaskTex", m_gBufferPipeline->GetMaskHeap());
-
-		m_GBufferrayTracingPipeline->Initialize(m_commandList, rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial, nullptr, nullptr);
+		
+		m_GBufferrayTracingPipeline->Initialize(m_commandList, rtEntityData, m_window->GetWidth(), m_window->GetHeight(), gBufferRTMaterial, m_cameraBuffer, m_lightManager.GetResource());
 
 		m_commandExecuter->ExecuteAndWait(m_commandList.Get());
+
+		auto rtGlob = m_GBufferrayTracingPipeline->GetMaterialInterface();
+		rtGlob->SetDescriptorHandle("_PositionTexture", m_gBufferPipeline->GetPositionHeap()->GetGPUDescriptorHandleForHeapStart());
+		rtGlob->SetDescriptorHandle("_NormalTexture", m_gBufferPipeline->GetNormalHeap()->GetGPUDescriptorHandleForHeapStart());
+		rtGlob->SetDescriptorHandle("_MaskTexture", m_gBufferPipeline->GetMaskHeap()->GetGPUDescriptorHandleForHeapStart());
+		
+		auto cpuHandle = m_rasterHeap->GetCPUDescriptorHandleForHeapStart();
+		auto gpuHandle1 = m_rasterHeap->GetGPUDescriptorHandleForHeapStart();
+		cpuHandle.ptr += (rasterHeapSize - 1) * incrementSize;
+		gpuHandle1.ptr += (rasterHeapSize - 1) * incrementSize;
+
+		D3D12_SHADER_RESOURCE_VIEW_DESC outRTDesc = {};
+		outRTDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM,
+		outRTDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+		outRTDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+		outRTDesc.Texture2D = D3D12_TEX2D_SRV{ .MipLevels = 1, };
+		m_device->CreateShaderResourceView(m_GBufferrayTracingPipeline->GetOutputBuffer().Get(), &outRTDesc, cpuHandle);
 
 		for (auto& entity : m_gBufferEntities) {
 			auto meshRender = std::make_shared<MeshRenderer>(entity.renderer->GetMesh(), entity.renderer->GetMaterial());
 			auto pipeline = std::make_shared<DX12GameEntityPipelineModule>();
 
-			auto material = std::dynamic_pointer_cast<HLSLMaterial>(entity.renderer->GetMaterial());
-			material->SetDescriptorHeap(HLSL_CAMERA_DATA_NAME, m_cameraHeap);
-			material->SetDescriptorHeap(HLSL_LIGHT_DATA_NAME, m_lightManager.GetDescriptor());
-			material->SetDescriptorHeap(HLSL_RT_OUTPUT_TEXTURE_NAME, m_GBufferrayTracingPipeline->GetOutputHeap());
-			material->SetDescriptorHeap("gPositionTex", m_gBufferPipeline->GetPositionHeap());
-			material->SetDescriptorHeap("gNormalTex", m_gBufferPipeline->GetNormalHeap());
-			material->SetDescriptorHeap("gMaskTex", m_gBufferPipeline->GetMaskHeap());
+			auto& material = usedMaterials[entity.renderer->GetMaterial()];
+			material->SetDescriptorHandles("_PositionTexture", m_gBufferPipeline->GetPositionHeap()->GetGPUDescriptorHandleForHeapStart());
+			material->SetDescriptorHandles("_NormalTexture", m_gBufferPipeline->GetNormalHeap()->GetGPUDescriptorHandleForHeapStart());
+			material->SetDescriptorHandles("_MaskTexture", m_gBufferPipeline->GetMaskHeap()->GetGPUDescriptorHandleForHeapStart());
+			material->SetDescriptorHandles(HLSL_RT_OUTPUT_TEXTURE_NAME, gpuHandle1);
 
 			if (pipeline->Initialize(m_device, DX12MeshRendererGPUData
 				{
 					.meshRenderer = meshRender,
+					.material = material,
 					.transformResource = entity.transformResource,
 					.transformHandle = entity.transformHandle
 				}, m_depthFormat) == false) {

@@ -1,16 +1,21 @@
 #include "TransformStructs.hlsli"
 #include "RTStructs.hlsli"
 
-cbuffer CameraData : register(b0)
+cbuffer _CameraData : register(b0)
 {
     CameraData cameraData;
 };
 
-RaytracingAccelerationStructure gRtScene : register(t0);
-Texture2D<uint> gMaskTex : register(t1);
-Texture2D<float4> gPositionTex : register(t2);
-Texture2D<float4> gNormalTex : register(t3);
-RWTexture2D<float4> gOutput : register(u0);
+cbuffer _RTProperties : register(b1)
+{
+    uint _missIndex;
+};
+
+RaytracingAccelerationStructure _RTScene : register(t0);
+Texture2D<uint> _MaskTexture : register(t1);
+Texture2D<float4> _PositionTexture : register(t2);
+Texture2D<float4> _NormalTexture : register(t3);
+RWTexture2D<float4> _OutputTexture : register(u0);
 sampler mainSampler : register(s0);
 
 [shader("raygeneration")]
@@ -19,16 +24,16 @@ void rayGen()
     uint3 launchIndex = DispatchRaysIndex();
     uint3 launchDim = DispatchRaysDimensions();
     float2 uv = float2(launchIndex.xy) / float2(launchDim.xy);
-    uint mask = gMaskTex.Load(int3(launchIndex.xy, 0));
+    uint mask = _MaskTexture.Load(int3(launchIndex.xy, 0));
     
     if (mask == 0)
     {
-        gOutput[launchIndex.xy] = float4(0, 0, 0, 0);
+        _OutputTexture[launchIndex.xy] = float4(0, 0, 0, 0);
         return;
     }
     
-    float3 pos = gPositionTex.SampleLevel(mainSampler, uv, 0).xyz;
-    float3 norm = 2 * gNormalTex.SampleLevel(mainSampler, uv, 0).xyz - 1;
+    float3 pos = _PositionTexture.SampleLevel(mainSampler, uv, 0).xyz;
+    float3 norm = 2 * _NormalTexture.SampleLevel(mainSampler, uv, 0).xyz - 1;
     
     RayDesc ray;
     ray.Origin = pos;
@@ -39,11 +44,11 @@ void rayGen()
     GeneralPayload payLoad;
     payLoad.recursionCount = 1;
     payLoad.targetMode = 1;
-    TraceRay(gRtScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, payLoad);
+    TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, payLoad);
     if(payLoad.hit == 0)
-        gOutput[launchIndex.xy] = float4(0.1f, 0.7f, 0.1f, 0.0f);
+        _OutputTexture[launchIndex.xy] = float4(0.1f, 0.7f, 0.1f, 0.0f);
     else
-        gOutput[launchIndex.xy] = float4(payLoad.color, 1.0f);
+        _OutputTexture[launchIndex.xy] = float4(payLoad.color, 1.0f);
 }
 
 [shader("miss")]

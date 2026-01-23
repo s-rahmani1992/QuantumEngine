@@ -2,6 +2,7 @@
 #include "pch.h"
 #include "BasicTypes.h"
 #include <vector>
+#include <string>
 
 using namespace Microsoft::WRL;
 
@@ -26,7 +27,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		void BindTransformDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& transformHeapHandle);
 		void BindCameraDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& cameraHeapHandle);
 		void BindLightDescriptor(ComPtr<ID3D12GraphicsCommandList7>& commandList, const D3D12_GPU_DESCRIPTOR_HANDLE& lightHeapHandle);
-		
+		void SetDescriptorHandles(const std::string& name, const D3D12_GPU_DESCRIPTOR_HANDLE& handle);
 		inline ref<Material> GetMaterial() const { return m_material; }
 		inline ref<Shader::HLSLRasterizationProgram> GetProgram() const { return m_program; }
 
@@ -39,6 +40,7 @@ namespace QuantumEngine::Rendering::DX12 {
 
 		struct HeapData {
 			UInt32 rootParamIndex;
+			std::string name;
 			D3D12_CPU_DESCRIPTOR_HANDLE originalCpuHandle = D3D12_CPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
 			D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = D3D12_CPU_DESCRIPTOR_HANDLE{ .ptr = 0 };
 			D3D12_GPU_DESCRIPTOR_HANDLE gpuHandle = D3D12_GPU_DESCRIPTOR_HANDLE{ .ptr = 0 };

@@ -15,7 +15,7 @@ struct VS_OUTPUT
     float2 normPos : POSITION;
 };
 
-cbuffer CameraData : register(b1)
+cbuffer _CameraData : register(b1)
 {
     CameraData cameraData;
 };
@@ -28,14 +28,14 @@ cbuffer MaterialProps : register(b2)
     float specular;
 };
 
-cbuffer LightData : register(b3)
+cbuffer _LightData : register(b3)
 {
     LightData lightData;
 }
 
-Texture2D<float4> gOutput : register(t0);
-Texture2D<float4> gPositionTex : register(t1);
-Texture2D<float4> gNormalTex : register(t2);
+Texture2D<float4> _OutputTexture : register(t0);
+Texture2D<float4> _PositionTexture : register(t1);
+Texture2D<float4> _NormalTexture : register(t2);
 
 Texture2D mainTexture : register(t3);
 sampler mainSampler : register(s0);
@@ -45,9 +45,9 @@ float4 main(VS_OUTPUT input) : SV_TARGET
     float2 ndc = input.pos.xy / float2(1280, 720);
     
     float2 uv = float2(ndc.x, ndc.y);
-    float3 pos = gPositionTex.SampleLevel(mainSampler, uv, 0).xyz;
-    float3 norm = 2 * gNormalTex.SampleLevel(mainSampler, uv, 0).xyz - 1;
-    float4 reflectionData = gOutput.Sample(mainSampler, uv, 0);
+    float3 pos = _PositionTexture.SampleLevel(mainSampler, uv, 0).xyz;
+    float3 norm = 2 * _NormalTexture.SampleLevel(mainSampler, uv, 0).xyz - 1;
+    float4 reflectionData = _OutputTexture.Sample(mainSampler, uv, 0);
     
     float3 ads = float3(ambient, diffuse, specular);
     float3 lightFactor = PhongLight(lightData, cameraData.position, pos, norm, ads);

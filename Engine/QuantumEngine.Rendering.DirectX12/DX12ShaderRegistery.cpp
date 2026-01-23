@@ -11,6 +11,7 @@
 #include "Compute/HLSLComputeProgramImporter.h"
 #include "Compute/HLSLComputeProgram.h"
 #include "RayTracing/HLSLRayTracingProgram.h"
+#include "RayTracing/HLSLRayTracingProgramImporter.h"
 
 namespace Render = QuantumEngine::Rendering;
 namespace HLSL = QuantumEngine::Rendering::DX12::Shader;
@@ -46,13 +47,16 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 
 	CreateAndRegisterShaderProgram("G_Buffer_Program", { vertexShader, pixelShader }, false);
 
-	ref<Render::Shader> rtGBufferShader = DX12::HLSLShaderImporter::Import(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", DX12::LIB_SHADER, errorStr);
+	DX12::RayTracing::HLSLRayTracingProgramProperties reflectionLocalRTDesc;
+	reflectionLocalRTDesc.shaderModel = "6_6";
+	reflectionLocalRTDesc.rayGenerationFunction = "rayGen";
+	reflectionLocalRTDesc.missFunction = "miss";
 
-	if (rtGBufferShader == nullptr) {
-		return;
+	auto reflectionRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", reflectionLocalRTDesc, errorStr);
+
+	if (reflectionRTLightProgram != nullptr) {
+		RegisterShaderProgram("G_Buffer_RT_Global_Program", reflectionRTLightProgram);
 	}
-
-	CreateAndRegisterShaderProgram("G_Buffer_RT_Global_Program", { rtGBufferShader }, true);
 
 	Compute::HLSLComputeProgramImportDesc computeDesc;
 	computeDesc.mainFunction = "cs_main";

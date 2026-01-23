@@ -14,12 +14,12 @@ struct VS_OUTPUT
     float2 normPos : POSITION;
 };
 
-cbuffer ObjectTransformData : register(b0)
+cbuffer _ObjectTransformData : register(b0)
 {
     TransformData transformData;
 };
 
-cbuffer CameraData : register(b1)
+cbuffer _CameraData : register(b1)
 {
     CameraData cameraData;
 };
