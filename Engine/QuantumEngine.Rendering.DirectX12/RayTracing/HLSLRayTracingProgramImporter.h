@@ -3,9 +3,12 @@
 #include "BasicTypes.h"
 #include <string>
 
-namespace QuantumEngine::Rendering::DX12::RayTracing {
-	class HLSLRayTracingProgram;
+namespace QuantumEngine::Rendering {
+	class ShaderProgram;
+}
 
+namespace QuantumEngine::Rendering::DX12::RayTracing {
+	
 	struct HLSLRayTracingProgramProperties {
 		std::string shaderModel;
 		std::string rayGenerationFunction;
@@ -24,6 +27,6 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		/// <param name="properties">import description</param>
 		/// <param name="error">if creation fails, contains error description</param>
 		/// <returns></returns>
-		static ref<HLSLRayTracingProgram> ImportShader(const std::wstring& hlslFile, const HLSLRayTracingProgramProperties& properties, std::string& error);
+		static ref<ShaderProgram> ImportShader(const std::wstring& hlslFile, const HLSLRayTracingProgramProperties& properties, std::string& error);
 	};
 }

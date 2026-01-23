@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "HLSLComputeProgramImporter.h"
 #include "HLSLComputeProgram.h"
-#include "../Shader/HLSLRasterizationProgram.h"
 #include <dxcapi.h>
 #include <fstream>
 #include <filesystem>
@@ -13,7 +12,7 @@ using namespace Microsoft::WRL;
 
 namespace Compute = QuantumEngine::Rendering::DX12::Compute;
 
-ref<Compute::HLSLComputeProgram> Compute::HLSLComputeProgramImporter::Import(const std::wstring& hlslFile, const Compute::HLSLComputeProgramImportDesc& properties, std::string& error)
+ref<QuantumEngine::Rendering::ShaderProgram> Compute::HLSLComputeProgramImporter::Import(const std::wstring& hlslFile, const Compute::HLSLComputeProgramImportDesc& properties, std::string& error)
 {
     // Read file into memory
     std::ifstream shaderFile(hlslFile, std::ios::binary | std::ios::ate);

@@ -1,7 +1,5 @@
 #include "pch.h"
 #include "DX12ShaderRegistery.h"
-#include "Rendering/ShaderProgram.h"
-#include "HLSLShaderProgram.h"
 #include "HLSLShaderImporter.h"
 #include <Shader/HLSLRasterizationProgram.h>
 #include <Rendering/Shader.h>
@@ -62,7 +60,7 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 	computeDesc.mainFunction = "cs_main";
 	computeDesc.shaderModel = "6_6";
 
-	ref<Compute::HLSLComputeProgram> computeProgram = Compute::HLSLComputeProgramImporter::Import(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", computeDesc, errorStr);
+	auto computeProgram = Compute::HLSLComputeProgramImporter::Import(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", computeDesc, errorStr);
 
 	if (computeProgram != nullptr) {
 		RegisterShaderProgram("Bezier_Curve_Compute_Program", computeProgram);

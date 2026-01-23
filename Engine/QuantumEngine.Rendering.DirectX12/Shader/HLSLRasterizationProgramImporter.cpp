@@ -11,7 +11,7 @@
 
 using namespace Microsoft::WRL;
 
-ref<QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgram> QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgramImporter::ImportShader(const std::wstring& hlslFile, const HLSLRasterizationProgramImportDesc& properties, std::string& error)
+ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::Shader::HLSLRasterizationProgramImporter::ImportShader(const std::wstring& hlslFile, const HLSLRasterizationProgramImportDesc& properties, std::string& error)
 {
     // Read file into memory
     std::ifstream shaderFile(hlslFile, std::ios::binary | std::ios::ate);

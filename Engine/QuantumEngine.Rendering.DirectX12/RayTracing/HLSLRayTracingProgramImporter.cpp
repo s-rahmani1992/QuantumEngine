@@ -14,7 +14,7 @@ using namespace Microsoft::WRL;
 
 namespace RayTracing = QuantumEngine::Rendering::DX12::RayTracing;
 
-ref<RayTracing::HLSLRayTracingProgram> RayTracing::HLSLRayTracingProgramImporter::ImportShader(const std::wstring& hlslFile, const HLSLRayTracingProgramProperties& properties, std::string& error)
+ref<QuantumEngine::Rendering::ShaderProgram> RayTracing::HLSLRayTracingProgramImporter::ImportShader(const std::wstring& hlslFile, const HLSLRayTracingProgramProperties& properties, std::string& error)
 {
     // Read file into memory
     std::ifstream shaderFile(hlslFile, std::ios::binary | std::ios::ate);

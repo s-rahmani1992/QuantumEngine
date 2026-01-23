@@ -5,12 +5,11 @@
 #include "Platform/GraphicWindow.h"
 
 #include "DX12GPUDeviceManager.h"
+#include "Core/HLSLShaderProgram.h"
 #include "HLSLShader.h"
 #include "HLSLShaderImporter.h"
 #include "Shader/HLSLRasterizationProgramImporter.h"
-#include "Shader/HLSLRasterizationProgram.h"
 #include "RayTracing/HLSLRayTracingProgramImporter.h"
-#include "RayTracing/HLSLRayTracingProgram.h"
 
 #include "Rendering/ShaderRegistery.h"
 #include "Rendering/GPUAssetManager.h"

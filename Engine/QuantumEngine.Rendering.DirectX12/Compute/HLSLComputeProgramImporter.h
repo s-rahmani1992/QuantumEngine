@@ -3,9 +3,11 @@
 #include "BasicTypes.h"
 #include <string>
 
-namespace QuantumEngine::Rendering::DX12::Compute {
-	class HLSLComputeProgram;
+namespace QuantumEngine::Rendering {
+	class ShaderProgram;
+}
 
+namespace QuantumEngine::Rendering::DX12::Compute {
 	struct HLSLComputeProgramImportDesc {
 		std::string shaderModel; //TODO : Use enum class if possible
 		std::string mainFunction;
@@ -22,6 +24,6 @@ namespace QuantumEngine::Rendering::DX12::Compute {
 		/// <param name="properties">import properties</param>
 		/// <param name="errorStr">error output if shader compilation failed</param>
 		/// <returns></returns>
-		static ref<HLSLComputeProgram> Import(const std::wstring& filePath, const HLSLComputeProgramImportDesc& properties, std::string& errorStr);
+		static ref<ShaderProgram> Import(const std::wstring& filePath, const HLSLComputeProgramImportDesc& properties, std::string& errorStr);
 	};
 }

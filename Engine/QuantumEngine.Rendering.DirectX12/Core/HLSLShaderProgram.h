@@ -1,7 +1,7 @@
 #pragma once
 #include "Rendering\ShaderProgram.h"
 #include "HLSLShader.h"
-#include "Core/HLSLReflection.h"
+#include "HLSLReflection.h"
 #include <map>
 
 using namespace Microsoft::WRL;

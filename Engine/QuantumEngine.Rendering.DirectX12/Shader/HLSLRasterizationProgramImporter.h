@@ -2,9 +2,11 @@
 #include "BasicTypes.h"
 #include <string>
 
-namespace QuantumEngine::Rendering::DX12::Shader {
-	class HLSLRasterizationProgram;
+namespace QuantumEngine::Rendering {
+	class ShaderProgram;
+}
 
+namespace QuantumEngine::Rendering::DX12::Shader {
 	struct HLSLRasterizationProgramImportDesc {
 		std::string shaderModel; //TODO : Use enum class if possible
 		std::string vertexMainFunction;
@@ -24,6 +26,6 @@ namespace QuantumEngine::Rendering::DX12::Shader {
 		/// <param name="properties">import properties</param>
 		/// <param name="error">if import not successful, contains error message as output</param>
 		/// <returns></returns>
-		static ref<HLSLRasterizationProgram> ImportShader(const std::wstring& hlslFile, const HLSLRasterizationProgramImportDesc& properties, std::string& error);
+		static ref<ShaderProgram> ImportShader(const std::wstring& hlslFile, const HLSLRasterizationProgramImportDesc& properties, std::string& error);
 	};
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "../HLSLShaderProgram.h"
+#include "HLSLShaderProgram.h"
 
 namespace QuantumEngine::Rendering::DX12::RayTracing {
 	struct HLSLRayTracingProgramProperties;

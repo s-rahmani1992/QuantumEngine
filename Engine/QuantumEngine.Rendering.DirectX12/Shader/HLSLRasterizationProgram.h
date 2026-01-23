@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.h"
 #include <string>
-#include "../HLSLShaderProgram.h"
+#include "HLSLShaderProgram.h"
 
 using namespace Microsoft::WRL;
 
