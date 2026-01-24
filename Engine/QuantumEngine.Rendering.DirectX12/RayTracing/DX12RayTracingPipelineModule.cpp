@@ -166,6 +166,9 @@ bool QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingPipelineModule::I
 
 void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingPipelineModule::RenderCommand(ComPtr<ID3D12GraphicsCommandList7>& commandList, const ref<Camera>& camera)
 {
+	for (auto& mat : dxMaterialMap)
+		mat.second->UpdateModifiedParameters();
+
 	Matrix4 v = camera->ViewMatrix();
 	m_TLASController->UpdateTransforms(commandList, v);
 

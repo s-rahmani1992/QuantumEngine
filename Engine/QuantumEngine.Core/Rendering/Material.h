@@ -105,6 +105,7 @@ namespace QuantumEngine::Rendering {
 				MaterialValueData& valueData = it->second;
 				if (sizeof(T) == valueData.size) {
 					memcpy(valueData.data, &value, sizeof(T));
+					m_modifiedValues.emplace(&valueData);
 				}
 			}
 		}
@@ -143,6 +144,10 @@ namespace QuantumEngine::Rendering {
 			return &m_textureFields;
 		}
 
+		inline std::map<std::string, MaterialValueData>* GetValueFields() {
+			return &m_valueFields;
+		}
+
 		inline UInt32 GetTextureFieldCount() const {
 			return static_cast<UInt32>(m_textureFields.size());
 		}
@@ -151,8 +156,13 @@ namespace QuantumEngine::Rendering {
 			return m_modifiedTextures;
 		}
 
+		inline const std::set<MaterialValueData*>& GetModifiedValues() const {
+			return m_modifiedValues;
+		}
+
 		inline void ClearModifiedTextures() {
 			m_modifiedTextures.clear();
+			m_modifiedValues.clear();
 		}
 	protected:
 		ref<ShaderProgram> m_program;
@@ -161,5 +171,6 @@ namespace QuantumEngine::Rendering {
 		std::map<std::string, MaterialValueData> m_valueFields;
 		std::map<std::string, MaterialTextureData> m_textureFields;
 		std::set<MaterialTextureData*> m_modifiedTextures;
+		std::set<MaterialValueData*> m_modifiedValues;
 	};
 }

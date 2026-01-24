@@ -28,6 +28,7 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		
 		void CopyVariableData(Byte* dst);
 		void BindParameters(ComPtr<ID3D12GraphicsCommandList7>& commandList);
+		void UpdateModifiedParameters();
 
 		inline ref<HLSLRayTracingProgram> GetProgram() const { return m_program; }
 
@@ -58,6 +59,8 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 
 		std::vector<constantBufferData> m_constantRegisterValues;
 		std::vector<HeapData> m_heapValues;
+
+		std::vector<Byte*> m_linkedLocations;
 
 		Byte* m_internalData;
 	};

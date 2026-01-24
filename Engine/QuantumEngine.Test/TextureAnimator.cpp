@@ -24,13 +24,18 @@ void TextureAnimator::Update(Float deltaTime)
 
 		if(m_currentTime > 1.0f)
 			m_currentTime = 1.0f;
+
+		m_material->SetValue("reflectivity", m_currentTime);
+
 	}
 
 	if (GetKeyState('E') & 0x80) {
 		m_currentTime -= deltaTime * m_speedSign;
 		if (m_currentTime < 0.0f)
 			m_currentTime = 0.0f;
+
+		m_material->SetValue("reflectivity", m_currentTime);
+
 	}
 
-	m_material->SetValue("textureFactor", m_currentTime);
 }

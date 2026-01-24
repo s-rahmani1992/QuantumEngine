@@ -626,6 +626,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     auto rtComponent7 = std::make_shared<Render::RayTracingComponent>(planeMesh, reflectionRTMaterial2);
     auto mirrorEntity2 = std::make_shared<QuantumEngine::GameEntity>(mirrorTransform1, gBufferRenderer1, rtComponent7);
 
+    ref<TextureAnimator> tAnimator = std::make_shared<TextureAnimator>(reflectionRTMaterial1, carTex1, groundBrickTex1, 1.6f);
 
     ////// Creating the lights
 
@@ -655,7 +656,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
     scene->entities = {carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, grountEntity1, mirrorEntity1, mirrorEntity2 };
-    scene->behaviours = { cameraController};
+    scene->behaviours = { cameraController, tAnimator };
     scene->rtGlobalMaterial = rtGlobalMaterial;
     return scene;
 }

@@ -14,11 +14,13 @@ QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::DX12RayTraci
 	auto& rootConstantList = reflectionData->GetRootConstants();
 
 	auto textureFields = material->GetTextureFields();
+	auto valueFields = material->GetValueFields();
 	auto& resourceVariableList = reflectionData->GetResourceVariables();
 	m_heapValues = std::vector<HeapData>(resourceVariableList.size());
 
 	UInt32 offset = 0;
 	UInt32 fieldIndex = 0;
+	UInt32 cbFieldIndex = 0;
 	UInt32 internalSize = 0;
 
 	for(UInt32 i = 0; i < reflectionData->GetRootParameterCount(); i++) {
@@ -37,6 +39,15 @@ QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::DX12RayTraci
 
 			if (cbData->name[0] == '_')
 				internalSize += (cbData->registerData.Num32BitValues * 4);
+			
+			for (auto& h : cbData->rootConstants) {
+				auto j = valueFields->find(h.name);
+
+				if (j != valueFields->end())
+					(*j).second.fieldIndex = cbFieldIndex;
+			}
+
+			cbFieldIndex++;
 
 			continue;
 		}
@@ -222,6 +233,8 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::CopyVar
 	auto& rootConstantList = reflectionData->GetRootConstants();
 	auto& resourceVariableList = reflectionData->GetResourceVariables();
 
+	m_linkedLocations.push_back(dst);
+
 	UInt32 offset = 0;
 	UInt32 fieldIndex = 0;
 	UInt32 internalSize = 0;
@@ -257,4 +270,26 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::BindPar
 	for (auto& heapField : m_heapValues) {
 		commandList->SetComputeRootDescriptorTable(heapField.rootParamIndex, heapField.gpuHandle);
 	}
+}
+
+void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::UpdateModifiedParameters()
+{
+	// Update Modified Textures
+	for (auto& modified : m_material->GetModifiedTextures()) {
+		auto& heapData = m_heapValues[modified->fieldIndex];
+		m_device->CopyDescriptorsSimple(
+			1,
+			heapData.cpuHandle,
+			std::dynamic_pointer_cast<DX12Texture2DController>(modified->texture->GetGPUHandle())->GetShaderView()->GetCPUDescriptorHandleForHeapStart(),
+			D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
+
+	for (auto& modifiedVal : m_material->GetModifiedValues()) {
+		auto& cbData = m_constantRegisterValues[modifiedVal->fieldIndex];
+
+		for (auto g : m_linkedLocations)
+			std::memcpy(g + cbData.locationOffset, cbData.dataLocation , 4 * cbData.size);
+	}
+
+	m_material->ClearModifiedTextures();
 }
