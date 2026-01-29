@@ -8,8 +8,12 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#define BOOST_JSON_NO_LIB
+#define BOOST_CONTAINER_NO_LIB
+#include <Platform/CommonWin.h>
 #include "framework.h"
 #include <d3d12.h>
+#include <dxcapi.h>
 #include <d3dcompiler.h>
 #include <dxgi1_6.h>
 #include <wrl/client.h>
