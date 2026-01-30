@@ -29,7 +29,7 @@ namespace QuantumEngine::Rendering::DX12 {
         /// </summary>
         /// <param name="device"></param>
         /// <returns></returns>
-        virtual bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device) = 0;
+        virtual bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device, std::string& error) = 0;
 
     protected:
         HLSLReflection m_reflection;

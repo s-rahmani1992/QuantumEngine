@@ -40,7 +40,6 @@ cbuffer _LightData : register(b3)
 }
 
 Texture2D mainTexture : register(t3);
-Texture2D mainTexture1 : register(t4);
 sampler mainSampler : register(s0);
 
 
@@ -61,6 +60,6 @@ float4 ps_main(VS_OUTPUT input) : SV_TARGET
   
     float3 lightFactor = PhongLight(lightData, cameraData.position, input.worldPos, input.norm, ads);
     
-    float4 texColor = textureFactor * mainTexture.Sample(mainSampler, input.texCoord) + (1 - textureFactor) * mainTexture1.Sample(mainSampler, input.texCoord);
+    float4 texColor = mainTexture.Sample(mainSampler, input.texCoord);
     return float4(lightFactor * texColor.xyz, 1);
 }

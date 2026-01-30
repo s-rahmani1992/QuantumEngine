@@ -8,7 +8,30 @@ namespace QuantumEngine::Rendering {
 
 	class ShaderRegistery {
 	public:
+
+		/// <summary>
+		/// abstract method for compiling file into a complete shader program
+		/// </summary>
+		/// <param name="fileName">name of the file</param>
+		/// <param name="error">contains error message if compilation fails</param>
+		/// <returns></returns>
+		virtual ref<ShaderProgram> CompileProgram(const std::wstring& fileName, std::string& error) = 0;
+		
+		/// <summary>
+		/// Registers shader program with name in order to be retrieved later. used for internal shaders
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="program"></param>
+		/// <param name="isRT"></param>
 		virtual void RegisterShaderProgram(const std::string& name, const ref<ShaderProgram>& program, bool isRT = false) = 0;
+		
+		/// <summary>
+		/// Creates and registers shader program from list of shaders
+		/// </summary>
+		/// <param name="name"></param>
+		/// <param name="shaders"></param>
+		/// <param name="isRT"></param>
+		/// <returns></returns>
 		virtual ref<ShaderProgram> CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Shader>>& shaders, bool isRT = false) = 0;
 	};
 }

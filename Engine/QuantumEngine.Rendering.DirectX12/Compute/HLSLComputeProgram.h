@@ -15,7 +15,7 @@ namespace QuantumEngine::Rendering::DX12::Compute {
 		/// </summary>
 		/// <param name="device"></param>
 		/// <returns></returns>
-		virtual bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device) override;
+		virtual bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device, std::string& error) override;
 
 		/// <summary>
 		/// Gets pointer to byte code

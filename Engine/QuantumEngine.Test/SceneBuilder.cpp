@@ -57,74 +57,37 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 
     ////// Compiling Shaders
 
-    std::wstring lightVertexShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.vert.hlsl";
-    IMPORT_SHADER(lightVertexShaderPath, vertexShader, DX12::VERTEX_SHADER, errorStr)
-
-        std::wstring lightPixelShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.pix.hlsl";
-    IMPORT_SHADER(lightPixelShaderPath, pixelShader, DX12::PIXEL_SHADER, errorStr)
-
-        auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
-
-    std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    
-    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    
-    std::wstring rtSimpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
-	DX12::Rasterization::HLSLRasterizationProgramImportDesc lightRasterDesc;
-	lightRasterDesc.shaderModel = "6_6";
-	lightRasterDesc.vertexMainFunction = "vs_main";
-	lightRasterDesc.pixelMainFunction = "ps_main";
-	auto lightRasterProgram = DX12::Rasterization::HLSLRasterizationProgramImporter::ImportShader(rtSimpleLightRasterPath, lightRasterDesc, errorStr);
+    std::wstring simpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
+    auto lightRasterProgram = shaderRegistery->CompileProgram(simpleLightRasterPath, errorStr);
 
     if(lightRasterProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightRasterPath) + "Error: \n" + errorStr;
+        error = "Error in Compiling Shader At: \n" + WStringToString(simpleLightRasterPath) + "Error: \n" + errorStr;
         return nullptr;
 	}
 
-	shaderRegistery->RegisterShaderProgram("RT_Simple_Light_Raster_Program", lightRasterProgram, false);
-	
 	std::wstring curveRasterPath = root + L"\\Assets\\Shaders\\curve_raster_program.hlsl";
-    DX12::Rasterization::HLSLRasterizationProgramImportDesc curveRasterDesc;
-    curveRasterDesc.shaderModel = "6_6";
-    curveRasterDesc.vertexMainFunction = "vs_main";
-    curveRasterDesc.pixelMainFunction = "ps_main";
-	curveRasterDesc.geometryMainFunction = "gs_main";
-    auto curveRasterProgram = DX12::Rasterization::HLSLRasterizationProgramImporter::ImportShader(curveRasterPath, curveRasterDesc, errorStr);
+    auto curveRasterProgram = shaderRegistery->CompileProgram(curveRasterPath, errorStr);
 
     if (curveRasterProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(curveRasterPath) + "Error: \n" + errorStr;
         return nullptr;
     }
 
-	shaderRegistery->RegisterShaderProgram("Curve_Raster_Program", curveRasterProgram, false);
-
-	DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
-	simpleRTDesc.shaderModel = "6_6";
-	simpleRTDesc.rayGenerationFunction = "rayGen";
-	simpleRTDesc.missFunction = "miss";
-    simpleRTDesc.closestHitFunction = "chs";
-
-	auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+    std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
+	auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, errorStr);
 
     if (globalRTProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
         return nullptr;
     }
 
-	shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
-    simpleLocalRTDesc.shaderModel = "6_6";
-    simpleLocalRTDesc.closestHitFunction = "chs";
-
-	auto simpleRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleLightShaderPath, simpleLocalRTDesc, errorStr);
+    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
+	auto simpleRTLightProgram = shaderRegistery->CompileProgram(rtSimpleLightShaderPath, errorStr);
 
     if(simpleRTLightProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
         return nullptr;
 	}
-
-	shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", simpleRTLightProgram, true);
 
     ////// Creating the camera
 
@@ -207,7 +170,6 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     carMaterial1->SetValue("diffuse", 0.5f);
     carMaterial1->SetValue("specular", 2.1f);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
-    carMaterial1->SetTexture2D("mainTexture1", groundBrickTex1);
 
 	auto carRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
 	carRTMaterial->SetTexture2D("mainTexture", carTex1);
@@ -215,7 +177,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 	carRTMaterial->SetValue("diffuse", 1.0f);
 	carRTMaterial->SetValue("specular", 0.1f);
 
-    auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
     rabbitStatueMaterial1->SetValue("ambient", 0.1f);
     rabbitStatueMaterial1->SetValue("diffuse", 0.8f);
@@ -227,7 +189,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
 	rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
 	rabbitStatueRTMaterial->SetValue("specular", 0.1f);
 
-    auto lionStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto lionStatueMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     lionStatueMaterial1->SetTexture2D("mainTexture", lionStatueTex1);
     lionStatueMaterial1->SetValue("ambient", 0.1f);
     lionStatueMaterial1->SetValue("diffuse", 0.8f);
@@ -239,7 +201,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     lionStatueRTMaterial->SetValue("diffuse", 0.8f);
     lionStatueRTMaterial->SetValue("specular", 0.1f);
 
-    auto chairMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto chairMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     chairMaterial1->SetTexture2D("mainTexture", chairTex1);
     chairMaterial1->SetValue("ambient", 0.1f);
     chairMaterial1->SetValue("diffuse", 0.8f);
@@ -251,7 +213,7 @@ ref<Scene> SceneBuilder::BuildLightScene(const ref<Render::GPUAssetManager>& ass
     chairRTMaterial->SetValue("diffuse", 0.8f);
     chairRTMaterial->SetValue("specular", 0.3f);
 
-    auto groundMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto groundMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     groundMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
     groundMaterial1->SetValue("ambient", 0.1f);
     groundMaterial1->SetValue("diffuse", 0.8f);
@@ -353,70 +315,46 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
 
     ////// Compiling Shaders
 
-    std::wstring lightVertexShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.vert.hlsl";
-    IMPORT_SHADER(lightVertexShaderPath, vertexShader, DX12::VERTEX_SHADER, errorStr)
+    std::wstring simpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
+    auto lightRasterProgram = shaderRegistery->CompileProgram(simpleLightRasterPath, errorStr);
 
-        std::wstring lightPixelShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.pix.hlsl";
-    IMPORT_SHADER(lightPixelShaderPath, pixelShader, DX12::PIXEL_SHADER, errorStr)
-
-        auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
+    if (lightRasterProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(simpleLightRasterPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    
-    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    
-    std::wstring rtReflectionShaderPath = root + L"\\Assets\\Shaders\\reflection_rt.lib.hlsl";
-    
-    std::wstring gBufferReflectionVertPath = root + L"\\Assets\\Shaders\\reflection_g_buffer.vert.hlsl";
-    IMPORT_SHADER(gBufferReflectionVertPath, gBufferReflectionVertexShader, DX12::VERTEX_SHADER, errorStr)
-
-        std::wstring gBufferReflectionPixPath = root + L"\\Assets\\Shaders\\reflection_g_buffer.pix.hlsl";
-    IMPORT_SHADER(gBufferReflectionPixPath, gBufferReflectionPixelShader, DX12::PIXEL_SHADER, errorStr)
-
-        auto gBufferReflectionProgram = shaderRegistery->CreateAndRegisterShaderProgram("G_Buffer_Reflection_Program", { gBufferReflectionVertexShader, gBufferReflectionPixelShader }, false);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
-    simpleRTDesc.shaderModel = "6_6";
-    simpleRTDesc.rayGenerationFunction = "rayGen";
-    simpleRTDesc.missFunction = "miss";
-    simpleRTDesc.closestHitFunction = "chs";
-
-    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+    auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, errorStr);
 
     if (globalRTProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
         return nullptr;
     }
 
-    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
-    simpleLocalRTDesc.shaderModel = "6_6";
-    simpleLocalRTDesc.closestHitFunction = "chs";
-
-    auto simpleRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleLightShaderPath, simpleLocalRTDesc, errorStr);
+    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
+    auto simpleRTLightProgram = shaderRegistery->CompileProgram(rtSimpleLightShaderPath, errorStr);
 
     if (simpleRTLightProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
         return nullptr;
     }
 
-    shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", simpleRTLightProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties reflectionLocalRTDesc;
-    reflectionLocalRTDesc.shaderModel = "6_6";
-    reflectionLocalRTDesc.closestHitFunction = "chs";
-    reflectionLocalRTDesc.missFunction = "miss";
-
-    auto reflectionRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtReflectionShaderPath, reflectionLocalRTDesc, errorStr);
+    std::wstring rtReflectionShaderPath = root + L"\\Assets\\Shaders\\reflection_rt.lib.hlsl";
+    auto reflectionRTLightProgram = shaderRegistery->CompileProgram(rtReflectionShaderPath, errorStr);
 
     if (reflectionRTLightProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtReflectionShaderPath) + "Error: \n" + errorStr;
         return nullptr;
     }
 
-    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", reflectionRTLightProgram, true);
+    std::wstring gBufferReflectionVertPath = root + L"\\Assets\\Shaders\\reflection_g_buffer.hlsl";
+    auto gBufferReflectionProgram = shaderRegistery->CompileProgram(gBufferReflectionVertPath, errorStr);
 
+    if (gBufferReflectionProgram == nullptr) {
+        error = "Error in Compiling Shader At: \n" + WStringToString(gBufferReflectionVertPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
+    
     ////// Creating the camera
 
     auto camtransform = std::make_shared<Transform>(Vector3(-8.0f, 6.4f, -4.1f), Vector3(1.0f), Vector3(-0.27f, -0.69f, 0.08f), 60);
@@ -499,7 +437,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
     rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
 
-    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto carMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
     carMaterial1->SetValue("ambient", 0.1f);
     carMaterial1->SetValue("diffuse", 1.0f);
@@ -511,7 +449,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     carRTMaterial->SetValue("diffuse", 1.0f);
     carRTMaterial->SetValue("specular", 0.1f);
 
-    auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
     rabbitStatueMaterial1->SetValue("ambient", 0.1f);
     rabbitStatueMaterial1->SetValue("diffuse", 0.8f);
@@ -523,7 +461,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     rabbitStatueRTMaterial->SetValue("diffuse", 0.8f);
     rabbitStatueRTMaterial->SetValue("specular", 0.1f);
 
-    auto lionStatueMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto lionStatueMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     lionStatueMaterial1->SetTexture2D("mainTexture", lionStatueTex1);
     lionStatueMaterial1->SetValue("ambient", 0.1f);
     lionStatueMaterial1->SetValue("diffuse", 0.8f);
@@ -535,7 +473,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     lionStatueRTMaterial->SetValue("diffuse", 0.8f);
     lionStatueRTMaterial->SetValue("specular", 0.1f);
 
-    auto chairMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto chairMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     chairMaterial1->SetTexture2D("mainTexture", chairTex1);
     chairMaterial1->SetValue("ambient", 0.1f);
     chairMaterial1->SetValue("diffuse", 0.8f);
@@ -547,7 +485,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     chairRTMaterial->SetValue("diffuse", 0.8f);
     chairRTMaterial->SetValue("specular", 0.3f);
 
-    auto groundMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto groundMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     groundMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
     groundMaterial1->SetValue("ambient", 0.1f);
     groundMaterial1->SetValue("diffuse", 0.8f);
@@ -670,46 +608,29 @@ ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& as
 
     ////// Compiling Shaders
 
-    std::wstring lightVertexShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.vert.hlsl";
-    IMPORT_SHADER(lightVertexShaderPath, vertexShader, DX12::VERTEX_SHADER, errorStr)
+    std::wstring simpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
+    auto lightRasterProgram = shaderRegistery->CompileProgram(simpleLightRasterPath, error);
 
-        std::wstring lightPixelShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.pix.hlsl";
-    IMPORT_SHADER(lightPixelShaderPath, pixelShader, DX12::PIXEL_SHADER, errorStr)
-
-        auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
+    if (lightRasterProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(simpleLightRasterPath) + "Error: \n" + errorStr;
+        return nullptr;
+    }
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
-    simpleRTDesc.shaderModel = "6_6";
-    simpleRTDesc.rayGenerationFunction = "rayGen";
-    simpleRTDesc.missFunction = "miss";
-    simpleRTDesc.closestHitFunction = "chs";
-
-    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+    auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, error);
 
     if (globalRTProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + error;
         return nullptr;
     }
-
-    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
 
     std::wstring rtShadowShaderPath = root + L"\\Assets\\Shaders\\shadow_rt.lib.hlsl";
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties shadowRTDesc;
-    shadowRTDesc.shaderModel = "6_6";
-    shadowRTDesc.closestHitFunction = "chs";
-    shadowRTDesc.missFunction = "miss";
-
-    auto rtShadowProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtShadowShaderPath, shadowRTDesc, errorStr);
+    auto rtShadowProgram = shaderRegistery->CompileProgram(rtShadowShaderPath, error);
 
     if (rtShadowProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtShadowShaderPath) + "Error: \n" + errorStr;
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtShadowShaderPath) + "Error: \n" + error;
         return nullptr;
     }
-
-    shaderRegistery->RegisterShaderProgram("RT_Shadow_Program", rtShadowProgram, true);
     
     ////// Creating the camera
 
@@ -787,7 +708,7 @@ ref<Scene> SceneBuilder::BuildShadowScene(const ref<Render::GPUAssetManager>& as
     rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
     rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
 
-    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto carMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
     carMaterial1->SetValue("ambient", 0.1f);
     carMaterial1->SetValue("diffuse", 1.0f);
@@ -909,62 +830,37 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
 
     ////// Compiling Shaders
 
-    std::wstring lightVertexShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.vert.hlsl";
-    IMPORT_SHADER(lightVertexShaderPath, vertexShader, DX12::VERTEX_SHADER, errorStr)
+    std::wstring simpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
+    auto lightRasterProgram = shaderRegistery->CompileProgram(simpleLightRasterPath, error);
 
-        std::wstring lightPixelShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.pix.hlsl";
-    IMPORT_SHADER(lightPixelShaderPath, pixelShader, DX12::PIXEL_SHADER, errorStr)
-
-        auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
+    if (lightRasterProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(simpleLightRasterPath) + "Error: \n" + error;
+        return nullptr;
+    }
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    
-    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    
-    std::wstring rtRefractionShaderPath = root + L"\\Assets\\Shaders\\refractor_rt.lib.hlsl";
-    
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
-    simpleRTDesc.shaderModel = "6_6";
-    simpleRTDesc.rayGenerationFunction = "rayGen";
-    simpleRTDesc.missFunction = "miss";
-    simpleRTDesc.closestHitFunction = "chs";
-
-    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
+    auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, error);
 
     if (globalRTProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + error;
         return nullptr;
     }
 
-    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
-    simpleLocalRTDesc.shaderModel = "6_6";
-    simpleLocalRTDesc.closestHitFunction = "chs";
-
-    auto simpleRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleLightShaderPath, simpleLocalRTDesc, errorStr);
+    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
+    auto simpleRTLightProgram = shaderRegistery->CompileProgram(rtSimpleLightShaderPath, error);
 
     if (simpleRTLightProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + errorStr;
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + error;
         return nullptr;
     }
-
-    shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", simpleRTLightProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties refractionLocalRTDesc;
-    refractionLocalRTDesc.shaderModel = "6_6";
-    refractionLocalRTDesc.closestHitFunction = "chs";
-    refractionLocalRTDesc.missFunction = "miss";
-
-    auto rtRefractionProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtRefractionShaderPath, refractionLocalRTDesc, errorStr);
+    
+    std::wstring rtRefractionShaderPath = root + L"\\Assets\\Shaders\\refractor_rt.lib.hlsl";
+    auto rtRefractionProgram = shaderRegistery->CompileProgram(rtRefractionShaderPath,  error);
 
     if (rtRefractionProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtRefractionShaderPath) + "Error: \n" + errorStr;
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtRefractionShaderPath) + "Error: \n" + error;
         return nullptr;
     }
-
-    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", rtRefractionProgram, true);
-
 
     ////// Creating the camera
 
@@ -1045,7 +941,7 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
     rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
 
-    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto carMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
     carMaterial1->SetValue("ambient", 0.1f);
     carMaterial1->SetValue("diffuse", 1.0f);
@@ -1165,95 +1061,61 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
 
     ////// Compiling Shaders
 
-    std::wstring lightVertexShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.vert.hlsl";
-    IMPORT_SHADER(lightVertexShaderPath, vertexShader, DX12::VERTEX_SHADER, errorStr)
+    std::wstring simpleLightRasterPath = root + L"\\Assets\\Shaders\\simple_light_raster_program.hlsl";
+    auto lightRasterProgram = shaderRegistery->CompileProgram(simpleLightRasterPath, error);
 
-        std::wstring lightPixelShaderPath = root + L"\\Assets\\Shaders\\simple_light_raster.pix.hlsl";
-    IMPORT_SHADER(lightPixelShaderPath, pixelShader, DX12::PIXEL_SHADER, errorStr)
-
-        auto lightProgram = shaderRegistery->CreateAndRegisterShaderProgram("Simple_Light_Raster_Program", { vertexShader, pixelShader }, false);
-
-    std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    
-    std::wstring rtSimpleShaderPath = root + L"\\Assets\\Shaders\\simple_rt.lib.hlsl";
-    
-    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
-    
-    std::wstring rtReflectionShaderPath = root + L"\\Assets\\Shaders\\reflection_rt.lib.hlsl";
-    
-    std::wstring rtShadowShaderPath = root + L"\\Assets\\Shaders\\shadow_rt.lib.hlsl";
-    
-    std::wstring rtRefractionShaderPath = root + L"\\Assets\\Shaders\\refractor_rt.lib.hlsl";
-    
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleRTDesc;
-    simpleRTDesc.shaderModel = "6_6";
-    simpleRTDesc.rayGenerationFunction = "rayGen";
-    simpleRTDesc.missFunction = "miss";
-    simpleRTDesc.closestHitFunction = "chs";
-
-    auto globalRTProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtGlobalShaderPath, simpleRTDesc, errorStr);
-
-    if (globalRTProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + errorStr;
+    if (lightRasterProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(simpleLightRasterPath) + "Error: \n" + error;
         return nullptr;
     }
 
-    shaderRegistery->RegisterShaderProgram("Global_RT_Program", globalRTProgram, true);
+    std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
+    auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, errorStr);
 
-    DX12::RayTracing::HLSLRayTracingProgramProperties simpleLocalRTDesc;
-    simpleLocalRTDesc.shaderModel = "6_6";
-    simpleLocalRTDesc.closestHitFunction = "chs";
+    if (globalRTProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + error;
+        return nullptr;
+    }
 
-    auto rtSimpleProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtSimpleShaderPath, simpleLocalRTDesc, errorStr);
+    std::wstring rtSimpleLightShaderPath = root + L"\\Assets\\Shaders\\simple_light_rt.lib.hlsl";
+    auto simpleRTLightProgram = shaderRegistery->CompileProgram(rtSimpleLightShaderPath, error);
+
+    if (simpleRTLightProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleLightShaderPath) + "Error: \n" + error;
+        return nullptr;
+    }
+
+    std::wstring rtReflectionShaderPath = root + L"\\Assets\\Shaders\\reflection_rt.lib.hlsl";
+    auto reflectionRTLightProgram = shaderRegistery->CompileProgram(rtReflectionShaderPath, error);
+
+    if (reflectionRTLightProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtReflectionShaderPath) + "Error: \n" + error;
+        return nullptr;
+    }
+
+    std::wstring rtShadowShaderPath = root + L"\\Assets\\Shaders\\shadow_rt.lib.hlsl";
+    auto rtShadowProgram = shaderRegistery->CompileProgram(rtShadowShaderPath, error);
+
+    if (rtShadowProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtShadowShaderPath) + "Error: \n" + error;
+        return nullptr;
+    }
+
+    std::wstring rtRefractionShaderPath = root + L"\\Assets\\Shaders\\refractor_rt.lib.hlsl";
+    auto rtRefractionProgram = shaderRegistery->CompileProgram(rtRefractionShaderPath, error);
+
+    if (rtRefractionProgram == nullptr) {
+        errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtRefractionShaderPath) + "Error: \n" + error;
+        return nullptr;
+    }
+
+    std::wstring rtSimpleShaderPath = root + L"\\Assets\\Shaders\\simple_rt.lib.hlsl";
+    auto rtSimpleProgram = shaderRegistery->CompileProgram(rtSimpleShaderPath, error);
 
     if (rtSimpleProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(rtSimpleShaderPath) + "Error: \n" + errorStr;
         return nullptr;
     }
-
-    shaderRegistery->RegisterShaderProgram("Simple_Light_RT_Program", rtSimpleProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties reflectionLocalRTDesc;
-    reflectionLocalRTDesc.shaderModel = "6_6";
-    reflectionLocalRTDesc.closestHitFunction = "chs";
-    reflectionLocalRTDesc.missFunction = "miss";
-
-    auto reflectionRTLightProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtReflectionShaderPath, reflectionLocalRTDesc, errorStr);
-
-    if (reflectionRTLightProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtReflectionShaderPath) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-
-    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", reflectionRTLightProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties shadowRTDesc;
-    shadowRTDesc.shaderModel = "6_6";
-    shadowRTDesc.closestHitFunction = "chs";
-    shadowRTDesc.missFunction = "miss";
-
-    auto rtShadowProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtShadowShaderPath, shadowRTDesc, errorStr);
-
-    if (rtShadowProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtShadowShaderPath) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-
-    shaderRegistery->RegisterShaderProgram("RT_Shadow_Program", rtShadowProgram, true);
-
-    DX12::RayTracing::HLSLRayTracingProgramProperties refractionLocalRTDesc;
-    refractionLocalRTDesc.shaderModel = "6_6";
-    refractionLocalRTDesc.closestHitFunction = "chs";
-    refractionLocalRTDesc.missFunction = "miss";
-
-    auto rtRefractionProgram = DX12::RayTracing::HLSLRayTracingProgramImporter::ImportShader(rtRefractionShaderPath, refractionLocalRTDesc, errorStr);
-
-    if (rtRefractionProgram == nullptr) {
-        error = "Error in Compiling Shader At: \n" + WStringToString(rtRefractionShaderPath) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-
-    shaderRegistery->RegisterShaderProgram("Simple_Reflection_RT_Program", rtRefractionProgram, true);
 
     ////// Creating the camera
 
@@ -1366,7 +1228,7 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
     rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
     rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
 
-    auto carMaterial1 = materialFactory->CreateMaterial(lightProgram);
+    auto carMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     carMaterial1->SetTexture2D("mainTexture", carTex1);
     carMaterial1->SetValue("ambient", 0.1f);
     carMaterial1->SetValue("diffuse", 1.0f);

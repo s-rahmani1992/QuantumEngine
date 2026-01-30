@@ -27,10 +27,9 @@ QuantumEngine::Rendering::DX12::Rasterization::HLSLRasterizationProgram::HLSLRas
 	}
 }
 
-bool QuantumEngine::Rendering::DX12::Rasterization::HLSLRasterizationProgram::InitializeRootSignature(const ComPtr<ID3D12Device10>& device)
+bool QuantumEngine::Rendering::DX12::Rasterization::HLSLRasterizationProgram::InitializeRootSignature(const ComPtr<ID3D12Device10>& device, std::string& error)
 {
-	std::string errorMessage;
-	m_rootSignature = m_reflection.CreateRootSignature(device, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, errorMessage);
+	m_rootSignature = m_reflection.CreateRootSignature(device, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT, error);
 	
     return m_rootSignature != nullptr;
 }

@@ -10,7 +10,7 @@ QuantumEngine::Rendering::DX12::Compute::HLSLComputeProgram::HLSLComputeProgram(
 	m_reflection.AddShaderReflection(shaderReflection.Get());
 }
 
-bool QuantumEngine::Rendering::DX12::Compute::HLSLComputeProgram::InitializeRootSignature(const ComPtr<ID3D12Device10>& device)
+bool QuantumEngine::Rendering::DX12::Compute::HLSLComputeProgram::InitializeRootSignature(const ComPtr<ID3D12Device10>& device, std::string& error)
 {
 	std::string errorMessage;
 	m_rootSignature = m_reflection.CreateRootSignature(device, D3D12_ROOT_SIGNATURE_FLAG_NONE, errorMessage);

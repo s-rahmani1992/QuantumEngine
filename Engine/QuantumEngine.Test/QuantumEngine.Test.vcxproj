@@ -177,7 +177,43 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
     <None Include="Assets\Shaders\RTStructs.hlsli" />
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
@@ -196,12 +232,7 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\g_buffer.pix.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </Text>
-    <Text Include="Assets\Shaders\g_buffer.vert.hlsl">
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
@@ -210,14 +241,9 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\reflection_g_buffer.pix.hlsl">
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_g_buffer.vert.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>
@@ -225,20 +251,6 @@
     <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\Shaders\simple_light_raster.vert.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\Shaders\simple_light_raster.pix.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

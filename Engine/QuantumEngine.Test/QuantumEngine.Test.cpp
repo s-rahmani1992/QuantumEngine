@@ -27,7 +27,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     
     std::string errorStr;
 
-    if (SceneBuilder::Run_ReflectionSample_RayTracing(gpuDevice, win, errorStr) == false) {
+    if (SceneBuilder::Run_ComplexScene_RayTracing(gpuDevice, win, errorStr) == false) {
         MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + errorStr).c_str(), "App Error", 0);
         return 0;
     }

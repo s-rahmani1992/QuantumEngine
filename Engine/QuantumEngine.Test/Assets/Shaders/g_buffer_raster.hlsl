@@ -14,6 +14,13 @@ struct VS_OUTPUT
     float3 worldPos : POSITION;
 };
 
+struct PSOutput
+{
+    float4 position : SV_Target0;
+    float4 normal : SV_Target1;
+    uint mask : SV_Target2;
+};
+
 cbuffer _ObjectTransformData : register(b0)
 {
     TransformData transformData;
@@ -24,11 +31,21 @@ cbuffer _CameraData : register(b1)
     CameraData cameraData;
 };
 
-VS_OUTPUT main(VS_INPUT vertexIn)
+VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {
     VS_OUTPUT vsOut;
     vsOut.pos = mul(float4(vertexIn.pos, 1.0f), mul(transformData.modelViewMatrix, cameraData.projectionMatrix));
     vsOut.normal = mul(float4(vertexIn.norm, 1.0f), transformData.rotationMatrix).xyz;
     vsOut.worldPos = mul(float4(vertexIn.pos, 1.0f), transformData.modelMatrix).xyz;
     return vsOut;
+}
+
+PSOutput ps_main(VS_OUTPUT input)
+{
+    PSOutput psOut;
+    psOut.position = float4(input.worldPos, 1.0f);
+    psOut.normal = float4(normalize(input.normal) * 0.5f + 0.5f, 1.0f); // Encode normal to [0,1] range
+    psOut.mask = 1; // Example mask value, can be modified as needed
+    
+    return psOut;
 }

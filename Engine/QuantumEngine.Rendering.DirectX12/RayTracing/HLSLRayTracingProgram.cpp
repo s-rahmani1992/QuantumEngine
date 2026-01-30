@@ -98,7 +98,7 @@ QuantumEngine::Rendering::DX12::RayTracing::HLSLRayTracingProgram::HLSLRayTracin
 	m_dxilData.pExports = m_exportDescs.data();
 }
 
-bool QuantumEngine::Rendering::DX12::RayTracing::HLSLRayTracingProgram::InitializeRootSignature(const ComPtr<ID3D12Device10>& device)
+bool QuantumEngine::Rendering::DX12::RayTracing::HLSLRayTracingProgram::InitializeRootSignature(const ComPtr<ID3D12Device10>& device, std::string& error)
 {
 	std::string errorMessage;
 	D3D12_ROOT_SIGNATURE_FLAGS flag = m_rayGenOriginalName.empty() ? D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE : D3D12_ROOT_SIGNATURE_FLAG_NONE;

@@ -14,7 +14,7 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		/// </summary>
 		/// <param name="device"></param>
 		/// <returns></returns>
-		bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device) override;
+		bool InitializeRootSignature(const ComPtr<ID3D12Device10>& device, std::string& error) override;
 
 		/// <summary>
 		/// Gets pointer to DXIL data of this program

@@ -105,25 +105,13 @@
     <Text Include="Assets\Shaders\refractor_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\g_buffer.pix.hlsl">
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\g_buffer.vert.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_g_buffer.vert.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_g_buffer.pix.hlsl">
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_light_raster.vert.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_light_raster.pix.hlsl">
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\simple_light_raster_program.hlsl">
@@ -133,6 +121,42 @@
       <Filter>Assets</Filter>
     </Text>
     <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl.json">
+      <Filter>Assets</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl.json">
       <Filter>Assets</Filter>
     </Text>
   </ItemGroup>

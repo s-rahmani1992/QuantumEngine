@@ -15,6 +15,13 @@ struct VS_OUTPUT
     float2 normPos : POSITION;
 };
 
+
+cbuffer _ObjectTransformData : register(b0)
+{
+    TransformData transformData;
+};
+
+
 cbuffer _CameraData : register(b1)
 {
     CameraData cameraData;
@@ -40,7 +47,19 @@ Texture2D<float4> _NormalTexture : register(t2);
 Texture2D mainTexture : register(t3);
 sampler mainSampler : register(s0);
 
-float4 main(VS_OUTPUT input) : SV_TARGET
+
+VS_OUTPUT vs_main(VS_INPUT vertexIn)
+{
+    VS_OUTPUT vsOut;
+    float4 position = mul(float4(vertexIn.pos, 1.0f), mul(transformData.modelViewMatrix, cameraData.projectionMatrix));
+    vsOut.pos = position;
+    vsOut.texCoord = vertexIn.texCoord;
+    float2 ndc = position.xy;
+    vsOut.normPos = float2(ndc.x, -ndc.y) * 0.5f + 0.5f;
+    return vsOut;
+}
+
+float4 ps_main(VS_OUTPUT input) : SV_TARGET
 {
     float2 ndc = input.pos.xy / float2(1280, 720);
     
