@@ -1,6 +1,6 @@
-#include "RTStructs.hlsli"
-#include "TransformStructs.hlsli"
-#include "LightStructs.hlsli"
+#include "Common/RTStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
+#include "Common/LightStructs.hlsli"
 
 cbuffer MissProps : register(b0, space1)
 {
@@ -10,33 +10,22 @@ cbuffer MissProps : register(b0, space1)
     float specular;
 };
 
-cbuffer _RTProperties : register(b3, space1)
-{
-    uint _missIndex;
-};
+TRANSFORM_VAR_2(b1, space1)
 
-cbuffer _ObjectTransformData : register(b1, space1)
-{
-    TransformData transformData;
-};
+CAMERA_VAR_2(b2, space1)
 
-cbuffer _CameraData : register(b2, space1)
-{
-    CameraData cameraData;
-};
+LIGHT_VAR_2(b3, space1)
 
-cbuffer _LightData : register(b4, space1)
-{
-    LightData lightData;
-}
+RT_PROP_VAR_2(b4, space1)
 
-RaytracingAccelerationStructure _RTScene : register(t3, space1);
+RT_SCENE_VAR_2(t0, space1);
 
-Texture2D mainTexture : register(t0, space1);
+RT_INDEX_BUFFER_VAR_2(t1, space1)
+
+RT_VERTEX_BUFFER_VAR_2(t2, space1)
+
+Texture2D mainTexture : register(t3, space1);
 sampler mainSampler : register(s0, space1);
-
-StructuredBuffer<uint> _indexBuffer : register(t1, space1);
-StructuredBuffer<Vertex> _vertexBuffer : register(t2, space1);
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

@@ -16,6 +16,9 @@
     <Filter Include="Assets">
       <UniqueIdentifier>{892544ca-585d-4aa6-874e-3cc2e80c9f1d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Assets\Common">
+      <UniqueIdentifier>{773f6960-ea0e-4126-955f-a919e4ac3e02}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -93,12 +96,6 @@
     <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
-    <Text Include="Assets\Shaders\TransformStructs.hlsli">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\LightStructs.hlsli">
-      <Filter>Assets</Filter>
-    </Text>
     <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
       <Filter>Assets</Filter>
     </Text>
@@ -159,11 +156,15 @@
     <Text Include="Assets\Shaders\simple_rt.lib.hlsl.json">
       <Filter>Assets</Filter>
     </Text>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Assets\Shaders\RTStructs.hlsli">
-      <Filter>Assets</Filter>
-    </None>
+    <Text Include="Assets\Shaders\Common\LightStructs.hlsli">
+      <Filter>Assets\Common</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\Common\RTStructs.hlsli">
+      <Filter>Assets\Common</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\Common\TransformStructs.hlsli">
+      <Filter>Assets\Common</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <Image Include="engine-icon.ico">

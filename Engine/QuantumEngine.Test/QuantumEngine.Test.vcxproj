@@ -131,11 +131,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\TransformStructs.hlsli">
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="Assets\Shaders\rt_global.lib.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
@@ -172,11 +167,6 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="Assets\Shaders\LightStructs.hlsli">
-      <FileType>Document</FileType>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl.json">
       <FileType>Document</FileType>
     </Text>
@@ -198,7 +188,6 @@
     <Text Include="Assets\Shaders\refractor_rt.lib.hlsl.json">
       <FileType>Document</FileType>
     </Text>
-    <None Include="Assets\Shaders\RTStructs.hlsli" />
     <Text Include="Assets\Shaders\rt_global.lib.hlsl.json">
       <FileType>Document</FileType>
     </Text>
@@ -279,6 +268,17 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\Common\LightStructs.hlsli">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\Common\RTStructs.hlsli">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\Common\TransformStructs.hlsli">
       <FileType>Document</FileType>
     </Text>
   </ItemGroup>

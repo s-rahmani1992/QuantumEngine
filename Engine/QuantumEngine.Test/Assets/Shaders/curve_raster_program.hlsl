@@ -1,5 +1,5 @@
-#include "TransformStructs.hlsli"
-#include "LightStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
+#include "Common/LightStructs.hlsli"
 
 struct VS_INPUT
 {
@@ -17,22 +17,11 @@ struct GS_OUTPUT
     float3 worldPos : POSITION;
 };
 
-cbuffer _ObjectTransformData : register(b0)
-{
-    TransformData transformData;
-};
+TRANSFORM_VAR_1(b0)
 
-cbuffer _CameraData : register(b1)
-{
-    CameraData cameraData;
-};
+CAMERA_VAR_1(b1)
 
-
-cbuffer _LightData : register(b2)
-{
-    LightData lightData;
-}
-
+LIGHT_VAR_1(b2)
 
 cbuffer _CurveProperties : register(b3)
 {

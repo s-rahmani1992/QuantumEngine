@@ -1,25 +1,19 @@
-#include "TransformStructs.hlsli"
-#include "RTStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
+#include "Common/RTStructs.hlsli"
 
-cbuffer _ObjectTransformData : register(b2, space1)
-{
-    TransformData transformData;
-};
+TRANSFORM_VAR_2(b0, space1)
 
-cbuffer _RTProperties : register(b1, space1)
-{
-    uint _missIndex;
-};
+RT_PROP_VAR_2(b1, space1)
 
-cbuffer MaterialProps : register(b0, space1)
+cbuffer MaterialProps : register(b2, space1)
 {
     float refractionFactor;
     uint maxRecursion;
 };
 
-RaytracingAccelerationStructure _RTScene : register(t3, space1);
-StructuredBuffer<uint> _indexBuffer : register(t1, space1);
-StructuredBuffer<Vertex> _vertexBuffer : register(t2, space1);
+RT_SCENE_VAR_2(t0, space1);
+RT_INDEX_BUFFER_VAR_2(t1, space1)
+RT_VERTEX_BUFFER_VAR_2(t2, space1)
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

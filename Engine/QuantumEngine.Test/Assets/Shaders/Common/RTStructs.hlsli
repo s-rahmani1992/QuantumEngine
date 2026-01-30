@@ -69,3 +69,39 @@ inline float3 Refract(float3 rayDirection, float3 normal, float refractionFactor
     else
         return normalize(refractionIndex * rayDirection + (refractionIndex * cosI - sqrt(1 - sinT2)) * normal);
 }
+
+#define RT_SCENE_VAR_1(t) \
+RaytracingAccelerationStructure _RTScene : register(t);
+
+#define RT_SCENE_VAR_2(t, space) \
+RaytracingAccelerationStructure _RTScene : register(t, space);
+
+#define RT_PROP_VAR_1(b) \
+cbuffer _RTProperties : register(b) \
+{ \
+    uint _missIndex; \
+};
+
+#define RT_PROP_VAR_2(b, space) \
+cbuffer _RTProperties : register(b, space) \
+{ \
+    uint _missIndex; \
+};
+
+#define RT_OUT_VAR_1(u) \
+RWTexture2D<float4> _OutputTexture : register(u);
+
+#define RT_OUT_VAR_2(u, space) \
+RWTexture2D<float4> _OutputTexture : register(u, space);
+
+#define RT_INDEX_BUFFER_VAR_1(t) \
+StructuredBuffer<uint> _indexBuffer : register(t);
+
+#define RT_INDEX_BUFFER_VAR_2(t, space) \
+StructuredBuffer<uint> _indexBuffer : register(t, space);
+
+#define RT_VERTEX_BUFFER_VAR_1(t) \
+StructuredBuffer<Vertex> _vertexBuffer : register(t);
+
+#define RT_VERTEX_BUFFER_VAR_2(t, space) \
+StructuredBuffer<Vertex> _vertexBuffer : register(t, space);

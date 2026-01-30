@@ -1065,7 +1065,7 @@ ref<Scene> SceneBuilder::BuildComplexScene(const ref<Render::GPUAssetManager>& a
     }
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
-    auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, errorStr);
+    auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, error);
 
     if (globalRTProgram == nullptr) {
         errorStr = "Error in Compiling Shader At: \n" + WStringToString(rtGlobalShaderPath) + "Error: \n" + error;

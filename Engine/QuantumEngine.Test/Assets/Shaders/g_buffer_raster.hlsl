@@ -1,4 +1,4 @@
-#include "TransformStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
 
 struct VS_INPUT
 {
@@ -21,15 +21,9 @@ struct PSOutput
     uint mask : SV_Target2;
 };
 
-cbuffer _ObjectTransformData : register(b0)
-{
-    TransformData transformData;
-};
+TRANSFORM_VAR_1(b0)
 
-cbuffer _CameraData : register(b1)
-{
-    CameraData cameraData;
-};
+CAMERA_VAR_1(b1)
 
 VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {

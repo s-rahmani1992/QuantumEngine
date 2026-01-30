@@ -1,5 +1,5 @@
-#include "TransformStructs.hlsli"
-#include "LightStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
+#include "Common/LightStructs.hlsli"
 
 struct VS_INPUT
 {
@@ -15,19 +15,13 @@ struct VS_OUTPUT
     float2 normPos : POSITION;
 };
 
+TRANSFORM_VAR_1(b0)
 
-cbuffer _ObjectTransformData : register(b0)
-{
-    TransformData transformData;
-};
+CAMERA_VAR_1(b1)
 
+LIGHT_VAR_1(b2)
 
-cbuffer _CameraData : register(b1)
-{
-    CameraData cameraData;
-};
-
-cbuffer MaterialProps : register(b2)
+cbuffer MaterialProps : register(b3)
 {
     float reflectivity;
     float ambient;
@@ -35,18 +29,12 @@ cbuffer MaterialProps : register(b2)
     float specular;
 };
 
-cbuffer _LightData : register(b3)
-{
-    LightData lightData;
-}
-
 Texture2D<float4> _OutputTexture : register(t0);
 Texture2D<float4> _PositionTexture : register(t1);
 Texture2D<float4> _NormalTexture : register(t2);
 
 Texture2D mainTexture : register(t3);
 sampler mainSampler : register(s0);
-
 
 VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {

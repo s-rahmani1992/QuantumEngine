@@ -1,24 +1,19 @@
-#include "TransformStructs.hlsli"
-#include "RTStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
+#include "Common/RTStructs.hlsli"
 
-cbuffer _CameraData : register(b0)
-{
-    CameraData cameraData;
-};
+CAMERA_VAR_1(b0)
 
-cbuffer ColorProperties : register(b1)
+RT_PROP_VAR_1(b1)
+
+cbuffer ColorProperties : register(b2)
 {
     float4 missColor;
     float4 hitColor;
 };
 
-cbuffer _RTProperties : register(b2)
-{
-    uint _missIndex;
-};
+RT_SCENE_VAR_1(t0)
 
-RaytracingAccelerationStructure _RTScene : register(t1);
-RWTexture2D<float4> _OutputTexture : register(u0);
+RT_OUT_VAR_1(u0)
 
 [shader("raygeneration")]
 void rayGen()

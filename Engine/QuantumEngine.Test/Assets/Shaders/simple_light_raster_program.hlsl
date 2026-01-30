@@ -1,5 +1,5 @@
-#include "TransformStructs.hlsli"
-#include "LightStructs.hlsli"
+#include "Common/TransformStructs.hlsli"
+#include "Common/LightStructs.hlsli"
 
 struct VS_INPUT
 {
@@ -16,17 +16,13 @@ struct VS_OUTPUT
     float3 worldPos : POSITION;
 };
 
-cbuffer _ObjectTransformData : register(b0)
-{
-    TransformData transformData;
-};
+TRANSFORM_VAR_1(b0)
 
-cbuffer _CameraData : register(b1)
-{
-    CameraData cameraData;
-};
+CAMERA_VAR_1(b1)
 
-cbuffer MaterialProps : register(b2)
+LIGHT_VAR_1(b2)
+
+cbuffer MaterialProps : register(b3)
 {
     float ambient;
     float diffuse;
@@ -34,14 +30,8 @@ cbuffer MaterialProps : register(b2)
     float textureFactor;
 };
 
-cbuffer _LightData : register(b3)
-{
-    LightData lightData;
-}
-
-Texture2D mainTexture : register(t3);
+Texture2D mainTexture : register(t0);
 sampler mainSampler : register(s0);
-
 
 VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {
@@ -52,7 +42,6 @@ VS_OUTPUT vs_main(VS_INPUT vertexIn)
     vsOut.worldPos = mul(float4(vertexIn.pos, 1.0f), transformData.modelMatrix).xyz;
     return vsOut;
 }
-
 
 float4 ps_main(VS_OUTPUT input) : SV_TARGET
 {

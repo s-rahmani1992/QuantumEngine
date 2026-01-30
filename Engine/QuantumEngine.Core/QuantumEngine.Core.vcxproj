@@ -143,7 +143,6 @@
     <ClInclude Include="Rendering\GPUTexture2DController.h" />
     <ClInclude Include="Rendering\GraphicContext.h" />
     <ClInclude Include="Rendering\Material.h" />
-    <ClInclude Include="Rendering\MaterialBuilder.h" />
     <ClInclude Include="Rendering\MaterialFactory.h" />
     <ClInclude Include="Rendering\MeshRenderer.h" />
     <ClInclude Include="Rendering\RayTracingComponent.h" />

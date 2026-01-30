@@ -125,7 +125,6 @@
     <ClInclude Include="Core\Scene.h">
       <Filter>Core</Filter>
     </ClInclude>
-    <ClInclude Include="Rendering\MaterialBuilder.h" />
     <ClInclude Include="Rendering\MaterialFactory.h">
       <Filter>Rendering</Filter>
     </ClInclude>
