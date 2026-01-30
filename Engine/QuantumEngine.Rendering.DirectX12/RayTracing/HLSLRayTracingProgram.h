@@ -5,6 +5,15 @@
 namespace QuantumEngine::Rendering::DX12::RayTracing {
 	struct HLSLRayTracingProgramProperties;
 
+	struct HLSLRayTracingProgramProperties {
+		std::string shaderModel;
+		std::string rayGenerationFunction;
+		std::string intersectionFunction;
+		std::string anyHitFunction;
+		std::string closestHitFunction;
+		std::string missFunction;
+	};
+
 	class HLSLRayTracingProgram : public HLSLShaderProgram {
 	public:
 		HLSLRayTracingProgram(Byte* byteCode, UInt64 codeLength, const HLSLRayTracingProgramProperties& properties, ComPtr<ID3D12LibraryReflection>& shaderReflection);

@@ -21,7 +21,6 @@ namespace QuantumEngine::Rendering::DX12 {
 		void Initialize(const ComPtr<ID3D12Device10>& device);
 		ref<HLSLShaderProgram> GetShaderProgram(const std::string& name);
 		virtual void RegisterShaderProgram(const std::string& name, const ref<ShaderProgram>& program, bool isRT = false) override;
-		virtual ref<ShaderProgram> CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<QuantumEngine::Rendering::Shader>>& shaders, bool isRT = false) override;
 		virtual ref<ShaderProgram> CompileProgram(const std::wstring& fileName, std::string& error) override;
 	
 	private:

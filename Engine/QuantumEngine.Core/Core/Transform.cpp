@@ -39,7 +39,7 @@ void QuantumEngine::Transform::RotateAround(const Vector3& axis, Float angleDeg)
 	m_right = mat * Vector3(1.0f, 0.0f, 0.0f);
 
 	Float cT = (mat(0, 0) + mat(1, 1) + mat(2, 2) - 1) / 2;
-	Float sT = sqrtf(1 - cT * cT);
+	Float sT = sqrtf(abs(1 - cT * cT));
 	Float x = (mat(1, 2) - mat(2, 1)) / 2 * sT;
 	Float y = (mat(2, 0) - mat(0, 2)) / 2 * sT;
 	Float z = (mat(0, 1) - mat(1, 0)) / 2 * sT;

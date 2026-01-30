@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "HLSLRayTracingProgram.h"
-#include "HLSLRayTracingProgramImporter.h"
 #include "StringUtilities.h"
 
 UInt32 QuantumEngine::Rendering::DX12::RayTracing::HLSLRayTracingProgram::m_programCounter = 0;

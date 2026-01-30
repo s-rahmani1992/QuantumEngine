@@ -12,7 +12,6 @@
 #include <vector>
 #include <memory>
 #include <Platform/Application.h>
-#include "RayTracing/HLSLRayTracingProgramImporter.h"
 #include <dxcapi.h>
 
 #include <boost/uuid/string_generator.hpp>
@@ -96,34 +95,10 @@ ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering:
 void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::RegisterShaderProgram(const std::string& name, const ref<ShaderProgram>& program, bool isRT)
 {
 	ref<HLSLShaderProgram> hlslProgram = std::dynamic_pointer_cast<HLSLShaderProgram>(program);
-	std::string err;
+
 	if(hlslProgram != nullptr) {
-		if (hlslProgram->InitializeRootSignature(m_device, err))
-			m_specialShaders[name] = hlslProgram;
-		return;
+		m_specialShaders.emplace(name, hlslProgram);
 	}
-}
-
-ref<Render::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Render::Shader>>& shaders, bool isRT)
-{
-	std::vector<ref<HLSLShader>> hlslShaders;
-	std::string err;
-	if(isRT == false) {
-		for (auto& shader : shaders) {
-			ref<HLSLShader> hlsl = std::dynamic_pointer_cast<HLSLShader>(shader);
-			hlslShaders.push_back(hlsl);
-		}
-		ref<HLSL::HLSLRasterizationProgram> rasterProgram = std::make_shared<Rasterization::HLSLRasterizationProgram>(hlslShaders);
-
-		if (rasterProgram->InitializeRootSignature(m_device, err)) {
-			m_specialShaders[name] = std::dynamic_pointer_cast<HLSLShaderProgram>(rasterProgram);
-			return rasterProgram;
-		}
-
-		return nullptr;
-	}
-
-	return nullptr;
 }
 
 ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CompileProgram(const std::wstring& hlslFile, std::string& error)

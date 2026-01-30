@@ -24,14 +24,5 @@ namespace QuantumEngine::Rendering {
 		/// <param name="program"></param>
 		/// <param name="isRT"></param>
 		virtual void RegisterShaderProgram(const std::string& name, const ref<ShaderProgram>& program, bool isRT = false) = 0;
-		
-		/// <summary>
-		/// Creates and registers shader program from list of shaders
-		/// </summary>
-		/// <param name="name"></param>
-		/// <param name="shaders"></param>
-		/// <param name="isRT"></param>
-		/// <returns></returns>
-		virtual ref<ShaderProgram> CreateAndRegisterShaderProgram(const std::string& name, const std::initializer_list<ref<Shader>>& shaders, bool isRT = false) = 0;
 	};
 }

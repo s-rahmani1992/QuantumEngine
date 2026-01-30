@@ -5,20 +5,15 @@
 #include "Platform/GraphicWindow.h"
 
 #include "DX12GPUDeviceManager.h"
-#include "Core/HLSLShaderProgram.h"
-#include "HLSLShader.h"
-#include "HLSLShaderImporter.h"
-#include "Rasterization/HLSLRasterizationProgramImporter.h"
-#include "RayTracing/HLSLRayTracingProgramImporter.h"
-
 #include "Rendering/ShaderRegistery.h"
 #include "Rendering/GPUAssetManager.h"
+#include "Rendering/GraphicContext.h"
+#include "Rendering/MaterialFactory.h"
+
 #include <Rendering/MeshRenderer.h>
-#include <Rendering/GraphicContext.h>
 #include <Rendering/GBufferRTReflectionRenderer.h>
 #include <Rendering/SplineRenderer.h>
 #include <Rendering/RayTracingComponent.h>
-#include "Rendering/MaterialFactory.h"
 
 #include <Core/Light/Lights.h>
 #include <Core/WICTexture2DImporter.h>
