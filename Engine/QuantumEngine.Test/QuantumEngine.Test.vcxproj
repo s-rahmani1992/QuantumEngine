@@ -129,6 +129,9 @@
     <ProjectReference Include="..\QuantumEngine.Rendering.DirectX12\QuantumEngine.Rendering.DirectX12.vcxproj">
       <Project>{bfeabcf0-c11b-4676-a29e-88fc2d265235}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\QuantumEngine.Rendering.Vulkan\QuantumEngine.Rendering.Vulkan.vcxproj">
+      <Project>{1298e746-863f-4c3e-87f4-8df8ae2a823d}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Text Include="Assets\Shaders\rt_global.lib.hlsl">
