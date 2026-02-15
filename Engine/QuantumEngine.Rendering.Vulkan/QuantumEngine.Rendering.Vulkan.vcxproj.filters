@@ -5,12 +5,18 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="vulkan-pch.h" />
+    <ClInclude Include="Core\VulkanGraphicContext.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="vulkan-pch.cpp" />
+    <ClCompile Include="Core\VulkanGraphicContext.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">

@@ -40,10 +40,14 @@ namespace QuantumEngine::Rendering::Vulkan {
 
 		bool CheckQueueSupport(VkPhysicalDevice device);
 		Int32 FindQueueFamilies(VkPhysicalDevice device, UInt32 flag);
+		Int32 FindPresentFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
+		bool CheckDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*>& requiredExtensions);
+		bool CheckDeviceSwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 
 		VkInstance m_instance;
 		VkPhysicalDevice m_physicalDevice;
 		VkDevice m_graphicDevice;
-		VkQueue m_graphicsQueue;
+		UInt32 m_graphicsQueueFamilyIndex;
+		UInt32 m_surfaceQueueFamilyIndex;
 	};
 }

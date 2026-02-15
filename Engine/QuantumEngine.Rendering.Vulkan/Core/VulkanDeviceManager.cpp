@@ -1,6 +1,9 @@
 #include "vulkan-pch.h"
 #include "VulkanDeviceManager.h"
+#include "Platform/Application.h"
 #include "Platform/GraphicWindow.h"
+#include "VulkanGraphicContext.h"
+#include <set>
 
 bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 {
@@ -28,6 +31,9 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 	std::vector<const char*> enabledLayers;
 	std::vector<const char*> enabledExtensions;
+
+	enabledExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+	enabledExtensions.push_back("VK_KHR_win32_surface");
 
 #if defined(_DEBUG)
 
@@ -72,6 +78,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 	// Getting suitable physical device (preferably discrete GPU)
 	UInt32 deviceCount = 0;
+	auto tempWindow = Platform::Application::CreateGraphicWindow(Platform::WindowProperties{ 100, 100, L"Temp Window" });
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, nullptr);
 
 	if (deviceCount == 0) // No Vulkan compatible devices found
@@ -81,13 +88,35 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	vkEnumeratePhysicalDevices(m_instance, &deviceCount, devices.data());
 	VkPhysicalDeviceProperties deviceProperties;
 
-	bool deviceFound = false;
+	VkSurfaceKHR tempSurface;
+	VkWin32SurfaceCreateInfoKHR createInfo
+	{
+		.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+		.hinstance = GetModuleHandle(nullptr),
+		.hwnd = tempWindow->GetHandle(),
+	};
 
-	for(auto& devicePtr : devices) {
+	result = vkCreateWin32SurfaceKHR(m_instance, &createInfo, nullptr, &tempSurface);
+
+	if (result != VK_SUCCESS)
+		return false;
+
+	bool deviceFound = false;
+	Int32 surfaceFamilyIndex = -1;
+	std::vector<const char*> requiredDeviceExtensions;
+	requiredDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+	for (auto& devicePtr : devices) {
 		vkGetPhysicalDeviceProperties(devicePtr, &deviceProperties);
 		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
-			CheckQueueSupport(devicePtr)) 
+			CheckQueueSupport(devicePtr) &&
+			CheckDeviceExtensionSupport(devicePtr, requiredDeviceExtensions) &&
+			CheckDeviceSwapChainSupport(devicePtr, tempSurface))
 		{
+			surfaceFamilyIndex = FindPresentFamilies(devicePtr, tempSurface);
+			if(surfaceFamilyIndex == -1)
+				continue;
+
 			deviceFound = true;
 			m_physicalDevice = devicePtr;
 			break;
@@ -104,23 +133,30 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
 
-	VkDeviceQueueCreateInfo deviceQueueCreateInfo{
-		.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.queueFamilyIndex = (UInt32)graphicsQueueFamilyIndex,
-		.queueCount = 1,
-		.pQueuePriorities = &queuePriority,
-	};
+	std::set<UInt32> uniqueQueueFamilies = { (UInt32)graphicsQueueFamilyIndex, (UInt32)surfaceFamilyIndex };
+
+	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
+	for(auto& queueFamily : uniqueQueueFamilies) {
+		VkDeviceQueueCreateInfo queueCreateInfo{
+			.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+			.pNext = nullptr,
+			.flags = 0,
+			.queueFamilyIndex = queueFamily,
+			.queueCount = 1,
+			.pQueuePriorities = &queuePriority,
+		};
+		queueCreateInfos.push_back(queueCreateInfo);
+	}
 
 	VkDeviceCreateInfo deviceCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.queueCreateInfoCount = 1,
-		.pQueueCreateInfos = &deviceQueueCreateInfo,
-		.enabledExtensionCount = 0,
-		.ppEnabledExtensionNames = nullptr,
+		.queueCreateInfoCount = (UInt32)queueCreateInfos.size(),
+		.pQueueCreateInfos = queueCreateInfos.data(),
+		.enabledExtensionCount = (UInt32)requiredDeviceExtensions.size(),
+		.ppEnabledExtensionNames = requiredDeviceExtensions.data(),
 		.pEnabledFeatures = &deviceFeatures,
 	};
 
@@ -129,14 +165,22 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	if (result != VK_SUCCESS)
 		return false;
 
-	vkGetDeviceQueue(m_graphicDevice, (UInt32)graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+	m_graphicsQueueFamilyIndex = (UInt32)graphicsQueueFamilyIndex;
+	m_surfaceQueueFamilyIndex = (UInt32)surfaceFamilyIndex;
 
+	vkDestroySurfaceKHR(m_instance, tempSurface, nullptr);
+	DestroyWindow(tempWindow->GetHandle());
 	return true;
 }
 
 ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateHybridContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
 {
-	return nullptr;
+	ref<VulkanGraphicContext> context = std::make_shared<VulkanGraphicContext>(m_instance, m_physicalDevice, m_graphicDevice, m_graphicsQueueFamilyIndex, m_surfaceQueueFamilyIndex, window);
+
+	if(context->Initialize() == false)
+		return nullptr;
+
+	return context;
 }
 
 ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateRayTracingContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
@@ -169,6 +213,7 @@ QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::~VulkanDeviceManager()
 	vkDestroyDevice(m_graphicDevice, nullptr);
 	vkDestroyInstance(m_instance, nullptr);
 }
+#if defined(_DEBUG)
 
 VKAPI_ATTR VkBool32 VKAPI_CALL QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::DebugMessageCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData)
 {
@@ -181,6 +226,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL QuantumEngine::Rendering::Vulkan::VulkanDeviceMan
 	
 	return VK_FALSE;
 }
+
+#endif
 
 bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CheckQueueSupport(VkPhysicalDevice device)
 {
@@ -212,4 +259,51 @@ Int32 QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::FindQueueFamilies(V
 	}
 
 	return -1;
+}
+
+Int32 QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::FindPresentFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+{
+	UInt32 queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+	std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+	VkBool32 presentSupport = false;
+
+	for (int i = 0; i < queueFamilyCount; i++) {
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
+		if (presentSupport)
+			return i;
+	}
+
+	return -1;
+}
+
+bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CheckDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*>& requiredExtensions)
+{
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> tempExtensions(requiredExtensions.begin(), requiredExtensions.end());
+
+	for (const auto& extension : availableExtensions) {
+		tempExtensions.erase(extension.extensionName);
+	}
+
+	return tempExtensions.empty();
+}
+
+bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CheckDeviceSwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
+{
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
+
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount, nullptr);
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
+	return formatCount > 0 && presentModeCount > 0;
 }
