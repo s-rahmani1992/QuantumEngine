@@ -8,6 +8,15 @@
     <ClInclude Include="Core\VulkanGraphicContext.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\VulkanShaderRegistery.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Rasterization\SPIRVRasterizationProgram.h">
+      <Filter>Rasterization</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SPIRVShader.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -17,10 +26,25 @@
     <ClCompile Include="Core\VulkanGraphicContext.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\VulkanShaderRegistery.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterization\SPIRVRasterizationProgram.cpp">
+      <Filter>Rasterization</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SPIRVShader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\spirv_reflect.c">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
       <UniqueIdentifier>{b475a5a1-816c-4043-af04-96d3ccd2718b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Rasterization">
+      <UniqueIdentifier>{43f0f47e-c852-4e25-af8b-22e74c9e4e35}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

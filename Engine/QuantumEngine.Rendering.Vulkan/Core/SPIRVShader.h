@@ -1,0 +1,27 @@
+#pragma once
+#include "vulkan-pch.h"
+#include "Rendering/Shader.h"
+
+namespace QuantumEngine::Rendering::Vulkan{
+	enum Vulkan_Shader_Type {
+		Vulkan_Vertex = 0,
+		Vulkan_Fragment = 1,
+		Vulkan_Geometry = 2,
+	};
+
+	class SPIRVShader : public Shader
+	{
+	public:
+		SPIRVShader(Byte* byteCode, UInt64 codeSize, Vulkan_Shader_Type shaderType, VkDevice device);
+		~SPIRVShader() override;
+
+		inline Vulkan_Shader_Type GetShaderType() const { return m_shaderType; }
+
+	private:
+		Vulkan_Shader_Type m_shaderType;
+		VkDevice m_device;
+
+		VkShaderModule m_module;
+		SpvReflectShaderModule m_reflectionModule;
+	};
+}

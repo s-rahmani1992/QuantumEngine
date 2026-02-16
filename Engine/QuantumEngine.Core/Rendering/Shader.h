@@ -18,7 +18,7 @@ namespace QuantumEngine::Rendering {
 		inline void* GetByteCode() const { return m_byteCode; }
 		inline UInt64 GetCodeSize() const { return m_codeSize; }
 		inline Int32 GetShaderTypeId() const { return m_shaderTypeId; }
-	private:
+	protected:
 		Byte* m_byteCode;
 		UInt64 m_codeSize;
 		Int32 m_shaderTypeId;

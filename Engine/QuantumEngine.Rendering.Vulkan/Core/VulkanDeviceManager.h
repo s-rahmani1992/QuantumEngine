@@ -2,14 +2,16 @@
 
 #include "vulkan-pch.h"
 #include "Rendering/GPUDeviceManager.h"
-#include "Rendering/GraphicContext.h"
-#include "Rendering/GPUAssetManager.h" 
-#include "Rendering/ShaderRegistery.h" 
+#include "Rendering/GPUAssetManager.h"
 #include "Rendering/MaterialFactory.h"
 
 namespace QuantumEngine {
 	namespace Platform {
 		class GraphicWindow;
+	}
+
+	namespace Rendering {
+		class GraphicContext;
 	}
 }
 
