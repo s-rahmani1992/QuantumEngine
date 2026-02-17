@@ -17,6 +17,12 @@
     <ClInclude Include="Core\SPIRVShader.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\VulkanAssetManager.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\VulkanMeshController.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -36,6 +42,12 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Core\spirv_reflect.c">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\VulkanAssetManager.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\VulkanMeshController.cpp">
       <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>

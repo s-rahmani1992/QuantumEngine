@@ -6,6 +6,7 @@
 #define VK_USE_PLATFORM_WIN32_KHR
 #define BOOST_JSON_NO_LIB
 #define BOOST_CONTAINER_NO_LIB
+#include <BasicTypes.h>
 #include <vulkan/vulkan.h>
 #include <dxcapi.h>
 #include "Core/spirv_reflect.h"

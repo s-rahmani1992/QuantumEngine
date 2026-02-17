@@ -4,6 +4,7 @@
 #include "Platform/GraphicWindow.h"
 #include "VulkanGraphicContext.h"
 #include "VulkanShaderRegistery.h"
+#include "VulkanAssetManager.h"
 #include <set>
 
 bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
@@ -191,7 +192,8 @@ ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::
 
 ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateAssetManager()
 {
-	return nullptr;
+	ref<VulkanAssetManager> assetManager = std::make_shared<VulkanAssetManager>(m_graphicDevice, m_physicalDevice);
+	return assetManager;
 }
 
 ref<QuantumEngine::Rendering::ShaderRegistery> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateShaderRegistery()

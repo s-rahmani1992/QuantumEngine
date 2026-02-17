@@ -156,8 +156,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Core\SPIRVShader.h" />
+    <ClInclude Include="Core\VulkanAssetManager.h" />
     <ClInclude Include="Core\VulkanDeviceManager.h" />
     <ClInclude Include="Core\VulkanGraphicContext.h" />
+    <ClInclude Include="Core\VulkanMeshController.h" />
     <ClInclude Include="Core\VulkanShaderRegistery.h" />
     <ClInclude Include="Rasterization\SPIRVRasterizationProgram.h" />
     <ClInclude Include="vulkan-pch.h" />
@@ -170,8 +172,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Core\VulkanAssetManager.cpp" />
     <ClCompile Include="Core\VulkanDeviceManager.cpp" />
     <ClCompile Include="Core\VulkanGraphicContext.cpp" />
+    <ClCompile Include="Core\VulkanMeshController.cpp" />
     <ClCompile Include="Core\VulkanShaderRegistery.cpp" />
     <ClCompile Include="Rasterization\SPIRVRasterizationProgram.cpp" />
     <ClCompile Include="vulkan-pch.cpp">
