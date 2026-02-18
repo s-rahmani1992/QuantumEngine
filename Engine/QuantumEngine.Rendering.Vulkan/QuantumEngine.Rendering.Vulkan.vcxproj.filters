@@ -23,6 +23,9 @@
     <ClInclude Include="Core\VulkanMeshController.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Rasterization\VulkanRasterizationPipelineModule.h">
+      <Filter>Rasterization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -49,6 +52,9 @@
     </ClCompile>
     <ClCompile Include="Core\VulkanMeshController.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterization\VulkanRasterizationPipelineModule.cpp">
+      <Filter>Rasterization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -49,6 +49,8 @@ bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysic
 	if(vkAllocateMemory(m_device, &vbAllocInfo, nullptr, &m_vertexBufferMemory) != VK_SUCCESS)
 		return false;
 
+	vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
+
 	void* data;
 	vkMapMemory(m_device, m_vertexBufferMemory, 0, vBufferInfo.size, 0, &data);
 	m_mesh->CopyVertexData((Byte*)data);
@@ -80,6 +82,8 @@ bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysic
 
 	if (vkAllocateMemory(m_device, &ibAllocInfo, nullptr, &m_indexBufferMemory) != VK_SUCCESS)
 		return false;
+
+	vkBindBufferMemory(m_device, m_indexBuffer, m_indexBufferMemory, 0);
 
 	vkMapMemory(m_device, m_indexBufferMemory, 0, iBufferInfo.size, 0, &data);
 	m_mesh->CopyIndexData((Byte*)data);

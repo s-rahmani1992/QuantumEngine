@@ -4,7 +4,7 @@
 #include "Camera/Camera.h"
 #include "Light/Lights.h"
 #include "Texture2D.h"
-#include "../Rendering/ShaderProgram.h"
+#include "../Rendering/Material.h"
 #include "Behaviour.h"
 #include <vector>
 

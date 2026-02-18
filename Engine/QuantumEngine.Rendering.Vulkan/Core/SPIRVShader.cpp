@@ -3,8 +3,8 @@
 #include "SPIRVShader.h"
 #include "spirv_reflect.h"
 
-QuantumEngine::Rendering::Vulkan::SPIRVShader::SPIRVShader(Byte* byteCode, UInt64 codeSize, Vulkan_Shader_Type shaderType, VkDevice device)
-	:Shader(byteCode, codeSize, (Int32)shaderType), m_device(device), m_shaderType(shaderType)
+QuantumEngine::Rendering::Vulkan::SPIRVShader::SPIRVShader(Byte* byteCode, UInt64 codeSize, Vulkan_Shader_Type shaderType, VkDevice device, const std::string& main)
+	:Shader(byteCode, codeSize, (Int32)shaderType), m_device(device), m_shaderType(shaderType), m_mainEntry(main)
 {
 	VkShaderModuleCreateInfo shaderModuleCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,

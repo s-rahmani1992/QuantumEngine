@@ -1,6 +1,8 @@
 #include "vulkan-pch.h"
 #include "VulkanGraphicContext.h"
 #include "Platform/GraphicWindow.h"
+#include "Core/Scene.h"
+#include "Rasterization/VulkanRasterizationPipelineModule.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::VulkanGraphicContext(const VkInstance vkInstance, VkPhysicalDevice physicalDevice, VkDevice logicDevice, UInt32 graphicsQueueFamilyIndex, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	:m_instance(vkInstance), m_physicalDevice(physicalDevice), m_logicDevice(logicDevice), 
@@ -237,7 +239,12 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::RegisterShaderRegis
 
 bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const ref<Scene>& scene)
 {
-	return false;
+	for (auto& entity : scene->entities) {
+		ref<Rasterization::VulkanRasterizationPipelineModule> rasterizationModule = std::make_shared<Rasterization::VulkanRasterizationPipelineModule>(m_logicDevice);
+		if(rasterizationModule->Initialize(entity, m_renderPass))
+			m_rasterizationModules.push_back(rasterizationModule);
+	}
+	return true;
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
@@ -273,6 +280,26 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 
 	vkCmdBeginRenderPass(m_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	VkViewport viewport{};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)m_swapChainCapability.currentExtent.width;
+	viewport.height = (float)m_swapChainCapability.currentExtent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	vkCmdSetViewport(m_commandBuffer, 0, 1, &viewport);
+
+	VkRect2D scissor{};
+	scissor.offset = { 0, 0 };
+	scissor.extent = m_swapChainCapability.currentExtent;
+
+	vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
+
+
+	for(auto& module : m_rasterizationModules) {
+		module->RenderCommand(m_commandBuffer);
+	}
 	// Render Objects here
 
 	vkCmdEndRenderPass(m_commandBuffer);

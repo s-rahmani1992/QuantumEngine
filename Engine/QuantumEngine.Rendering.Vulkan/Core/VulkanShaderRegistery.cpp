@@ -115,7 +115,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 			std::wstring wTarget = CharToString(target.c_str());
 			m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
 
-			auto vertexShader = CompileShaderStage(&sourceBuffer, Vulkan_Vertex, stageError);
+			auto vertexShader = CompileShaderStage(&sourceBuffer, Vulkan_Vertex, WStringToString(wMain), stageError);
 
 			if (vertexShader == nullptr) {
 				error = "Error in compiling Vertex Stage: " + stageError;
@@ -135,7 +135,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 			std::wstring wTarget = CharToString(target.c_str());
 			m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
 
-			auto geometryShader = CompileShaderStage(&sourceBuffer, Vulkan_Geometry, stageError);
+			auto geometryShader = CompileShaderStage(&sourceBuffer, Vulkan_Geometry, WStringToString(wMain), stageError);
 
 			if (geometryShader == nullptr) {
 				error = "Error in compiling Geometry Stage: " + stageError;
@@ -155,7 +155,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 			std::wstring wTarget = CharToString(target.c_str());
 			m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
 
-			auto pixelShader = CompileShaderStage(&sourceBuffer, Vulkan_Fragment, stageError);
+			auto pixelShader = CompileShaderStage(&sourceBuffer, Vulkan_Fragment, WStringToString(wMain), stageError);
 
 			if (pixelShader == nullptr) {
 				error = "Error in compiling Pixel Stage: " + stageError;
@@ -165,12 +165,12 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 			shaders.push_back(pixelShader);
 		}
 
-		finalProgram = std::make_shared<Rasterization::SPIRVRasterizationProgram>(shaders);
+		finalProgram = std::make_shared<Rasterization::SPIRVRasterizationProgram>(shaders, m_device);
 	}
 	return finalProgram;
 }
 
-ref<QuantumEngine::Rendering::Vulkan::SPIRVShader> QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::CompileShaderStage(const DxcBuffer* sourceBuffer, Vulkan_Shader_Type shaderType, std::string& error)
+ref<QuantumEngine::Rendering::Vulkan::SPIRVShader> QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::CompileShaderStage(const DxcBuffer* sourceBuffer, Vulkan_Shader_Type shaderType, const std::string entryName, std::string& error)
 {
 	ComPtr<IDxcBlob> pshaderObjectData;
 
@@ -205,6 +205,6 @@ ref<QuantumEngine::Rendering::Vulkan::SPIRVShader> QuantumEngine::Rendering::Vul
 		return nullptr;
 	}
 
-	ref<SPIRVShader> shader = std::make_shared<SPIRVShader>((Byte*)pshaderObjectData->GetBufferPointer(), pshaderObjectData->GetBufferSize(), shaderType, m_device);
+	ref<SPIRVShader> shader = std::make_shared<SPIRVShader>((Byte*)pshaderObjectData->GetBufferPointer(), pshaderObjectData->GetBufferSize(), shaderType, m_device, entryName);
 	return shader;
 }

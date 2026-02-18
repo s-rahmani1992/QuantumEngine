@@ -10,6 +10,10 @@ namespace QuantumEngine {
 }
 
 namespace QuantumEngine::Rendering::Vulkan {
+	namespace Rasterization {
+		class VulkanRasterizationPipelineModule;
+	}
+
 	class VulkanGraphicContext : public GraphicContext
 	{
 	public:
@@ -47,5 +51,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkSemaphore m_imageAvailableSemaphore;
 		VkSemaphore m_renderFinishedSemaphore;
 		VkFence m_fence;
+
+		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_rasterizationModules;
 	};
 }

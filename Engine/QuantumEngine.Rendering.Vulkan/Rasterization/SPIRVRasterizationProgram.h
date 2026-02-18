@@ -11,12 +11,17 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 	class SPIRVRasterizationProgram : public ShaderProgram
 	{
 	public:
-		SPIRVRasterizationProgram(const std::vector<ref<SPIRVShader>>& spirvShaders);
-		virtual ~SPIRVRasterizationProgram() = default;
-
+		SPIRVRasterizationProgram(const std::vector<ref<SPIRVShader>>& spirvShaders, const VkDevice device);
+		virtual ~SPIRVRasterizationProgram() override;
+		inline std::vector<VkPipelineShaderStageCreateInfo>& GetStageInfos() { return m_stageInfos; }
+		inline VkPipelineLayout GetPipelineLayout() const { return m_pipelineLayout; }
 	private:
 		ref<SPIRVShader> m_vertexShader;
 		ref<SPIRVShader> m_geometryShader;
 		ref<SPIRVShader> m_pixelShader;
+
+		const VkDevice m_device;
+		std::vector<VkPipelineShaderStageCreateInfo> m_stageInfos;
+		VkPipelineLayout m_pipelineLayout;
 	};
 }

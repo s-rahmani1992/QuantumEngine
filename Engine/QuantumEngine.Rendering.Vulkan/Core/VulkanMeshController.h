@@ -13,6 +13,8 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VulkanMeshController(const ref<Mesh>& mesh, const VkDevice device);
 		~VulkanMeshController() override;
 		bool Initialize(VkPhysicalDevice physicalDevice);
+		inline VkBuffer GetVertexBuffer() { return m_vertexBuffer; }
+		inline VkBuffer GetIndexBuffer() { return m_indexBuffer; }
 	private:
 		UInt32 GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags properties, const VkPhysicalDeviceMemoryProperties* memoryProperties);
 

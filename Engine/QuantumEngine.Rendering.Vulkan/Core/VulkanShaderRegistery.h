@@ -19,7 +19,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		virtual ref<ShaderProgram> CompileProgram(const std::wstring& fileName, std::string& error) override;
 	
 	private:
-		ref<SPIRVShader> CompileShaderStage(const DxcBuffer* sourceBuffer, Vulkan_Shader_Type shaderType, std::string& error);
+		ref<SPIRVShader> CompileShaderStage(const DxcBuffer* sourceBuffer, Vulkan_Shader_Type shaderType, const std::string entryName, std::string& error);
 
 		VkDevice m_device;
 
