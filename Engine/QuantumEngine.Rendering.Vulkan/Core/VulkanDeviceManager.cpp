@@ -193,6 +193,10 @@ ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::
 ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateAssetManager()
 {
 	ref<VulkanAssetManager> assetManager = std::make_shared<VulkanAssetManager>(m_graphicDevice, m_physicalDevice);
+	
+	if(assetManager->Initializes(m_graphicsQueueFamilyIndex) == false)
+		return nullptr;
+
 	return assetManager;
 }
 

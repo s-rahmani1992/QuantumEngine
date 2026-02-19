@@ -1,6 +1,7 @@
 #include "vulkan-pch.h"
 #include "VulkanMeshController.h"
 #include "Core/Mesh.h"
+#include "VulkanUtilities.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanMeshController::VulkanMeshController(const ref<Mesh>& mesh, const VkDevice device)
 	: m_mesh(mesh), m_device(device)
@@ -16,19 +17,15 @@ QuantumEngine::Rendering::Vulkan::VulkanMeshController::~VulkanMeshController()
 	vkFreeMemory(m_device, m_indexBufferMemory, nullptr);
 }
 
-bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysicalDevice physicalDevice)
+bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(const VkPhysicalDeviceMemoryProperties* memoryProperties)
 {
-	m_physicalDevice = physicalDevice;
-	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
-
 	// Create Vertex Buffer
 	VkBufferCreateInfo vBufferInfo{
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
 		.size = sizeof(Vertex) * m_mesh->GetVertexCount(),
-		.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 0,
 		.pQueueFamilyIndices = nullptr,
@@ -43,7 +40,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysic
 	VkMemoryAllocateInfo vbAllocInfo{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.allocationSize = vbMemoryRequirements.size,
-		.memoryTypeIndex = GetMemoryTypeIndex( &vbMemoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &memProperties),
+		.memoryTypeIndex = GetMemoryTypeIndex( &vbMemoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryProperties),
 	};
 
 	if(vkAllocateMemory(m_device, &vbAllocInfo, nullptr, &m_vertexBufferMemory) != VK_SUCCESS)
@@ -51,18 +48,13 @@ bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysic
 
 	vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
 
-	void* data;
-	vkMapMemory(m_device, m_vertexBufferMemory, 0, vBufferInfo.size, 0, &data);
-	m_mesh->CopyVertexData((Byte*)data);
-	vkUnmapMemory(m_device, m_vertexBufferMemory);
-
 	// Create Index Buffer
 	VkBufferCreateInfo iBufferInfo{
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
 		.size = sizeof(UInt32) * m_mesh->GetIndexCount(),
-		.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
 		.queueFamilyIndexCount = 0,
 		.pQueueFamilyIndices = nullptr,
@@ -77,7 +69,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysic
 	VkMemoryAllocateInfo ibAllocInfo{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.allocationSize = ibMemoryRequirements.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&ibMemoryRequirements, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &memProperties),
+		.memoryTypeIndex = GetMemoryTypeIndex(&ibMemoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryProperties),
 	};
 
 	if (vkAllocateMemory(m_device, &ibAllocInfo, nullptr, &m_indexBufferMemory) != VK_SUCCESS)
@@ -85,20 +77,17 @@ bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(VkPhysic
 
 	vkBindBufferMemory(m_device, m_indexBuffer, m_indexBufferMemory, 0);
 
-	vkMapMemory(m_device, m_indexBufferMemory, 0, iBufferInfo.size, 0, &data);
-	m_mesh->CopyIndexData((Byte*)data);
-	vkUnmapMemory(m_device, m_indexBufferMemory);
-
 	return true;
 }
 
-UInt32 QuantumEngine::Rendering::Vulkan::VulkanMeshController::GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags targetFlags, const VkPhysicalDeviceMemoryProperties* memoryProperties)
+void QuantumEngine::Rendering::Vulkan::VulkanMeshController::CopyCommand(VkCommandBuffer commandBuffer, VkBuffer stageBuffer, UInt32 offset)
 {
-	for (UInt32 i = 0; i < memoryProperties->memoryTypeCount; i++) {
-		if ((memoryRequirement->memoryTypeBits & (1 << i)) && (memoryProperties->memoryTypes[i].propertyFlags & targetFlags) == targetFlags) {
-			return i;
-		}
-	}
-	
-	return UINT32_MAX;
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = offset;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = sizeof(Vertex) * m_mesh->GetVertexCount();
+	vkCmdCopyBuffer(commandBuffer, stageBuffer, m_vertexBuffer, 1, &copyRegion);
+	copyRegion.srcOffset = offset + sizeof(Vertex) * m_mesh->GetVertexCount();
+	copyRegion.size = sizeof(UInt32) * m_mesh->GetIndexCount();
+	vkCmdCopyBuffer(commandBuffer, stageBuffer, m_indexBuffer, 1, &copyRegion);
 }

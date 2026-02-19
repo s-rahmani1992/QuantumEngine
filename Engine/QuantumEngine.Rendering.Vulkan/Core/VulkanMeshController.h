@@ -12,15 +12,15 @@ namespace QuantumEngine::Rendering::Vulkan {
 	public: 		
 		VulkanMeshController(const ref<Mesh>& mesh, const VkDevice device);
 		~VulkanMeshController() override;
-		bool Initialize(VkPhysicalDevice physicalDevice);
+		bool Initialize(const VkPhysicalDeviceMemoryProperties* memoryProperties);
 		inline VkBuffer GetVertexBuffer() { return m_vertexBuffer; }
 		inline VkBuffer GetIndexBuffer() { return m_indexBuffer; }
+		void CopyCommand(VkCommandBuffer commandBuffer, VkBuffer stageBuffer, UInt32 offset);
+	
 	private:
-		UInt32 GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags properties, const VkPhysicalDeviceMemoryProperties* memoryProperties);
 
 		ref<Mesh> m_mesh;
 		VkDevice m_device;
-		VkPhysicalDevice m_physicalDevice;
 
 		VkBuffer m_vertexBuffer;
 		VkDeviceMemory m_vertexBufferMemory;
