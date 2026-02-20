@@ -17,6 +17,7 @@ QuantumEngine::Rendering::Vulkan::Rasterization::SPIRVRasterizationProgram::SPIR
 				.module = shader->GetShaderModule(),
 				.pName = shader->GetEntryPoint().c_str(),
 				});
+			m_reflection.AddShaderReflection(shader->GetReflectionModule());
 		}
 		else if (shader->GetShaderType() == Vulkan_Vertex) {
 			m_geometryShader = shader;
@@ -28,6 +29,7 @@ QuantumEngine::Rendering::Vulkan::Rasterization::SPIRVRasterizationProgram::SPIR
 				.module = shader->GetShaderModule(),
 				.pName = shader->GetEntryPoint().c_str(),
 				});
+			m_reflection.AddShaderReflection(shader->GetReflectionModule());
 		}
 		else if (shader->GetShaderType() == Vulkan_Fragment) {
 			m_pixelShader = shader;
@@ -39,17 +41,11 @@ QuantumEngine::Rendering::Vulkan::Rasterization::SPIRVRasterizationProgram::SPIR
 				.module = shader->GetShaderModule(),
 				.pName = shader->GetEntryPoint().c_str(),
 				});
+			m_reflection.AddShaderReflection(shader->GetReflectionModule());
 		}
 	}
 
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 0; // Optional
-	pipelineLayoutInfo.pSetLayouts = nullptr; // Optional
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-	vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
+	m_pipelineLayout = m_reflection.CreatePipelineLayout(device);
 }
 
 QuantumEngine::Rendering::Vulkan::Rasterization::SPIRVRasterizationProgram::~SPIRVRasterizationProgram()

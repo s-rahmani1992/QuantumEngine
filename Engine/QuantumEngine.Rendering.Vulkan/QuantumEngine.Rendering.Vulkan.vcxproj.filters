@@ -29,6 +29,15 @@
     <ClInclude Include="Core\VulkanUtilities.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\SPIRVReflection.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\VulkanMaterialFactory.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Rasterization\VulkanRasterizationMaterial.h">
+      <Filter>Rasterization</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -61,6 +70,15 @@
     </ClCompile>
     <ClCompile Include="Core\VulkanUtilities.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SPIRVReflection.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\VulkanMaterialFactory.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Rasterization\VulkanRasterizationMaterial.cpp">
+      <Filter>Rasterization</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

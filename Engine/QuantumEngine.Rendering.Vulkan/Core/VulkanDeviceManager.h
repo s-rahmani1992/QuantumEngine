@@ -2,7 +2,6 @@
 
 #include "vulkan-pch.h"
 #include "Rendering/GPUDeviceManager.h"
-#include "Rendering/MaterialFactory.h"
 
 namespace QuantumEngine {
 	namespace Platform {

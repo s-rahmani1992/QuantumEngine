@@ -11,6 +11,8 @@ namespace QuantumEngine {
 }
 
 namespace QuantumEngine::Rendering::Vulkan::Rasterization {
+	class VulkanRasterizationMaterial;
+
 	class VulkanRasterizationPipelineModule
 	{
 	public:
@@ -28,5 +30,6 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		VkPipeline m_graphicsPipeline;
 		ref<Mesh> m_mesh;
 		ref<VulkanMeshController> m_meshController;
+		ref<VulkanRasterizationMaterial> m_material;
 	};
 }

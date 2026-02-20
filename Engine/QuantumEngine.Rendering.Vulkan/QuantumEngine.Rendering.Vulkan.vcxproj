@@ -155,18 +155,22 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Core\SPIRVReflection.h" />
     <ClInclude Include="Core\SPIRVShader.h" />
     <ClInclude Include="Core\VulkanAssetManager.h" />
     <ClInclude Include="Core\VulkanDeviceManager.h" />
     <ClInclude Include="Core\VulkanGraphicContext.h" />
+    <ClInclude Include="Core\VulkanMaterialFactory.h" />
     <ClInclude Include="Core\VulkanMeshController.h" />
     <ClInclude Include="Core\VulkanShaderRegistery.h" />
     <ClInclude Include="Core\VulkanUtilities.h" />
     <ClInclude Include="Rasterization\SPIRVRasterizationProgram.h" />
+    <ClInclude Include="Rasterization\VulkanRasterizationMaterial.h" />
     <ClInclude Include="Rasterization\VulkanRasterizationPipelineModule.h" />
     <ClInclude Include="vulkan-pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Core\SPIRVReflection.cpp" />
     <ClCompile Include="Core\SPIRVShader.cpp" />
     <ClCompile Include="Core\spirv_reflect.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -177,10 +181,12 @@
     <ClCompile Include="Core\VulkanAssetManager.cpp" />
     <ClCompile Include="Core\VulkanDeviceManager.cpp" />
     <ClCompile Include="Core\VulkanGraphicContext.cpp" />
+    <ClCompile Include="Core\VulkanMaterialFactory.cpp" />
     <ClCompile Include="Core\VulkanMeshController.cpp" />
     <ClCompile Include="Core\VulkanShaderRegistery.cpp" />
     <ClCompile Include="Core\VulkanUtilities.cpp" />
     <ClCompile Include="Rasterization\SPIRVRasterizationProgram.cpp" />
+    <ClCompile Include="Rasterization\VulkanRasterizationMaterial.cpp" />
     <ClCompile Include="Rasterization\VulkanRasterizationPipelineModule.cpp" />
     <ClCompile Include="vulkan-pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

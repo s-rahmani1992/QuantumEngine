@@ -5,6 +5,7 @@
 #include "VulkanGraphicContext.h"
 #include "VulkanShaderRegistery.h"
 #include "VulkanAssetManager.h"
+#include "VulkanMaterialFactory.h"
 #include <set>
 
 bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
@@ -208,7 +209,8 @@ ref<QuantumEngine::Rendering::ShaderRegistery> QuantumEngine::Rendering::Vulkan:
 
 ref<QuantumEngine::Rendering::MaterialFactory> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateMaterialFactory()
 {
-	return nullptr;
+	ref<VulkanMaterialFactory> materialFactory = std::make_shared<VulkanMaterialFactory>();
+	return materialFactory;
 }
 
 QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::~VulkanDeviceManager()

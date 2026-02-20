@@ -33,6 +33,8 @@ namespace QuantumEngine::Rendering::Vulkan{
 		/// <returns></returns>
 		inline VkShaderModule GetShaderModule() const { return m_module; }
 
+		inline SpvReflectShaderModule* GetReflectionModule() { return &m_reflectionModule; }
+
 	private:
 		Vulkan_Shader_Type m_shaderType;
 		VkDevice m_device;

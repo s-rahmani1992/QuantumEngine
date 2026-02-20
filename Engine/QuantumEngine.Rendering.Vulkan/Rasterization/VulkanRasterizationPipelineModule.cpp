@@ -6,6 +6,7 @@
 #include "SPIRVRasterizationProgram.h"
 #include "Rendering/Renderer.h"
 #include "Rendering/Material.h"
+#include "VulkanRasterizationMaterial.h"
 
 VkVertexInputBindingDescription QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelineModule::s_bindingDescriptions = {
 	.binding = 0,
@@ -47,6 +48,7 @@ void QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 	auto vertexBuffer = m_meshController->GetVertexBuffer();
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	m_material->BindValues(commandBuffer);
 	vkCmdDrawIndexed(commandBuffer, m_mesh->GetIndexCount(), 1, 0, 0, 0);
 }
 
@@ -55,7 +57,8 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 	auto program = std::dynamic_pointer_cast<SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
 	m_mesh = entity->GetRenderer()->GetMesh();
 	m_meshController = std::dynamic_pointer_cast<VulkanMeshController>(m_mesh->GetGPUHandle());
-
+	m_material = std::make_shared<VulkanRasterizationMaterial>(entity->GetRenderer()->GetMaterial());
+	
 	VkPipelineInputAssemblyStateCreateInfo pInputAssemblyInfo{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
 		.pNext = nullptr,
