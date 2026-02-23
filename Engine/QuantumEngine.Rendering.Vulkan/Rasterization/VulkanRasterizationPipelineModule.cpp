@@ -7,6 +7,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/Material.h"
 #include "VulkanRasterizationMaterial.h"
+#include "SPIRVRasterizationProgram.h"
 
 VkVertexInputBindingDescription QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelineModule::s_bindingDescriptions = {
 	.binding = 0,
@@ -49,15 +50,17 @@ void QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	m_material->BindValues(commandBuffer);
+	m_material->BindDynamicValues(commandBuffer, m_offset.data(), (UInt32)m_offset.size());
 	vkCmdDrawIndexed(commandBuffer, m_mesh->GetIndexCount(), 1, 0, 0, 0);
 }
 
-bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelineModule::Initialize(const ref<GameEntity>& entity, const VkRenderPass renderPass)
+bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelineModule::Initialize(const ref<GameEntity>& entity, ref<VulkanRasterizationMaterial> material, const VkRenderPass renderPass)
 {
-	auto program = std::dynamic_pointer_cast<SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
+	m_program = std::dynamic_pointer_cast<SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
+	m_offset = std::vector<UInt32>(m_program->GetReflection().GetDynamicDescriptorCount(), 0);
 	m_mesh = entity->GetRenderer()->GetMesh();
 	m_meshController = std::dynamic_pointer_cast<VulkanMeshController>(m_mesh->GetGPUHandle());
-	m_material = std::make_shared<VulkanRasterizationMaterial>(entity->GetRenderer()->GetMaterial());
+	m_material = material;
 	
 	VkPipelineInputAssemblyStateCreateInfo pInputAssemblyInfo{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
@@ -135,7 +138,7 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 		.pDynamicStates = dynamicStates.data(),
 	};
 
-	auto& stages = program->GetStageInfos();
+	auto& stages = m_program->GetStageInfos();
 	
 	VkGraphicsPipelineCreateInfo pipelineCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
@@ -152,7 +155,7 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 		.pDepthStencilState = nullptr,
 		.pColorBlendState = &colorBlendStateInfo,
 		.pDynamicState = &dynamicStateInfo,
-		.layout = program->GetPipelineLayout(),
+		.layout = m_program->GetPipelineLayout(),
 		.renderPass = renderPass,
 		.subpass = 0,
 		.basePipelineHandle = VK_NULL_HANDLE,
@@ -165,4 +168,14 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 	}
 
 	return true;
+}
+
+void QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelineModule::SetDescriptorOffset(const std::string& name, UInt32 offset)
+{
+	auto descriptorData = m_program->GetReflection().GetDescriptorData(name);
+
+	if (descriptorData == nullptr)
+		return;
+
+	m_offset[descriptorData->offsetIndex] = offset;
 }

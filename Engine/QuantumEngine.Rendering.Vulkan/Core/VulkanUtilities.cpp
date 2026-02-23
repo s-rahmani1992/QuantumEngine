@@ -11,3 +11,8 @@ UInt32 GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemor
 
 	return UINT32_MAX;
 }
+
+bool CreateBuffer(const VkPhysicalDevice physicalDevice, const VkDevice device, UInt32 size, UInt32 count, VkBuffer* buffer, VkDeviceMemory* memory)
+{
+	return false;
+}

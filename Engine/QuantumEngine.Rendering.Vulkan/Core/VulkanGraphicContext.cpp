@@ -2,18 +2,29 @@
 #include "VulkanGraphicContext.h"
 #include "Platform/GraphicWindow.h"
 #include "Core/Scene.h"
+#include "Rasterization/VulkanRasterizationMaterial.h"
+#include "Rasterization/SPIRVRasterizationProgram.h"
 #include "Rasterization/VulkanRasterizationPipelineModule.h"
+#include "SPIRVReflection.h"
+#include "VulkanBufferFactory.h"
+#include "Rendering/Renderer.h"
+#include "Core/Transform.h"
+#include "VulkanUtilities.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::VulkanGraphicContext(const VkInstance vkInstance, VkPhysicalDevice physicalDevice, VkDevice logicDevice, UInt32 graphicsQueueFamilyIndex, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	:m_instance(vkInstance), m_physicalDevice(physicalDevice), m_logicDevice(logicDevice), 
 	m_graphicsQueueFamilyIndex(graphicsQueueFamilyIndex), m_window(window)
 {
+	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 	vkGetDeviceQueue(m_logicDevice, graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 	vkGetDeviceQueue(m_logicDevice, surfaceQueueFamilyIndex, 0, &m_presentQueue);
 }
 
 QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::~VulkanGraphicContext()
 {
+	vkDestroyBuffer(m_logicDevice, m_transformBuffer, nullptr);
+	vkFreeMemory(m_logicDevice, m_transformBufferMemory, nullptr);
+
 	vkDestroySemaphore(m_logicDevice, m_imageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(m_logicDevice, m_renderFinishedSemaphore, nullptr);
 	vkDestroyFence(m_logicDevice, m_fence, nullptr);
@@ -33,8 +44,9 @@ QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::~VulkanGraphicContext()
 	vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
 }
 
-bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Initialize()
+bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Initialize(const ref<VulkanBufferFactory> bufferFactory)
 {
+	m_bufferFactory = bufferFactory;
 	// Create Surface
 	VkWin32SurfaceCreateInfoKHR surfaceCreateInfo
 	{
@@ -239,16 +251,82 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::RegisterShaderRegis
 
 bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const ref<Scene>& scene)
 {
+	std::map<ref<Material>, ref<Rasterization::VulkanRasterizationMaterial>> usedMaterials;
+	UInt32 index = 0;
+	m_entityGPUList.reserve(scene->entities.size());
+
+	m_bufferFactory->CreateBuffer(sizeof(TransformGPU), scene->entities.size()
+		, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_transformBuffer, &m_transformBufferMemory, &m_transformStride);
+
 	for (auto& entity : scene->entities) {
+		m_entityGPUList.push_back({entity, index });
+
+		auto material = entity->GetRenderer()->GetMaterial();
+		auto matIT = usedMaterials.find(material);
+		
+		if (matIT == usedMaterials.end()) {
+			matIT = usedMaterials.emplace(material, std::make_shared<Rasterization::VulkanRasterizationMaterial>(material, m_logicDevice)).first;
+		}
+
 		ref<Rasterization::VulkanRasterizationPipelineModule> rasterizationModule = std::make_shared<Rasterization::VulkanRasterizationPipelineModule>(m_logicDevice);
-		if(rasterizationModule->Initialize(entity, m_renderPass))
+		if(rasterizationModule->Initialize(entity, (*matIT).second, m_renderPass)){
 			m_rasterizationModules.push_back(rasterizationModule);
+			rasterizationModule->SetDescriptorOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, index * m_transformStride);
+		}
+
+		auto program = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
+		index++;
 	}
+
+	std::vector<VkDescriptorPoolSize> poolSizes;
+	poolSizes.reserve(20);
+
+	for (auto& matPair : usedMaterials) {
+		auto program = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>(matPair.first->GetProgram());
+		auto& reflection = program->GetReflection();
+		auto& descriptors = reflection.GetDescriptors();
+
+		for (auto& descriptor : descriptors) {
+			auto it = std::find_if(poolSizes.begin(), poolSizes.end(), [descriptor](const VkDescriptorPoolSize& poolSize) {
+				return descriptor.descriptorType == poolSize.type;
+				});
+
+			if (it != poolSizes.end())
+				(*it).descriptorCount++;
+			else
+				poolSizes.push_back(VkDescriptorPoolSize{
+				.type = descriptor.descriptorType,
+				.descriptorCount = 1,
+					});
+		}
+	}
+
+	VkDescriptorPoolCreateInfo poolCreateInfo{
+		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.maxSets = (UInt32)usedMaterials.size(),
+		.poolSizeCount = (UInt32)poolSizes.size(),
+		.pPoolSizes = poolSizes.data(),
+
+	};
+
+	if (vkCreateDescriptorPool(m_logicDevice, &poolCreateInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
+		return false;
+
+	for (auto& matPair : usedMaterials) {
+		matPair.second->Initialize(m_descriptorPool);
+		matPair.second->WriteBuffer(HLSL_OBJECT_TRANSFORM_DATA_NAME, m_transformBuffer, m_transformStride);
+	}
+
 	return true;
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 {
+	UpdateTransforms();
+
 	vkResetFences(m_logicDevice, 1, &m_fence);
 
 	UInt32 imageIndex;
@@ -335,4 +413,20 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 	vkQueueWaitIdle(m_presentQueue);
 
 	vkWaitForFences(m_logicDevice, 1, &m_fence, VK_TRUE, 20000);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()
+{
+	void* data;
+	vkMapMemory(m_logicDevice, m_transformBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+
+	for (auto& entityGPU : m_entityGPUList) {
+		m_transformData.modelMatrix = entityGPU.gameEntity->GetTransform()->Matrix();
+		m_transformData.rotationMatrix = entityGPU.gameEntity->GetTransform()->RotateMatrix();
+		
+		std::memcpy((Byte*)data + entityGPU.index * m_transformStride, &m_transformData, sizeof(TransformGPU));
+	}
+
+
+	vkUnmapMemory(m_logicDevice, m_transformBufferMemory);
 }

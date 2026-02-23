@@ -38,6 +38,9 @@
     <ClInclude Include="Rasterization\VulkanRasterizationMaterial.h">
       <Filter>Rasterization</Filter>
     </ClInclude>
+    <ClInclude Include="Core\VulkanBufferFactory.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -79,6 +82,9 @@
     </ClCompile>
     <ClCompile Include="Rasterization\VulkanRasterizationMaterial.cpp">
       <Filter>Rasterization</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\VulkanBufferFactory.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

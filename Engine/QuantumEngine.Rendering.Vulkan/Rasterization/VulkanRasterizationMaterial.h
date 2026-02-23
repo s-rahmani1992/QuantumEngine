@@ -10,9 +10,11 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 
 	class VulkanRasterizationMaterial {
 	public:
-		VulkanRasterizationMaterial(const ref<Material>& material);
+		VulkanRasterizationMaterial(const ref<Material>& material, const VkDevice device);
+		bool Initialize(const VkDescriptorPool pool);
 		void BindValues(VkCommandBuffer commandBuffer);
-
+		void BindDynamicValues(VkCommandBuffer commandBuffer, UInt32* offsets, UInt32 offsetCount);
+		void WriteBuffer(const std::string name, const VkBuffer buffer, UInt32 stride);
 	private:
 		struct pushConstantData {
 			UInt32 offset;
@@ -21,8 +23,10 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		};
 
 		ref<Material> m_material;
+		VkDevice m_device;
 		ref<SPIRVRasterizationProgram> m_program;
 		VkPipelineLayout m_pipelineLayout;
-		std::vector<pushConstantData> m_pushConstantValues;
+		std::vector<pushConstantData> m_pushConstantValues; 
+		std::vector<VkDescriptorSet> m_descriptorSets;
 	};
 }

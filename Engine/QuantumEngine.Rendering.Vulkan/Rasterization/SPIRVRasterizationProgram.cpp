@@ -45,10 +45,15 @@ QuantumEngine::Rendering::Vulkan::Rasterization::SPIRVRasterizationProgram::SPIR
 		}
 	}
 
-	m_pipelineLayout = m_reflection.CreatePipelineLayout(device);
+	m_reflection.Initializes();
+	m_descriptorSetLayout.resize(m_reflection.GetDescriptorLayoutCount());
+	m_reflection.CreatePipelineLayout(device, &m_pipelineLayout, m_descriptorSetLayout.data());
 }
 
 QuantumEngine::Rendering::Vulkan::Rasterization::SPIRVRasterizationProgram::~SPIRVRasterizationProgram()
 {
 	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+
+	for(auto& descriptorLayout : m_descriptorSetLayout)
+		vkDestroyDescriptorSetLayout(m_device, descriptorLayout, nullptr);
 }

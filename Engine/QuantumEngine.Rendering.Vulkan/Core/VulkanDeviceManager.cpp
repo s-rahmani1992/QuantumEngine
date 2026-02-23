@@ -6,6 +6,7 @@
 #include "VulkanShaderRegistery.h"
 #include "VulkanAssetManager.h"
 #include "VulkanMaterialFactory.h"
+#include "VulkanBufferFactory.h"
 #include <set>
 
 bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
@@ -180,7 +181,7 @@ ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::
 {
 	ref<VulkanGraphicContext> context = std::make_shared<VulkanGraphicContext>(m_instance, m_physicalDevice, m_graphicDevice, m_graphicsQueueFamilyIndex, m_surfaceQueueFamilyIndex, window);
 
-	if(context->Initialize() == false)
+	if(context->Initialize(CreateBufferFactory()) == false)
 		return nullptr;
 
 	return context;
@@ -316,4 +317,9 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CheckDeviceSwapChain
 	uint32_t presentModeCount;
 	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 	return formatCount > 0 && presentModeCount > 0;
+}
+
+ref<QuantumEngine::Rendering::Vulkan::VulkanBufferFactory> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateBufferFactory()
+{
+	return std::make_shared<VulkanBufferFactory>(m_graphicDevice, m_physicalDevice);
 }

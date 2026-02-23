@@ -12,6 +12,7 @@ namespace QuantumEngine {
 
 namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 	class VulkanRasterizationMaterial;
+	class SPIRVRasterizationProgram;
 
 	class VulkanRasterizationPipelineModule
 	{
@@ -19,8 +20,8 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		VulkanRasterizationPipelineModule(const VkDevice device);
 		~VulkanRasterizationPipelineModule();
 		void RenderCommand(VkCommandBuffer commandBuffer);
-		bool Initialize(const ref<GameEntity>& entity, const VkRenderPass m_renderPass);
-
+		bool Initialize(const ref<GameEntity>& entity, ref<VulkanRasterizationMaterial> material, const VkRenderPass m_renderPass);
+		void SetDescriptorOffset(const std::string& name, UInt32 offset);
 	private:
 		static VkVertexInputBindingDescription s_bindingDescriptions;
 		static VkVertexInputAttributeDescription s_attributeDescriptions[3];
@@ -30,6 +31,8 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		VkPipeline m_graphicsPipeline;
 		ref<Mesh> m_mesh;
 		ref<VulkanMeshController> m_meshController;
-		ref<VulkanRasterizationMaterial> m_material;
+		ref<VulkanRasterizationMaterial> m_material;		
+		ref<SPIRVRasterizationProgram> m_program;
+		std::vector<UInt32> m_offset;
 	};
 }

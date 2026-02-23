@@ -1,0 +1,21 @@
+#pragma once
+#include "vulkan-pch.h"
+
+namespace QuantumEngine::Rendering::Vulkan {
+	class VulkanBufferFactory {
+	public:
+		VulkanBufferFactory(const VkDevice device, const VkPhysicalDevice physicalDevice);
+		bool CreateBuffers(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory);
+		bool CreateBuffer(UInt32 size, UInt32 amount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory, UInt32* stride);
+
+	private:
+		static UInt32 GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags targetFlags, const VkPhysicalDeviceMemoryProperties* memoryProperties);
+		
+		VkDevice m_device;
+		VkPhysicalDevice m_physicalDevice;
+		VkPhysicalDeviceProperties m_physicalDeviceProperties;
+		VkPhysicalDeviceMemoryProperties m_memoryProperties;
+
+		VkBufferUsageFlags m_uniformFlag;
+	};
+}

@@ -14,15 +14,28 @@ namespace QuantumEngine::Rendering::Vulkan {
 		std::vector<PushConstantVariableData> variables;
 	};
 
+	struct DescriptableBufferData {
+		std::string name;
+		UInt32 offsetIndex;
+		VkDescriptorType descriptorType;
+		SpvReflectDescriptorBinding data;
+	};
+
 	class SPIRVReflection
 	{
 	public:
 		SPIRVReflection() = default;
 		void AddShaderReflection(const SpvReflectShaderModule* shaderReflection);
-		VkPipelineLayout CreatePipelineLayout(const VkDevice device);
+		UInt32 GetDescriptorLayoutCount();
+		UInt32 GetDynamicDescriptorCount();
+		void CreatePipelineLayout(const VkDevice device, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* m_descriptorSetLayout);
 		MaterialReflection CreateMaterialReflection();
 		inline std::vector<PushConstantBufferData>& GetPushConstants() { return m_pushConstants; }
+		inline std::vector<DescriptableBufferData>& GetDescriptors() { return m_descripters; }
+		DescriptableBufferData* GetDescriptorData(const std::string name);
+		void Initializes();
 	private:
 		std::vector<PushConstantBufferData> m_pushConstants;
+		std::vector<DescriptableBufferData> m_descripters;
 	};
 }

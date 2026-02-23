@@ -10,22 +10,39 @@ namespace QuantumEngine {
 }
 
 namespace QuantumEngine::Rendering::Vulkan {
+	class VulkanBufferFactory;
+
 	namespace Rasterization {
 		class VulkanRasterizationPipelineModule;
 	}
+
+	struct TransformGPU {
+	public:
+		Matrix4 modelMatrix;
+		Matrix4 rotationMatrix;
+		Matrix4 modelViewMatrix;
+	};
+
+	struct VKEntityGPUData {
+	public:
+		ref<GameEntity> gameEntity;
+		UInt32 index;
+	};
 
 	class VulkanGraphicContext : public GraphicContext
 	{
 	public:
 		VulkanGraphicContext(const VkInstance vkInstance, VkPhysicalDevice physicalDevice, VkDevice logicDevice, UInt32 graphicsQueueFamilyIndex, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window);
 		~VulkanGraphicContext();
-		bool Initialize();
+		bool Initialize(const ref<VulkanBufferFactory> bufferFactory);
 		virtual void RegisterAssetManager(const ref<GPUAssetManager>& assetManager) override;
 		virtual void RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery) override;
 		virtual bool PrepareScene(const ref<Scene>& scene) override;
 		virtual void Render() override;
 
 	private:
+		void UpdateTransforms();
+
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;		
 		VkInstance m_instance;
 		VkPhysicalDevice m_physicalDevice;
@@ -53,5 +70,13 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkFence m_fence;
 
 		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_rasterizationModules;
+		VkPhysicalDeviceMemoryProperties m_memoryProperties;
+		std::vector<VKEntityGPUData> m_entityGPUList;
+		UInt32 m_transformStride;
+		VkBuffer m_transformBuffer;
+		VkDeviceMemory m_transformBufferMemory;
+		TransformGPU m_transformData;
+		ref<VulkanBufferFactory> m_bufferFactory;
+		VkDescriptorPool m_descriptorPool;
 	};
 }

@@ -17,6 +17,7 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		inline std::vector<VkPipelineShaderStageCreateInfo>& GetStageInfos() { return m_stageInfos; }
 		inline VkPipelineLayout GetPipelineLayout() const { return m_pipelineLayout; }
 		inline SPIRVReflection& GetReflection() { return m_reflection; }
+		inline std::vector<VkDescriptorSetLayout>& GetDiscriptorLayouts() { return m_descriptorSetLayout; }
 	private:
 		ref<SPIRVShader> m_vertexShader;
 		ref<SPIRVShader> m_geometryShader;
@@ -25,6 +26,7 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		const VkDevice m_device;
 		std::vector<VkPipelineShaderStageCreateInfo> m_stageInfos;
 		VkPipelineLayout m_pipelineLayout;
+		std::vector<VkDescriptorSetLayout> m_descriptorSetLayout;
 		SPIRVReflection m_reflection;
 	};
 }

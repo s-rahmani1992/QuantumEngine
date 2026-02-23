@@ -14,6 +14,7 @@ namespace QuantumEngine {
 }
 
 namespace QuantumEngine::Rendering::Vulkan {
+	class VulkanBufferFactory;
 
 	class VulkanDeviceManager : public GPUDeviceManager
 	{
@@ -43,7 +44,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		Int32 FindPresentFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*>& requiredExtensions);
 		bool CheckDeviceSwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
-
+		ref<VulkanBufferFactory> CreateBufferFactory();
 		VkInstance m_instance;
 		VkPhysicalDevice m_physicalDevice;
 		VkDevice m_graphicDevice;
