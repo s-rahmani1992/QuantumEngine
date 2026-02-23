@@ -291,10 +291,12 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 
 	std::vector<VkDescriptorPoolSize> poolSizes;
 	poolSizes.reserve(20);
+	UInt32 setcount = 0;
 
 	for (auto& matPair : usedMaterials) {
 		auto program = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>(matPair.first->GetProgram());
 		auto& reflection = program->GetReflection();
+		setcount += reflection.GetDescriptorLayoutCount();
 		auto& descriptors = reflection.GetDescriptors();
 
 		for (auto& descriptor : descriptors) {
@@ -316,10 +318,9 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.maxSets = (UInt32)usedMaterials.size(),
+		.maxSets = setcount,
 		.poolSizeCount = (UInt32)poolSizes.size(),
 		.pPoolSizes = poolSizes.data(),
-
 	};
 
 	if (vkCreateDescriptorPool(m_logicDevice, &poolCreateInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)

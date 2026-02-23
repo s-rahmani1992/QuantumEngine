@@ -127,7 +127,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.setLayoutCount = 1,
+		.setLayoutCount = (UInt32)descriptorLayoutBindings.size(),
 		.pSetLayouts = descriptorSetLayout,
 		.pushConstantRangeCount = (UInt32)(pushConstantRanges.size()),
 		.pPushConstantRanges = pushConstantRanges.data(),

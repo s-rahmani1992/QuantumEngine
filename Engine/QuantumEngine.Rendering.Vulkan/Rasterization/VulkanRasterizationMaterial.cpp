@@ -40,7 +40,7 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationMateria
 	for (UInt32 i = 0; i < layouts.size(); i++) {
 		descSetAlloc.pSetLayouts = layouts.data() + i;
 
-		if (vkAllocateDescriptorSets(m_device, &descSetAlloc, m_descriptorSets.data() + i) == VK_SUCCESS)
+		if (vkAllocateDescriptorSets(m_device, &descSetAlloc, m_descriptorSets.data() + i) != VK_SUCCESS)
 			return false;
 	}
 	
