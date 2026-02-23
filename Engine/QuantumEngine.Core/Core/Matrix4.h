@@ -17,6 +17,7 @@ namespace QuantumEngine {
 		static Matrix4 PerspectiveProjection(Float near, Float far, Float acpect, Float FOV);
 		static Matrix4 InversePerspectiveProjection(Float near, Float far, Float acpect, Float FOV);
 		Float operator()(UInt8 x, UInt8 y) { return m_values[4 * x + y]; }
+		void SetValue(UInt8 x, UInt8 y, Float value) { m_values[4 * x + y] = value; }
 	private:
 		Float m_values[16];
 	};

@@ -78,5 +78,11 @@ namespace QuantumEngine::Rendering::Vulkan {
 		TransformGPU m_transformData;
 		ref<VulkanBufferFactory> m_bufferFactory;
 		VkDescriptorPool m_descriptorPool;
+
+		ref<Camera> m_camera;
+		VkBuffer m_cameraBuffer;
+		VkDeviceMemory m_cameraBufferMemory;
+		UInt32 m_cameraStride;
+		CameraGPU m_cameraGPU;
 	};
 }

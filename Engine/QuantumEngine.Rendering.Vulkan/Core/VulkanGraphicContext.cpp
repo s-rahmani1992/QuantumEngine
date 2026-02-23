@@ -259,6 +259,15 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_transformBuffer, &m_transformBufferMemory, &m_transformStride);
 
+	m_bufferFactory->CreateBuffer(sizeof(CameraGPU), 1
+		, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_cameraBuffer, &m_cameraBufferMemory, &m_cameraStride);
+
+	m_camera = scene->mainCamera;
+	m_cameraGPU.projectionMatrix = m_camera->ProjectionMatrix();
+	m_cameraGPU.projectionMatrix.SetValue(1, 1, -m_cameraGPU.projectionMatrix(1, 1));
+
+
 	for (auto& entity : scene->entities) {
 		m_entityGPUList.push_back({entity, index });
 
@@ -273,6 +282,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		if(rasterizationModule->Initialize(entity, (*matIT).second, m_renderPass)){
 			m_rasterizationModules.push_back(rasterizationModule);
 			rasterizationModule->SetDescriptorOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, index * m_transformStride);
+			rasterizationModule->SetDescriptorOffset(HLSL_CAMERA_DATA_NAME, 0);
 		}
 
 		auto program = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
@@ -318,6 +328,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 	for (auto& matPair : usedMaterials) {
 		matPair.second->Initialize(m_descriptorPool);
 		matPair.second->WriteBuffer(HLSL_OBJECT_TRANSFORM_DATA_NAME, m_transformBuffer, m_transformStride);
+		matPair.second->WriteBuffer(HLSL_CAMERA_DATA_NAME, m_cameraBuffer, m_cameraStride);
 	}
 
 	return true;
@@ -418,15 +429,23 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()
 {
 	void* data;
+	m_cameraGPU.viewMatrix = m_camera->ViewMatrix();
+	m_cameraGPU.position = m_camera->GetTransform()->Position();
+
+	vkMapMemory(m_logicDevice, m_cameraBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+	std::memcpy(data, &m_cameraGPU, sizeof(CameraGPU));
+	vkUnmapMemory(m_logicDevice, m_cameraBufferMemory);
+
+
 	vkMapMemory(m_logicDevice, m_transformBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
 
 	for (auto& entityGPU : m_entityGPUList) {
 		m_transformData.modelMatrix = entityGPU.gameEntity->GetTransform()->Matrix();
+		m_transformData.modelViewMatrix = m_cameraGPU.viewMatrix * m_transformData.modelMatrix;
 		m_transformData.rotationMatrix = entityGPU.gameEntity->GetTransform()->RotateMatrix();
 		
 		std::memcpy((Byte*)data + entityGPU.index * m_transformStride, &m_transformData, sizeof(TransformGPU));
 	}
-
 
 	vkUnmapMemory(m_logicDevice, m_transformBufferMemory);
 }

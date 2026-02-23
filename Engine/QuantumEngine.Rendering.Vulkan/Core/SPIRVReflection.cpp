@@ -116,7 +116,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
-		.bindingCount = (UInt32)descriptorLayoutBindings.size(),
+		.bindingCount = (UInt32)descriptorLayoutBindings[i].size(),
 		.pBindings = descriptorLayoutBindings[i].data(),
 		};
 
