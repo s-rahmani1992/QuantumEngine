@@ -22,6 +22,10 @@ QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::VulkanGraphicContext(con
 
 QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::~VulkanGraphicContext()
 {
+	vkDestroyBuffer(m_logicDevice, m_lightBuffer, nullptr);
+	vkFreeMemory(m_logicDevice, m_lightBufferMemory, nullptr);
+	vkDestroyBuffer(m_logicDevice, m_cameraBuffer, nullptr);
+	vkFreeMemory(m_logicDevice, m_cameraBufferMemory, nullptr);
 	vkDestroyBuffer(m_logicDevice, m_transformBuffer, nullptr);
 	vkFreeMemory(m_logicDevice, m_transformBufferMemory, nullptr);
 
@@ -267,6 +271,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 	m_cameraGPU.projectionMatrix = m_camera->ProjectionMatrix();
 	m_cameraGPU.projectionMatrix.SetValue(1, 1, -m_cameraGPU.projectionMatrix(1, 1));
 
+	InitializeLightBuffer(scene->lightData);
 
 	for (auto& entity : scene->entities) {
 		m_entityGPUList.push_back({entity, index });
@@ -283,6 +288,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 			m_rasterizationModules.push_back(rasterizationModule);
 			rasterizationModule->SetDescriptorOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, index * m_transformStride);
 			rasterizationModule->SetDescriptorOffset(HLSL_CAMERA_DATA_NAME, 0);
+			rasterizationModule->SetDescriptorOffset(HLSL_LIGHT_DATA_NAME, 0);
 		}
 
 		auto program = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
@@ -330,6 +336,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		matPair.second->Initialize(m_descriptorPool);
 		matPair.second->WriteBuffer(HLSL_OBJECT_TRANSFORM_DATA_NAME, m_transformBuffer, m_transformStride);
 		matPair.second->WriteBuffer(HLSL_CAMERA_DATA_NAME, m_cameraBuffer, m_cameraStride);
+		matPair.second->WriteBuffer(HLSL_LIGHT_DATA_NAME, m_lightBuffer, m_lightStride);
 	}
 
 	return true;
@@ -425,6 +432,27 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 	vkQueueWaitIdle(m_presentQueue);
 
 	vkWaitForFences(m_logicDevice, 1, &m_fence, VK_TRUE, 20000);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeLightBuffer(const SceneLightData& lightData)
+{
+	UInt32 lightSize = 10 * (sizeof(DirectionalLight) + sizeof(PointLight)) + 2 * sizeof(UInt32);
+	m_bufferFactory->CreateBuffer(lightSize, 1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		&m_lightBuffer, &m_lightBufferMemory, &m_lightStride);
+
+	void* data;
+	vkMapMemory(m_logicDevice, m_lightBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+	Byte* pData = (Byte*)data;
+	std::memcpy(pData, (void*)lightData.directionalLights.data(), lightData.directionalLights.size() * sizeof(DirectionalLight));
+	pData += 10 * (sizeof(DirectionalLight));
+	std::memcpy(pData, (void*)lightData.pointLights.data(), lightData.pointLights.size() * sizeof(PointLight));
+	pData += 10 * (sizeof(PointLight));
+	UInt32* sizeData = (UInt32*)(pData);
+	*sizeData = lightData.directionalLights.size();
+	sizeData++;
+	*sizeData = lightData.pointLights.size();
+	vkUnmapMemory(m_logicDevice, m_lightBufferMemory);
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()

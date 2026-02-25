@@ -41,6 +41,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		virtual void Render() override;
 
 	private:
+		void InitializeLightBuffer(const SceneLightData& lightData);
 		void UpdateTransforms();
 
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;		
@@ -84,5 +85,9 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkDeviceMemory m_cameraBufferMemory;
 		UInt32 m_cameraStride;
 		CameraGPU m_cameraGPU;
+
+		VkBuffer m_lightBuffer;
+		VkDeviceMemory m_lightBufferMemory;
+		UInt32 m_lightStride;
 	};
 }

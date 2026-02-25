@@ -16,7 +16,7 @@
 using namespace Microsoft::WRL;
 
 QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::VulkanShaderRegistery(VkDevice device)
-	: m_compileArguments(11), m_device(device)
+	: m_compileArguments(12), m_device(device)
 {
 	// Create compiler-related objects
 	DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
@@ -41,8 +41,8 @@ QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::VulkanShaderRegistery(V
 
 	m_compileArguments[8] = (WCHAR*)L"-spirv";
 	m_compileArguments[9] = (WCHAR*)L"-fspv-target-env=vulkan1.2";
-	//[8] = (WCHAR*)L"-fvk-use-dx-layout";
 	m_compileArguments[10] = (WCHAR*)L"-O3";
+	m_compileArguments[11] = (WCHAR*)L"-fvk-use-dx-layout";
 }
 
 QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::~VulkanShaderRegistery()
