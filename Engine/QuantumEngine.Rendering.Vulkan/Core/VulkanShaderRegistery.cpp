@@ -40,7 +40,7 @@ QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::VulkanShaderRegistery(V
 	m_compileArguments[7] = (WCHAR*)L"_VULKAN";
 
 	m_compileArguments[8] = (WCHAR*)L"-spirv";
-	m_compileArguments[9] = (WCHAR*)L"-fspv-target-env=vulkan1.2";
+	m_compileArguments[9] = (WCHAR*)L"-fspv-target-env=vulkan1.3";
 	m_compileArguments[10] = (WCHAR*)L"-O3";
 	m_compileArguments[11] = (WCHAR*)L"-fvk-use-dx-layout";
 }

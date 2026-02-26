@@ -153,9 +153,14 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	VkPhysicalDeviceUniformBufferStandardLayoutFeatures ubStandardLayoutFeature{};
+	ubStandardLayoutFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES;
+	ubStandardLayoutFeature.pNext = nullptr;
+	ubStandardLayoutFeature.uniformBufferStandardLayout = VK_TRUE;
+
 	VkDeviceCreateInfo deviceCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-		.pNext = nullptr,
+		.pNext = &ubStandardLayoutFeature,
 		.flags = 0,
 		.queueCreateInfoCount = (UInt32)queueCreateInfos.size(),
 		.pQueueCreateInfos = queueCreateInfos.data(),
