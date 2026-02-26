@@ -105,6 +105,21 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 		.alphaToOneEnable = VK_FALSE,
 	};
 
+	VkPipelineDepthStencilStateCreateInfo depthStencilState{
+		.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.depthTestEnable = VK_TRUE,
+		.depthWriteEnable = VK_TRUE,
+		.depthCompareOp = VK_COMPARE_OP_LESS,
+		.depthBoundsTestEnable = VK_FALSE,
+		.stencilTestEnable = VK_FALSE,
+		.front = {},
+		.back = {},
+		.minDepthBounds = -1.0f,
+		.maxDepthBounds = 1.0f,
+	};
+
 	VkPipelineColorBlendAttachmentState colorBlendAttachmentState{
 		.blendEnable = VK_FALSE,
 		.srcColorBlendFactor = VK_BLEND_FACTOR_ONE,
@@ -152,7 +167,7 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationPipelin
 		.pViewportState = &viewportStateInfo,
 		.pRasterizationState = &rasterizationStateInfo,
 		.pMultisampleState = &multisampleStateInfo,
-		.pDepthStencilState = nullptr,
+		.pDepthStencilState = &depthStencilState,
 		.pColorBlendState = &colorBlendStateInfo,
 		.pDynamicState = &dynamicStateInfo,
 		.layout = m_program->GetPipelineLayout(),

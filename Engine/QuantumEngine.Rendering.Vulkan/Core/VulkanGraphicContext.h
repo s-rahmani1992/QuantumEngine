@@ -42,6 +42,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 
 	private:
 		void InitializeLightBuffer(const SceneLightData& lightData);
+		void InitializeDepthBuffer();
 		void UpdateTransforms();
 
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;		
@@ -89,5 +90,10 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkBuffer m_lightBuffer;
 		VkDeviceMemory m_lightBufferMemory;
 		UInt32 m_lightStride;
+
+		VkFormat m_depthFormat = VK_FORMAT_D32_SFLOAT;
+		VkImage m_depthImage;
+		VkDeviceMemory m_depthMemory;
+		VkImageView m_depthImageView;
 	};
 }

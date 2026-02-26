@@ -29,6 +29,9 @@ QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::~VulkanGraphicContext()
 	vkDestroyBuffer(m_logicDevice, m_transformBuffer, nullptr);
 	vkFreeMemory(m_logicDevice, m_transformBufferMemory, nullptr);
 
+	vkDestroyImage(m_logicDevice, m_depthImage, nullptr);
+	vkFreeMemory(m_logicDevice, m_depthMemory, nullptr);
+
 	vkDestroySemaphore(m_logicDevice, m_imageAvailableSemaphore, nullptr);
 	vkDestroySemaphore(m_logicDevice, m_renderFinishedSemaphore, nullptr);
 	vkDestroyFence(m_logicDevice, m_fence, nullptr);
@@ -140,6 +143,8 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Initialize(const re
 		vkCreateImageView(m_logicDevice, &imageViewCreateInfo, nullptr, &m_swapChainImageViews[i]);
 	}
 
+	InitializeDepthBuffer();
+
 	// Create Render Pass
 	VkAttachmentDescription colorAttachment{
 		.format = m_swapChainFormat.format,
@@ -152,23 +157,42 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Initialize(const re
 		.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 	};
 
+	VkAttachmentDescription depthAttachment{
+		.format = m_depthFormat,
+		.samples = VK_SAMPLE_COUNT_1_BIT,
+		.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+		.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+		.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+	};
+
+	VkAttachmentDescription attachments[2] = { colorAttachment, depthAttachment };
+
 	VkAttachmentReference colorAttachmentRef{
 		.attachment = 0,
 		.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 	};
 
-	VkSubpassDescription subpass{
+	VkAttachmentReference depthAttachmentRef{
+		.attachment = 1,
+		.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+	};
+
+	VkSubpassDescription colorSubpass{
 		.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
 		.colorAttachmentCount = 1,
 		.pColorAttachments = &colorAttachmentRef,
+		.pDepthStencilAttachment = &depthAttachmentRef,
 	};
 
 	VkRenderPassCreateInfo rpInfo{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-		.attachmentCount = 1,
-		.pAttachments = &colorAttachment,
+		.attachmentCount = 2,
+		.pAttachments = attachments,
 		.subpassCount = 1,
-		.pSubpasses = &subpass,
+		.pSubpasses = &colorSubpass,
 	};
 
 	result = vkCreateRenderPass(m_logicDevice, &rpInfo, nullptr, &m_renderPass);
@@ -180,11 +204,13 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Initialize(const re
 	VkFramebuffer* framebuffer = m_swapChainFramebuffers.data();
 
 	for (auto view : m_swapChainImageViews) {
+		VkImageView imageViews[2] = { view, m_depthImageView };
+
 		VkFramebufferCreateInfo fbInfo{
 			.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
 			.renderPass = m_renderPass,
-			.attachmentCount = 1,
-			.pAttachments = &view,
+			.attachmentCount = 2,
+			.pAttachments = imageViews,
 			.width = m_swapChainCapability.currentExtent.width,
 			.height = m_swapChainCapability.currentExtent.height,
 			.layers = 1,
@@ -362,6 +388,11 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 
 	vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
 	VkClearValue clearColor = { .color = { {0.5f, 0.6f, 0.1f, 1.0f} } };
+
+	VkClearValue clearValues[2];
+	clearValues[0].color = { {0.5f, 0.6f, 0.1f, 1.0f} };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
 	VkRenderPassBeginInfo renderPassInfo{
 		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
 		.pNext = nullptr,
@@ -371,8 +402,8 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 			.offset = { 0, 0 },
 			.extent = m_swapChainCapability.currentExtent,
 		},
-		.clearValueCount = 1,
-		.pClearValues = &clearColor,
+		.clearValueCount = 2,
+		.pClearValues = clearValues,
 	};
 
 	vkCmdBeginRenderPass(m_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -453,6 +484,50 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeLightBuff
 	sizeData++;
 	*sizeData = lightData.pointLights.size();
 	vkUnmapMemory(m_logicDevice, m_lightBufferMemory);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeDepthBuffer()
+{
+	// Create depth image
+	VkImageCreateInfo imgInfo{
+	.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+	.imageType = VK_IMAGE_TYPE_2D,
+	.format = m_depthFormat,
+	.extent = { m_swapChainCapability.currentExtent.width, m_swapChainCapability.currentExtent.height, 1 },
+	.mipLevels = 1,
+	.arrayLayers = 1,
+	.samples = VK_SAMPLE_COUNT_1_BIT,
+	.tiling = VK_IMAGE_TILING_OPTIMAL,
+	.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+	};
+	
+	vkCreateImage(m_logicDevice, &imgInfo, nullptr, &m_depthImage);
+
+	// Allocate memory
+	VkMemoryRequirements memReq;
+	vkGetImageMemoryRequirements(m_logicDevice, m_depthImage, &memReq);
+
+	VkMemoryAllocateInfo allocInfo{
+	.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+	.allocationSize = memReq.size,
+	.memoryTypeIndex = GetMemoryTypeIndex(&memReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_memoryProperties),
+	};
+
+	vkAllocateMemory(m_logicDevice, &allocInfo, nullptr, &m_depthMemory);
+	vkBindImageMemory(m_logicDevice, m_depthImage, m_depthMemory, 0);
+
+	// Create depth image view
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = m_depthImage;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = m_depthFormat;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	vkCreateImageView(m_logicDevice, &viewInfo, nullptr, &m_depthImageView);
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()
