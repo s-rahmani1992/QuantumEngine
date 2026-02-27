@@ -19,6 +19,7 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		inline SPIRVReflection& GetReflection() { return m_reflection; }
 		inline std::vector<VkDescriptorSetLayout>& GetDiscriptorLayouts() { return m_descriptorSetLayout; }
 	private:
+		void InitializeSampler();
 		ref<SPIRVShader> m_vertexShader;
 		ref<SPIRVShader> m_geometryShader;
 		ref<SPIRVShader> m_pixelShader;
@@ -28,5 +29,6 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		VkPipelineLayout m_pipelineLayout;
 		std::vector<VkDescriptorSetLayout> m_descriptorSetLayout;
 		SPIRVReflection m_reflection;
+		VkSampler m_sampler;
 	};
 }

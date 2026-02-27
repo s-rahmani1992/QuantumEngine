@@ -346,6 +346,11 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		}
 	}
 
+	poolSizes.push_back(VkDescriptorPoolSize{
+				.type = VK_DESCRIPTOR_TYPE_SAMPLER,
+				.descriptorCount = (UInt32)usedMaterials.size(),
+		});
+
 	VkDescriptorPoolCreateInfo poolCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
 		.pNext = nullptr,

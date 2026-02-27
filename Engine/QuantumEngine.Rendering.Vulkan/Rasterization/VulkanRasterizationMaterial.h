@@ -22,11 +22,18 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 			UInt32 size;
 		};
 
+		struct DescriptorData {
+			UInt32 setIndex;
+			UInt32 binding;
+			VkDescriptorType descriptorType;
+		};
+
 		ref<Material> m_material;
 		VkDevice m_device;
 		ref<SPIRVRasterizationProgram> m_program;
 		VkPipelineLayout m_pipelineLayout;
 		std::vector<pushConstantData> m_pushConstantValues; 
 		std::vector<VkDescriptorSet> m_descriptorSets;
+		std::vector<DescriptorData> m_descriptorData;
 	};
 }

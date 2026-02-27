@@ -4,6 +4,8 @@
 #include "VulkanMeshController.h"
 #include <map>
 #include "VulkanUtilities.h"
+#include "Core/Texture2D.h"
+#include "VulkanTexture2DController.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanAssetManager::VulkanAssetManager(const VkDevice device, VkPhysicalDevice physicalDevice)
 	: m_device(device), m_physicalDevice(physicalDevice)
@@ -53,6 +55,69 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshToGPU(const
 
 void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadTextureToGPU(const ref<Texture2D>& texture)
 {
+	ref<VulkanTexture2DController> gpuTexture = std::make_shared<VulkanTexture2DController>(texture, m_device);
+
+	if (gpuTexture->Initialize(m_memoryProperties) == false)
+		return;
+
+	VkBufferCreateInfo stageBufferCreateInfo{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.size = texture->GetTotalSize(),
+		.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = nullptr,
+	};
+
+	VkBuffer stageBuffer;
+
+	if (vkCreateBuffer(m_device, &stageBufferCreateInfo, nullptr, &stageBuffer) != VK_SUCCESS)
+		return;
+
+	VkMemoryRequirements stagingBufferMemoryRequirement;
+	vkGetBufferMemoryRequirements(m_device, stageBuffer, &stagingBufferMemoryRequirement);
+
+	VkMemoryAllocateInfo stageAllocInfo{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.allocationSize = stagingBufferMemoryRequirement.size,
+		.memoryTypeIndex = GetMemoryTypeIndex(&stagingBufferMemoryRequirement, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_memoryProperties),
+	};
+
+	VkDeviceMemory stageBufferMemory;
+
+	if (vkAllocateMemory(m_device, &stageAllocInfo, nullptr, &stageBufferMemory) != VK_SUCCESS) {
+		vkDestroyBuffer(m_device, stageBuffer, nullptr);
+		vkFreeMemory(m_device, stageBufferMemory, nullptr);
+		return;
+	}
+
+	vkBindBufferMemory(m_device, stageBuffer, stageBufferMemory, 0);
+
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
+
+	void* data;
+	vkMapMemory(m_device, stageBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+	std::memcpy(data, texture->GetData(), texture->GetTotalSize());
+
+	gpuTexture->CopyCommand(m_commandBuffer, stageBuffer);
+
+	vkUnmapMemory(m_device, stageBufferMemory);
+	vkEndCommandBuffer(m_commandBuffer);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &m_commandBuffer;
+
+	vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(m_graphicsQueue);
+	texture->SetGPUHandle(gpuTexture);
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(const std::vector<ref<Mesh>>& meshes)

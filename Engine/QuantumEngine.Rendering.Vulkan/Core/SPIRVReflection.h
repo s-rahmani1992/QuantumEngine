@@ -28,7 +28,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		void AddShaderReflection(const SpvReflectShaderModule* shaderReflection);
 		UInt32 GetDescriptorLayoutCount();
 		UInt32 GetDynamicDescriptorCount();
-		void CreatePipelineLayout(const VkDevice device, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* m_descriptorSetLayout);
+		void CreatePipelineLayout(const VkDevice device, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* m_descriptorSetLayout);
 		MaterialReflection CreateMaterialReflection();
 		inline std::vector<PushConstantBufferData>& GetPushConstants() { return m_pushConstants; }
 		inline std::vector<DescriptableBufferData>& GetDescriptors() { return m_descripters; }
@@ -37,5 +37,6 @@ namespace QuantumEngine::Rendering::Vulkan {
 	private:
 		std::vector<PushConstantBufferData> m_pushConstants;
 		std::vector<DescriptableBufferData> m_descripters;
+		std::vector<DescriptableBufferData> m_samplers;
 	};
 }

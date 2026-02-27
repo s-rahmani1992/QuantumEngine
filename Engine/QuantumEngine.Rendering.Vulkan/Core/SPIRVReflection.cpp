@@ -49,9 +49,22 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 
 		VkDescriptorType desType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
+		if (descriptor->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER) {
+			m_samplers.push_back(DescriptableBufferData{
+				.name = std::string(descriptor->name),
+				.offsetIndex = UINT32_MAX,
+				.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER,
+				.data = *descriptor,
+			});
+			continue;
+		}
+
 		switch (descriptor->descriptor_type) {
 		case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
 			desType = descriptor->name[0] != '_' ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			break;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+			desType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 			break;
 		}
 
@@ -83,7 +96,7 @@ UInt32 QuantumEngine::Rendering::Vulkan::SPIRVReflection::GetDynamicDescriptorCo
 	return UInt32(h);
 }
 
-void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(const VkDevice device, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* descriptorSetLayout)
+void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(const VkDevice device, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* descriptorSetLayout)
 {
 	std::vector<VkPushConstantRange> pushConstantRanges;
 	pushConstantRanges.reserve(m_pushConstants.size());
@@ -109,6 +122,16 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 			.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
 			.pImmutableSamplers = nullptr,
 		});
+	}
+
+	for (auto& samplerDescriptor : m_samplers) {
+		descriptorLayoutBindings[samplerDescriptor.data.set].push_back(VkDescriptorSetLayoutBinding{
+			.binding = samplerDescriptor.data.binding,
+			.descriptorType = samplerDescriptor.descriptorType,
+			.descriptorCount = samplerDescriptor.data.count,
+			.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
+			.pImmutableSamplers = &sampler,
+			});
 	}
 
 	for (UInt32 i = 0; i < descriptorLayoutBindings.size(); i++) {
@@ -156,6 +179,22 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::Vulkan::S
 			reflectionData.valueFields.push_back(valueFieldInfo);
 			fieldIndex++;
 		}
+	}
+
+	UInt32 textureIndex = 0;
+	for (auto& descriptor : m_descripters) {
+		if (descriptor.name[0] == '_') {// Skip internal variables
+			textureIndex++;
+			continue;
+		}
+
+		MaterialTextureFieldInfo textureFieldInfo{
+			.name = descriptor.name,
+			.fieldIndex = textureIndex,
+		};
+
+		reflectionData.textureFields.push_back(textureFieldInfo);
+		textureIndex++;
 	}
 
 	return reflectionData;
