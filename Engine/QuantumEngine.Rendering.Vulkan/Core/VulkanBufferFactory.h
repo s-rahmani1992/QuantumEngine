@@ -5,7 +5,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 	class VulkanBufferFactory {
 	public:
 		VulkanBufferFactory(const VkDevice device, const VkPhysicalDevice physicalDevice);
-		bool CreateBuffers(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory);
+		bool CreateBuffer(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory);
 		bool CreateBuffer(UInt32 size, UInt32 amount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory, UInt32* stride);
 
 	private:

@@ -11,26 +11,66 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 
 	for(auto& pushConstant : pushConstants)
 	{
-		auto it = std::find_if(m_pushConstants.begin(), m_pushConstants.end(),
-			[pushConstant](const PushConstantBufferData& data) { return data.name.compare(pushConstant->name) == 0; });
-		
-		if(it != m_pushConstants.end())//checking if the resource is already processed because it can exist in multiple shaders
+		if(m_pushConstant.blocks.size() > 0)//checking if the push constant is processed because it can exist in multiple shaders
 			continue;
 
-		auto& pushConstantItem = m_pushConstants.emplace_back(PushConstantBufferData{
-			.name = pushConstant->name,
-			.data = *pushConstant,
-			});
+		m_pushConstant.name = pushConstant->name;
+		m_pushConstant.data = *pushConstant;
+		
+		UInt32 i = 0;
 
-		pushConstantItem.variables.reserve(pushConstant->member_count);
+		do {
+			if (pushConstant->members[i].name[0] == '_') {
+				auto& blockItem = m_pushConstant.blocks.emplace_back(PushConstantBlockData{
+				.offset = pushConstant->members[i].offset,
+				.size = 0,
+				.isDynamic = true,
+					});
+				UInt32 size = 0;
 
-		for (UInt32 i = 0; i < pushConstant->member_count; ++i) {
+				while (pushConstant->members[i].name[0] == '_') {
+					blockItem.variables.push_back(PushConstantVariableData{
+						.name = pushConstant->members[i].name,
+						.variableDesc = pushConstant->members[i],
+						});
+					blockItem.size += pushConstant->members[i].size;
+
+					i++;
+
+					if (i >= pushConstant->member_count)
+						break;
+				}
+			}
+
+			else {
+				auto& blockItem = m_pushConstant.blocks.emplace_back(PushConstantBlockData{
+				.offset = pushConstant->members[i].offset,
+				.size = 0,
+				.isDynamic = false,
+					});
+
+				while (pushConstant->members[i].name[0] != '_') {
+					blockItem.variables.push_back(PushConstantVariableData{
+						.name = pushConstant->members[i].name,
+						.variableDesc = pushConstant->members[i],
+						});
+
+					blockItem.size += pushConstant->members[i].size;
+					i++;
+
+					if (i >= pushConstant->member_count)
+						break;
+				}
+			}
+		} while (i < pushConstant->member_count);
+		
+		/*for (UInt32 i = 0; i < pushConstant->member_count; ++i) {
 			auto& member = pushConstant->members[i];
 			pushConstantItem.variables.push_back(PushConstantVariableData{
 				.name = member.name,
 				.variableDesc = member,
 			});
-		}
+		}*/
 	}
 
 	// Extract Descriptors
@@ -66,6 +106,8 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 		case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
 			desType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 			break;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+			desType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 		}
 
 		m_descripters.push_back(DescriptableBufferData{
@@ -96,19 +138,16 @@ UInt32 QuantumEngine::Rendering::Vulkan::SPIRVReflection::GetDynamicDescriptorCo
 	return UInt32(h);
 }
 
-void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(const VkDevice device, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* descriptorSetLayout)
+void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(const VkDevice device, VkShaderStageFlags stageFlags, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* descriptorSetLayout)
 {
 	std::vector<VkPushConstantRange> pushConstantRanges;
-	pushConstantRanges.reserve(m_pushConstants.size());
+	pushConstantRanges.reserve(1);
 
-	for(auto& pushConstant : m_pushConstants)
-	{
-		pushConstantRanges.push_back(VkPushConstantRange{
-			.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
-			.offset = pushConstant.data.offset,
-			.size = pushConstant.data.size,
+	pushConstantRanges.push_back(VkPushConstantRange{
+			.stageFlags = stageFlags,
+			.offset = m_pushConstant.data.offset,
+			.size = m_pushConstant.data.size,
 		});
-	}
 
 	VkDescriptorType desType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
@@ -119,7 +158,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 			.binding = descriptor.data.binding,
 			.descriptorType = descriptor.descriptorType,
 			.descriptorCount = descriptor.data.count,
-			.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
+			.stageFlags = stageFlags,
 			.pImmutableSamplers = nullptr,
 		});
 	}
@@ -164,13 +203,13 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::Vulkan::S
 	UInt32 fieldIndex = 0;
 	MaterialReflection reflectionData;
 
-	for (auto& pushConst : m_pushConstants) {
-		if (pushConst.name[0] == '_') {// Skip internal root constants
+	for (auto& pushConstBlock : m_pushConstant.blocks) {
+		if (pushConstBlock.isDynamic) {// Skip internal root constants
 			fieldIndex++;
 			continue;
 		}
 
-		for (auto& rootVar : pushConst.variables) {
+		for (auto& rootVar : pushConstBlock.variables) {
 			MaterialValueFieldInfo valueFieldInfo{
 				.name = rootVar.name,
 				.fieldIndex = fieldIndex,
@@ -198,6 +237,19 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::Vulkan::S
 	}
 
 	return reflectionData;
+}
+
+QuantumEngine::Rendering::Vulkan::PushConstantBlockData* QuantumEngine::Rendering::Vulkan::SPIRVReflection::GetPushConstantBlockData(const std::string& name)
+{
+	for (auto& block : m_pushConstant.blocks) {
+		auto varIt = std::find_if(block.variables.begin(), block.variables.end(), [name](const PushConstantVariableData& var) {
+			return var.name == name;
+			});
+
+		if (varIt != block.variables.end())
+			return &block;
+	}
+	return nullptr;
 }
 
 QuantumEngine::Rendering::Vulkan::DescriptableBufferData* QuantumEngine::Rendering::Vulkan::SPIRVReflection::GetDescriptorData(const std::string name)

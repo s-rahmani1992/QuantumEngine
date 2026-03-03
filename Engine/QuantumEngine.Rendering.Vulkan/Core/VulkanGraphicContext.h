@@ -7,10 +7,18 @@ namespace QuantumEngine {
 	namespace Platform {
 		class GraphicWindow;
 	}
+
+	namespace Rendering
+	{
+		class SplineRenderer;
+	}
 }
 
 namespace QuantumEngine::Rendering::Vulkan {
 	class VulkanBufferFactory;
+	class VulkanAssetManager;
+	class VulkanShaderRegistery;
+	class VulkanSplinePipelineModule;
 
 	namespace Rasterization {
 		class VulkanRasterizationPipelineModule;
@@ -41,6 +49,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		virtual void Render() override;
 
 	private:
+		void UploadMeshToGPU(const std::vector<ref<GameEntity>>& entities);
 		void InitializeLightBuffer(const SceneLightData& lightData);
 		void InitializeDepthBuffer();
 		void UpdateTransforms();
@@ -49,6 +58,8 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkInstance m_instance;
 		VkPhysicalDevice m_physicalDevice;
 		VkDevice m_logicDevice;
+		ref<VulkanAssetManager> m_assetManager;
+		ref<VulkanShaderRegistery> m_shaderRegistery;
 
 		VkSurfaceKHR m_surface;
 		VkSurfaceFormatKHR m_swapChainFormat;
@@ -72,6 +83,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkFence m_fence;
 
 		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_rasterizationModules;
+		std::vector<ref<VulkanSplinePipelineModule>> m_splineModues;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 		std::vector<VKEntityGPUData> m_entityGPUList;
 		UInt32 m_transformStride;

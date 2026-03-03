@@ -11,7 +11,7 @@ QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::VulkanBufferFactory(const
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 }
 
-bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffers(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory)
+bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory)
 {
 	VkBufferCreateInfo bufferCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,

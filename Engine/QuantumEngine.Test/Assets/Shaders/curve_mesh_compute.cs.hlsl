@@ -33,6 +33,27 @@ void Interpolate(float3 startPoint, float3 midPoint, float3 endPoint, float t, o
     tangent = normalize(2.0f * (u * (midPoint - startPoint) + t * (endPoint - midPoint)));
 }
 
+#ifdef _VULKAN
+struct CurveProperties
+{
+    float3 startPoint;
+    float width;
+    float3 midPoint;
+    float length;
+    float3 endPoint;
+};
+
+[[vk::push_constant]]
+CurveProperties CurveProps;
+
+#define _startPoint CurveProps.startPoint
+#define _width CurveProps.width
+#define _midPoint CurveProps.midPoint
+#define _length CurveProps.length
+#define _endPoint CurveProps.endPoint
+
+#else
+
 cbuffer _CurveProperties : register(b0)
 {
     float3 _startPoint;
@@ -41,6 +62,8 @@ cbuffer _CurveProperties : register(b0)
     float _length;
     float3 _endPoint;
 };
+
+#endif
 
 RWStructuredBuffer<SplineVertex> _vertexBuffer : register(u0);
 

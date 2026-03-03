@@ -7,11 +7,13 @@
 
 #include "SPIRVShader.h"
 #include "Rasterization/SPIRVRasterizationProgram.h"
+#include "Compute/SPIRVComputeProgram.h"
 
 #include <boost/uuid/string_generator.hpp>
 #include <boost/json/src.hpp>
 
 #include "StringUtilities.h"
+#include "Platform/Application.h"
 
 using namespace Microsoft::WRL;
 
@@ -99,7 +101,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 
 	auto programType = properties["type"].as_string().c_str();
 
-	ref<Rasterization::SPIRVRasterizationProgram> finalProgram;
+	ref<SPIRVShaderProgram> finalProgram;
 
 	if (strcmp(programType, "Rasterization") == 0) {
 
@@ -167,7 +169,80 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 
 		finalProgram = std::make_shared<Rasterization::SPIRVRasterizationProgram>(shaders, m_device);
 	}
+
+	else if (strcmp(programType, "Compute") == 0) {
+		std::wstring wMain = CharToString(properties["csMain"].as_string().c_str());
+		m_compileArguments[m_mainIndex] = (WCHAR*)(wMain.c_str());
+
+		std::string target("cs_");
+		target += properties["model"].as_string().c_str();
+		std::wstring wTarget = CharToString(target.c_str());
+		m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
+
+		ComPtr<IDxcBlob> pshaderObjectData;
+
+		ComPtr<IDxcResult> compileResult;
+		HRESULT result;
+		result = m_dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_compileArguments.size(), m_includeHandler, IID_PPV_ARGS(&compileResult));
+
+		if (FAILED(result)) {
+			error = "Unknown Error when Beginning to compile";
+			return nullptr;
+		}
+
+		ComPtr<IDxcBlobUtf8> pErrors;
+
+		result = compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddressOf()), nullptr);
+
+		if (FAILED(result)) {
+			error = "Unknown Error when Beginning to compile";
+			return nullptr;
+		}
+
+		if (pErrors && pErrors->GetStringLength() > 0)
+		{
+			error = std::string(pErrors->GetStringPointer(), pErrors->GetStringLength());
+			return nullptr;
+		}
+
+		result = compileResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pshaderObjectData), nullptr);
+
+		if (FAILED(result)) {
+			error = "Unknown Error when Obtaining Shader Bytecode";
+			return nullptr;
+		}
+
+		finalProgram = std::make_shared<Compute::SPIRVComputeProgram>((Byte*)pshaderObjectData->GetBufferPointer(), pshaderObjectData->GetBufferSize(), m_device);
+	}
+	else {
+		finalProgram = std::make_shared<SPIRVShaderProgram>();
+	}
+
+	auto uidStr = metaData["uuid"].as_string().c_str();
+	boost::uuids::string_generator gen;
+	m_registeredPrograms.emplace(gen(uidStr), finalProgram);
 	return finalProgram;
+}
+
+ref<QuantumEngine::Rendering::Vulkan::SPIRVShaderProgram> QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::GetShaderPrograms(const std::string& name)
+{
+	auto it = m_specialPrograms.find(name);
+	if (it != m_specialPrograms.end())
+		return (*it).second;
+	return nullptr;
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::Initialize()
+{
+	std::wstring root = Platform::Application::GetExecutablePath();
+
+	std::string errorStr;
+
+	auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
+
+	if (computeProgram != nullptr) {
+		m_specialPrograms.emplace("Bezier_Curve_Compute_Program", std::dynamic_pointer_cast<SPIRVShaderProgram>(computeProgram));
+	}
 }
 
 ref<QuantumEngine::Rendering::Vulkan::SPIRVShader> QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::CompileShaderStage(const DxcBuffer* sourceBuffer, Vulkan_Shader_Type shaderType, const std::string entryName, std::string& error)

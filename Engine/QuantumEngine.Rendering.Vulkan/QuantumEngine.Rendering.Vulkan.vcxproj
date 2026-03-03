@@ -155,8 +155,10 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Compute\SPIRVComputeProgram.h" />
     <ClInclude Include="Core\SPIRVReflection.h" />
     <ClInclude Include="Core\SPIRVShader.h" />
+    <ClInclude Include="Core\SPIRVShaderProgram.h" />
     <ClInclude Include="Core\VulkanAssetManager.h" />
     <ClInclude Include="Core\VulkanBufferFactory.h" />
     <ClInclude Include="Core\VulkanDeviceManager.h" />
@@ -170,10 +172,13 @@
     <ClInclude Include="Rasterization\VulkanRasterizationMaterial.h" />
     <ClInclude Include="Rasterization\VulkanRasterizationPipelineModule.h" />
     <ClInclude Include="vulkan-pch.h" />
+    <ClInclude Include="VulkanSplinePipelineModule.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Compute\SPIRVComputeProgram.cpp" />
     <ClCompile Include="Core\SPIRVReflection.cpp" />
     <ClCompile Include="Core\SPIRVShader.cpp" />
+    <ClCompile Include="Core\SPIRVShaderProgram.cpp" />
     <ClCompile Include="Core\spirv_reflect.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -198,6 +203,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="VulkanSplinePipelineModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantumEngine.Core\QuantumEngine.Core.vcxproj">

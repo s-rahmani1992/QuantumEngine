@@ -23,6 +23,28 @@ CAMERA_VAR_1(b1)
 
 LIGHT_VAR_1(b2)
 
+#ifdef _VULKAN
+
+struct MaterialProperties
+{
+    float4 color;
+    float ambient;
+    float diffuse;
+    float specular;
+    float _width;
+};
+
+[[vk::push_constant]]
+MaterialProperties MaterialProps;
+
+#define color MaterialProps.color
+#define ambient MaterialProps.ambient
+#define diffuse MaterialProps.diffuse
+#define specular MaterialProps.specular
+#define _width MaterialProps._width
+
+#else
+
 cbuffer _CurveProperties : register(b3)
 {
     float _width;
@@ -35,6 +57,8 @@ cbuffer MaterialProps : register(b4)
     float diffuse;
     float specular;
 };
+
+#endif
 
 VS_INPUT vs_main(VS_INPUT vertexIn)
 {

@@ -133,9 +133,10 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 	// Create Logical Device and Graphics Queue
 	float queuePriority = 1.0f;
-	Int32 graphicsQueueFamilyIndex = FindQueueFamilies(m_physicalDevice, VK_QUEUE_GRAPHICS_BIT);
+	Int32 graphicsQueueFamilyIndex = FindQueueFamilies(m_physicalDevice, VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT);
 
 	VkPhysicalDeviceFeatures deviceFeatures{};
+	deviceFeatures.geometryShader = VK_TRUE;
 
 	std::set<UInt32> uniqueQueueFamilies = { (UInt32)graphicsQueueFamilyIndex, (UInt32)surfaceFamilyIndex };
 
@@ -153,9 +154,14 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
+	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutFeature{};
+	scalarBlockLayoutFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES;
+	scalarBlockLayoutFeature.pNext = nullptr;
+	scalarBlockLayoutFeature.scalarBlockLayout = VK_TRUE;
+
 	VkPhysicalDeviceUniformBufferStandardLayoutFeatures ubStandardLayoutFeature{};
 	ubStandardLayoutFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES;
-	ubStandardLayoutFeature.pNext = nullptr;
+	ubStandardLayoutFeature.pNext = &scalarBlockLayoutFeature;
 	ubStandardLayoutFeature.uniformBufferStandardLayout = VK_TRUE;
 
 	VkDeviceCreateInfo deviceCreateInfo{
@@ -210,6 +216,7 @@ ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::Vulkan:
 ref<QuantumEngine::Rendering::ShaderRegistery> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateShaderRegistery()
 {
 	ref<VulkanShaderRegistery> shaderRegistery = std::make_shared<VulkanShaderRegistery>(m_graphicDevice);
+	shaderRegistery->Initialize();
 	return shaderRegistery;
 }
 

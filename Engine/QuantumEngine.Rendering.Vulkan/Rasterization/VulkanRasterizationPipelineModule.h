@@ -31,7 +31,7 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		VkPipeline m_graphicsPipeline;
 		ref<Mesh> m_mesh;
 		ref<VulkanMeshController> m_meshController;
-		ref<VulkanRasterizationMaterial> m_material;		
+		ref<VulkanRasterizationMaterial> m_material;
 		ref<SPIRVRasterizationProgram> m_program;
 		std::vector<UInt32> m_offset;
 	};

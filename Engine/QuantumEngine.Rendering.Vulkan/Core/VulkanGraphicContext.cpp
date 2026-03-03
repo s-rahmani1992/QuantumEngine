@@ -5,11 +5,18 @@
 #include "Rasterization/VulkanRasterizationMaterial.h"
 #include "Rasterization/SPIRVRasterizationProgram.h"
 #include "Rasterization/VulkanRasterizationPipelineModule.h"
+#include "Compute/SPIRVComputeProgram.h"
+#include "VulkanSplinePipelineModule.h"
 #include "SPIRVReflection.h"
 #include "VulkanBufferFactory.h"
 #include "Rendering/Renderer.h"
 #include "Core/Transform.h"
 #include "VulkanUtilities.h"
+#include "Rendering/RayTracingComponent.h"
+#include "VulkanAssetManager.h"
+#include "VulkanShaderRegistery.h"
+#include <Rendering/MeshRenderer.h>
+#include <Rendering/SplineRenderer.h>
 
 QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::VulkanGraphicContext(const VkInstance vkInstance, VkPhysicalDevice physicalDevice, VkDevice logicDevice, UInt32 graphicsQueueFamilyIndex, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	:m_instance(vkInstance), m_physicalDevice(physicalDevice), m_logicDevice(logicDevice), 
@@ -273,22 +280,25 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Initialize(const re
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::RegisterAssetManager(const ref<GPUAssetManager>& assetManager)
 {
+	m_assetManager = std::dynamic_pointer_cast<VulkanAssetManager>(assetManager);
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::RegisterShaderRegistery(const ref<ShaderRegistery>& shaderRegistery)
 {
+	m_shaderRegistery = std::dynamic_pointer_cast<VulkanShaderRegistery>(shaderRegistery);
 }
 
 bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const ref<Scene>& scene)
 {
-	std::map<ref<Material>, ref<Rasterization::VulkanRasterizationMaterial>> usedMaterials;
-	UInt32 index = 0;
-	m_entityGPUList.reserve(scene->entities.size());
+	// Upload Meshes to GPU
+	UploadMeshToGPU(scene->entities);
 
+	// Create Uniform Buffers for Transforms
 	m_bufferFactory->CreateBuffer(sizeof(TransformGPU), scene->entities.size()
 		, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_transformBuffer, &m_transformBufferMemory, &m_transformStride);
 
+	// Create Uniform Buffer for Camera
 	m_bufferFactory->CreateBuffer(sizeof(CameraGPU), 1
 		, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_cameraBuffer, &m_cameraBufferMemory, &m_cameraStride);
@@ -299,6 +309,11 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 
 	InitializeLightBuffer(scene->lightData);
 
+	std::map<ref<Material>, ref<Rasterization::VulkanRasterizationMaterial>> usedMaterials;
+	UInt32 index = 0;
+	m_entityGPUList.reserve(scene->entities.size());
+
+
 	for (auto& entity : scene->entities) {
 		m_entityGPUList.push_back({entity, index });
 
@@ -306,18 +321,9 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		auto matIT = usedMaterials.find(material);
 		
 		if (matIT == usedMaterials.end()) {
-			matIT = usedMaterials.emplace(material, std::make_shared<Rasterization::VulkanRasterizationMaterial>(material, m_logicDevice)).first;
+			usedMaterials.emplace(material, std::make_shared<Rasterization::VulkanRasterizationMaterial>(material, m_logicDevice)).first;
 		}
 
-		ref<Rasterization::VulkanRasterizationPipelineModule> rasterizationModule = std::make_shared<Rasterization::VulkanRasterizationPipelineModule>(m_logicDevice);
-		if(rasterizationModule->Initialize(entity, (*matIT).second, m_renderPass)){
-			m_rasterizationModules.push_back(rasterizationModule);
-			rasterizationModule->SetDescriptorOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, index * m_transformStride);
-			rasterizationModule->SetDescriptorOffset(HLSL_CAMERA_DATA_NAME, 0);
-			rasterizationModule->SetDescriptorOffset(HLSL_LIGHT_DATA_NAME, 0);
-		}
-
-		auto program = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>(entity->GetRenderer()->GetMaterial()->GetProgram());
 		index++;
 	}
 
@@ -346,9 +352,16 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		}
 	}
 
+	setcount += m_entityGPUList.size();
+
 	poolSizes.push_back(VkDescriptorPoolSize{
 				.type = VK_DESCRIPTOR_TYPE_SAMPLER,
 				.descriptorCount = (UInt32)usedMaterials.size(),
+		});
+
+	poolSizes.push_back(VkDescriptorPoolSize{
+				.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				.descriptorCount = (UInt32)m_entityGPUList.size(),
 		});
 
 	VkDescriptorPoolCreateInfo poolCreateInfo{
@@ -363,8 +376,46 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 	if (vkCreateDescriptorPool(m_logicDevice, &poolCreateInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
 		return false;
 
+	for (auto& entityGPU : m_entityGPUList) {
+		auto& entity = entityGPU.gameEntity;
+		auto Renderer = entity->GetRenderer();
+
+		auto meshRenderer = std::dynamic_pointer_cast<MeshRenderer>(Renderer);
+
+		if (meshRenderer != nullptr) {
+			auto& gpuMateiral = usedMaterials[meshRenderer->GetMaterial()];
+			ref<Rasterization::VulkanRasterizationPipelineModule> rasterizationModule = std::make_shared<Rasterization::VulkanRasterizationPipelineModule>(m_logicDevice);
+			if (rasterizationModule->Initialize(entity, gpuMateiral, m_renderPass)) {
+				m_rasterizationModules.push_back(rasterizationModule);
+				rasterizationModule->SetDescriptorOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, entityGPU.index * m_transformStride);
+				rasterizationModule->SetDescriptorOffset(HLSL_CAMERA_DATA_NAME, 0);
+				rasterizationModule->SetDescriptorOffset(HLSL_LIGHT_DATA_NAME, 0);
+			}
+		}
+
+		auto splineRenderer = std::dynamic_pointer_cast<SplineRenderer>(Renderer);
+
+		if (splineRenderer != nullptr) {
+			auto& gpuMateiral = usedMaterials[splineRenderer->GetMaterial()];
+			ref<VulkanSplinePipelineModule> splineModule = std::make_shared<VulkanSplinePipelineModule>(m_logicDevice);
+			SplineEntityData splineEntityData{
+				.splineRenderer = splineRenderer,
+				.material = gpuMateiral,
+				.computeProgram = std::dynamic_pointer_cast<Compute::SPIRVComputeProgram>(m_shaderRegistery->GetShaderPrograms("Bezier_Curve_Compute_Program")),
+				.memoryProperties = &m_memoryProperties,
+			};
+			if (splineModule->Initialize(splineEntityData, m_renderPass, m_descriptorPool)) {
+				m_splineModues.push_back(splineModule);
+				splineModule->WriteOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, entityGPU.index * m_transformStride);
+				splineModule->WriteOffset(HLSL_CAMERA_DATA_NAME, 0);
+				splineModule->WriteOffset(HLSL_LIGHT_DATA_NAME, 0);
+			}
+		}
+	}
+
 	for (auto& matPair : usedMaterials) {
-		matPair.second->Initialize(m_descriptorPool);
+		if(matPair.second->Initialize(m_descriptorPool) == false)
+			continue;
 		matPair.second->WriteBuffer(HLSL_OBJECT_TRANSFORM_DATA_NAME, m_transformBuffer, m_transformStride);
 		matPair.second->WriteBuffer(HLSL_CAMERA_DATA_NAME, m_cameraBuffer, m_cameraStride);
 		matPair.second->WriteBuffer(HLSL_LIGHT_DATA_NAME, m_lightBuffer, m_lightStride);
@@ -392,6 +443,11 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 	};
 
 	vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
+
+	for (auto& m_splineModues : m_splineModues) {
+		m_splineModues->ComputeCommand(m_commandBuffer);
+	}
+
 	VkClearValue clearColor = { .color = { {0.5f, 0.6f, 0.1f, 1.0f} } };
 
 	VkClearValue clearValues[2];
@@ -409,6 +465,19 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 		},
 		.clearValueCount = 2,
 		.pClearValues = clearValues,
+	};
+
+	VkRenderPassBeginInfo middleRenderPassInfo{
+		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+		.pNext = nullptr,
+		.renderPass = m_renderPass,
+		.framebuffer = m_swapChainFramebuffers[imageIndex],
+		.renderArea = {
+			.offset = { 0, 0 },
+			.extent = m_swapChainCapability.currentExtent,
+		},
+		.clearValueCount = 0,
+		.pClearValues = nullptr,
 	};
 
 	vkCmdBeginRenderPass(m_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -430,10 +499,14 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 	vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
 
 
+	// Render Objects here
 	for(auto& module : m_rasterizationModules) {
 		module->RenderCommand(m_commandBuffer);
 	}
-	// Render Objects here
+
+	for(auto& module : m_splineModues) {
+		module->RenderCommand(m_commandBuffer);
+	}
 
 	vkCmdEndRenderPass(m_commandBuffer);
 	vkEndCommandBuffer(m_commandBuffer);
@@ -468,6 +541,27 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 	vkQueueWaitIdle(m_presentQueue);
 
 	vkWaitForFences(m_logicDevice, 1, &m_fence, VK_TRUE, 20000);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UploadMeshToGPU(const std::vector<ref<GameEntity>>& entities)
+{
+	std::set<ref<Mesh>> uniqueMeshes;
+
+	for (auto& entity : entities) {
+		auto mesh = entity->GetRenderer()->GetMesh();
+
+		if (mesh == nullptr)
+			continue;
+
+		uniqueMeshes.insert(mesh);
+
+		auto rtcomponent = entity->GetRayTracingComponent();
+
+		if (rtcomponent != nullptr)
+			uniqueMeshes.insert(rtcomponent->GetMesh());
+	}
+
+	m_assetManager->UploadMeshesToGPU(std::vector<ref<Mesh>>(uniqueMeshes.begin(), uniqueMeshes.end()));
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeLightBuffer(const SceneLightData& lightData)

@@ -44,6 +44,13 @@
     <ClInclude Include="Core\VulkanTexture2DController.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="Core\SPIRVShaderProgram.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Compute\SPIRVComputeProgram.h">
+      <Filter>Compute</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanSplinePipelineModule.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -92,6 +99,13 @@
     <ClCompile Include="Core\VulkanTexture2DController.cpp">
       <Filter>Core</Filter>
     </ClCompile>
+    <ClCompile Include="Core\SPIRVShaderProgram.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Compute\SPIRVComputeProgram.cpp">
+      <Filter>Compute</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanSplinePipelineModule.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
@@ -99,6 +113,9 @@
     </Filter>
     <Filter Include="Rasterization">
       <UniqueIdentifier>{43f0f47e-c852-4e25-af8b-22e74c9e4e35}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Compute">
+      <UniqueIdentifier>{1c91e4f1-a766-4ee1-88c6-f5c032c4f645}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

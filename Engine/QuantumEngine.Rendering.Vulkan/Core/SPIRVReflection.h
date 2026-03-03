@@ -8,10 +8,17 @@ namespace QuantumEngine::Rendering::Vulkan {
 		SpvReflectBlockVariable variableDesc;
 	};
 
+	struct PushConstantBlockData {
+		UInt32 offset;
+		UInt32 size;
+		bool isDynamic;
+		std::vector<PushConstantVariableData> variables;
+	};
+
 	struct PushConstantBufferData { //TODO Add shader stage flags to make it more optimal for binding
 		std::string name;
 		SpvReflectBlockVariable data;
-		std::vector<PushConstantVariableData> variables;
+		std::vector<PushConstantBlockData> blocks;
 	};
 
 	struct DescriptableBufferData {
@@ -28,14 +35,15 @@ namespace QuantumEngine::Rendering::Vulkan {
 		void AddShaderReflection(const SpvReflectShaderModule* shaderReflection);
 		UInt32 GetDescriptorLayoutCount();
 		UInt32 GetDynamicDescriptorCount();
-		void CreatePipelineLayout(const VkDevice device, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* m_descriptorSetLayout);
+		void CreatePipelineLayout(const VkDevice device, VkShaderStageFlags stageFlags, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* m_descriptorSetLayout);
 		MaterialReflection CreateMaterialReflection();
-		inline std::vector<PushConstantBufferData>& GetPushConstants() { return m_pushConstants; }
+		inline PushConstantBufferData& GetPushConstants() { return m_pushConstant; }
+		PushConstantBlockData* GetPushConstantBlockData(const std::string& name);
 		inline std::vector<DescriptableBufferData>& GetDescriptors() { return m_descripters; }
 		DescriptableBufferData* GetDescriptorData(const std::string name);
 		void Initializes();
 	private:
-		std::vector<PushConstantBufferData> m_pushConstants;
+		PushConstantBufferData m_pushConstant;
 		std::vector<DescriptableBufferData> m_descripters;
 		std::vector<DescriptableBufferData> m_samplers;
 	};

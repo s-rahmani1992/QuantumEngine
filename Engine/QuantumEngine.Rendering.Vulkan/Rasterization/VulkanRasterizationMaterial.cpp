@@ -12,16 +12,16 @@ QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationMaterial::Vu
 	auto& reflection = m_program->GetReflection();
 	auto& pushConstants = reflection.GetPushConstants();
 
-	for(auto& pushConstant : pushConstants)
+	for(auto& pushConstantBlock : pushConstants.blocks)
 	{
-		auto valueLocation = material->GetValueLocation(pushConstant.variables[0].name);
-		if(valueLocation != nullptr)
+		auto valueLocation = material->GetValueLocation(pushConstantBlock.variables[0].name);
+		if (valueLocation != nullptr)
 		{
 			m_pushConstantValues.push_back({
-				.offset = pushConstant.data.offset,
+				.offset = pushConstantBlock.offset,
 				.location = valueLocation,
-				.size = pushConstant.data.size,
-			});
+				.size = pushConstantBlock.size,
+				});
 		}
 	}
 
