@@ -24,6 +24,10 @@ namespace QuantumEngine::Rendering::Vulkan {
 		class VulkanRasterizationPipelineModule;
 	}
 
+	namespace RayTracing {
+		class VulkanRayTracingPipelineModule;
+	}
+
 	struct TransformGPU {
 	public:
 		Matrix4 modelMatrix;
@@ -53,6 +57,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		void InitializeLightBuffer(const SceneLightData& lightData);
 		void InitializeDepthBuffer();
 		void UpdateTransforms();
+		void InitializeRTPipeline();
 
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;		
 		VkInstance m_instance;
@@ -84,6 +89,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 
 		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_rasterizationModules;
 		std::vector<ref<VulkanSplinePipelineModule>> m_splineModues;
+		ref<RayTracing::VulkanRayTracingPipelineModule> m_rayTracingModule;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 		std::vector<VKEntityGPUData> m_entityGPUList;
 		UInt32 m_transformStride;

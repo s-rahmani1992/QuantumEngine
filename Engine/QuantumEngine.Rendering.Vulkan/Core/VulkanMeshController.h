@@ -7,6 +7,11 @@ namespace QuantumEngine {
 }
 
 namespace QuantumEngine::Rendering::Vulkan {
+	namespace RayTracing {
+		struct VulkanBLASBuildInfo;
+	}
+
+
 	class VulkanMeshController : public GPUMeshController
 	{
 	public: 		
@@ -16,7 +21,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		inline VkBuffer GetVertexBuffer() { return m_vertexBuffer; }
 		inline VkBuffer GetIndexBuffer() { return m_indexBuffer; }
 		void CopyCommand(VkCommandBuffer commandBuffer, VkBuffer stageBuffer, UInt32 offset);
-	
+		void GetBLASBuildInfo(RayTracing::VulkanBLASBuildInfo* blasBuildInfo);
 	private:
 
 		ref<Mesh> m_mesh;

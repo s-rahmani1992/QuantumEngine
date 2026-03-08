@@ -26,7 +26,14 @@ namespace QuantumEngine::Rendering::Vulkan {
 		virtual ref<ShaderRegistery> CreateShaderRegistery() override;
 		virtual ref<MaterialFactory> CreateMaterialFactory() override;
 		~VulkanDeviceManager();
-
+		ref<VulkanBufferFactory> GetBufferFactory() const { return m_bufferFactory; }
+		VkInstance GetVKInstance() const { return m_instance; }
+		VkDevice GetGraphicDevice() const { return m_graphicDevice; }
+		VkPhysicalDevice GetPhysicalDevice() const { return m_physicalDevice; }
+		VkQueue GetGraphicsQueue() const;
+		UInt32 GetGraphicsQueueFamilyIndex() const { return m_graphicsQueueFamilyIndex; }
+		VkPhysicalDeviceAccelerationStructurePropertiesKHR* GetAccelerationStructureProperties() { return &m_accelProps; }
+		static VulkanDeviceManager* Instance() { return s_instance; }
 	private:
 
 #if defined(_DEBUG)
@@ -39,16 +46,20 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkDebugUtilsMessengerEXT m_debugMessenger;
 #endif
 
+		static VulkanDeviceManager* s_instance;
+
 		bool CheckQueueSupport(VkPhysicalDevice device);
 		Int32 FindQueueFamilies(VkPhysicalDevice device, UInt32 flag);
 		Int32 FindPresentFamilies(VkPhysicalDevice device, VkSurfaceKHR surface);
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char*>& requiredExtensions);
 		bool CheckDeviceSwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
-		ref<VulkanBufferFactory> CreateBufferFactory();
 		VkInstance m_instance;
 		VkPhysicalDevice m_physicalDevice;
 		VkDevice m_graphicDevice;
 		UInt32 m_graphicsQueueFamilyIndex;
 		UInt32 m_surfaceQueueFamilyIndex;
+		VkPhysicalDeviceAccelerationStructurePropertiesKHR m_accelProps;
+
+		ref<VulkanBufferFactory> m_bufferFactory;
 	};
 }

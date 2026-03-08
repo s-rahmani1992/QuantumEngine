@@ -2,6 +2,9 @@
 #include "VulkanMeshController.h"
 #include "Core/Mesh.h"
 #include "VulkanUtilities.h"
+#include "VulkanDeviceManager.h"
+#include "RayTracing/VulkanBLAS.h"
+#include "Core/VulkanBufferFactory.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanMeshController::VulkanMeshController(const ref<Mesh>& mesh, const VkDevice device)
 	: m_mesh(mesh), m_device(device)
@@ -19,63 +22,22 @@ QuantumEngine::Rendering::Vulkan::VulkanMeshController::~VulkanMeshController()
 
 bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(const VkPhysicalDeviceMemoryProperties* memoryProperties)
 {
-	// Create Vertex Buffer
-	VkBufferCreateInfo vBufferInfo{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.size = sizeof(Vertex) * m_mesh->GetVertexCount(),
-		.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 0,
-		.pQueueFamilyIndices = nullptr,
+	auto bufferFactory = VulkanDeviceManager::Instance()->GetBufferFactory();
+
+	VkMemoryAllocateFlagsInfo flags{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
+		.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
 	};
 
-	if (vkCreateBuffer(m_device, &vBufferInfo, nullptr, &m_vertexBuffer) != VK_SUCCESS)
-		return false;
+	bufferFactory->CreateBuffer(sizeof(Vertex) * m_mesh->GetVertexCount(),
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &flags, &m_vertexBuffer, &m_vertexBufferMemory);
 
-	VkMemoryRequirements vbMemoryRequirements;
-	vkGetBufferMemoryRequirements(m_device, m_vertexBuffer, &vbMemoryRequirements);
-
-	VkMemoryAllocateInfo vbAllocInfo{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = vbMemoryRequirements.size,
-		.memoryTypeIndex = GetMemoryTypeIndex( &vbMemoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryProperties),
-	};
-
-	if(vkAllocateMemory(m_device, &vbAllocInfo, nullptr, &m_vertexBufferMemory) != VK_SUCCESS)
-		return false;
-
-	vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
-
-	// Create Index Buffer
-	VkBufferCreateInfo iBufferInfo{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.size = sizeof(UInt32) * m_mesh->GetIndexCount(),
-		.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 0,
-		.pQueueFamilyIndices = nullptr,
-	};
-
-	if (vkCreateBuffer(m_device, &iBufferInfo, nullptr, &m_indexBuffer) != VK_SUCCESS)
-		return false;
-
-	VkMemoryRequirements ibMemoryRequirements;
-	vkGetBufferMemoryRequirements(m_device, m_indexBuffer, &ibMemoryRequirements);
-
-	VkMemoryAllocateInfo ibAllocInfo{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = ibMemoryRequirements.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&ibMemoryRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, memoryProperties),
-	};
-
-	if (vkAllocateMemory(m_device, &ibAllocInfo, nullptr, &m_indexBufferMemory) != VK_SUCCESS)
-		return false;
-
-	vkBindBufferMemory(m_device, m_indexBuffer, m_indexBufferMemory, 0);
+	bufferFactory->CreateBuffer(sizeof(UInt32) * m_mesh->GetIndexCount(),
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+		VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &flags, &m_indexBuffer, &m_indexBufferMemory);
 
 	return true;
 }
@@ -90,4 +52,65 @@ void QuantumEngine::Rendering::Vulkan::VulkanMeshController::CopyCommand(VkComma
 	copyRegion.srcOffset = offset + sizeof(Vertex) * m_mesh->GetVertexCount();
 	copyRegion.size = sizeof(UInt32) * m_mesh->GetIndexCount();
 	vkCmdCopyBuffer(commandBuffer, stageBuffer, m_indexBuffer, 1, &copyRegion);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanMeshController::GetBLASBuildInfo(RayTracing::VulkanBLASBuildInfo* blasBuildInfo)
+{
+	VkBufferDeviceAddressInfo vbAddrInfo{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+		.buffer = m_vertexBuffer,
+	};
+	VkDeviceAddress vertexAddress = vkGetBufferDeviceAddress(m_device, &vbAddrInfo);
+
+	VkBufferDeviceAddressInfo ibAddrInfo{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
+		.buffer = m_indexBuffer,
+	};
+	VkDeviceAddress indexAddress = vkGetBufferDeviceAddress(m_device, &ibAddrInfo);
+
+	VkAccelerationStructureGeometryTrianglesDataKHR triangles{};
+	triangles.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+	triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
+	VkDeviceOrHostAddressConstKHR vertexDeviceAddress{};
+	vertexDeviceAddress.deviceAddress = vertexAddress;
+	triangles.vertexData = vertexDeviceAddress;
+	triangles.vertexStride = sizeof(Vertex);
+	triangles.maxVertex = m_mesh->GetVertexCount();
+	triangles.indexType = VK_INDEX_TYPE_UINT32;
+	VkDeviceOrHostAddressConstKHR indexDeviceAddress{};
+	indexDeviceAddress.deviceAddress = indexAddress;
+	triangles.indexData = indexDeviceAddress;
+	VkDeviceOrHostAddressConstKHR transformDeviceAddress{};
+	transformDeviceAddress.deviceAddress = 0;
+	triangles.transformData = transformDeviceAddress;
+
+
+	blasBuildInfo->geometryInfo = VkAccelerationStructureGeometryKHR{
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR,
+		.geometryType = VK_GEOMETRY_TYPE_TRIANGLES_KHR,
+		.geometry = VkAccelerationStructureGeometryDataKHR{
+			.triangles = triangles,
+		},
+		.flags = VK_GEOMETRY_OPAQUE_BIT_KHR,
+	};
+
+	blasBuildInfo->buildInfo = VkAccelerationStructureBuildGeometryInfoKHR{
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR,
+		.type = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR,
+		.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR,
+		.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR,
+		.geometryCount = 1,
+		.pGeometries = &(blasBuildInfo->geometryInfo),
+	};
+
+	UInt32 primitiveCount = m_mesh->GetIndexCount() / 3;
+
+	blasBuildInfo->sizeInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+	blasBuildInfo->primitiveCount = primitiveCount;
+	auto getRTASGetSizePtr = (PFN_vkGetAccelerationStructureBuildSizesKHR)vkGetDeviceProcAddr(m_device, "vkGetAccelerationStructureBuildSizesKHR");
+	getRTASGetSizePtr(m_device, VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+		&(blasBuildInfo->buildInfo),
+		&primitiveCount,
+		&(blasBuildInfo->sizeInfo)
+	);
 }

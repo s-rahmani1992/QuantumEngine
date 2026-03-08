@@ -33,7 +33,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 
 	VkMemoryAllocateInfo stageAllocInfo{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.allocationSize = bufferMemoryRequirement.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&bufferMemoryRequirement, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_memoryProperties),
+		.memoryTypeIndex = GetMemoryTypeIndex(&bufferMemoryRequirement, memoryPropertyFlags, &m_memoryProperties),
 	};
 
 	if (vkAllocateMemory(m_device, &stageAllocInfo, nullptr, memory) != VK_SUCCESS) {
@@ -75,7 +75,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 
 	VkMemoryAllocateInfo stageAllocInfo{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
 		.allocationSize = bufferMemoryRequirement.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&bufferMemoryRequirement, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_memoryProperties),
+		.memoryTypeIndex = GetMemoryTypeIndex(&bufferMemoryRequirement, memoryPropertyFlags, &m_memoryProperties),
 	};
 
 	if (vkAllocateMemory(m_device, &stageAllocInfo, nullptr, memory) != VK_SUCCESS) {
@@ -84,6 +84,36 @@ bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 
 
 	vkBindBufferMemory(m_device, *buffer, *memory, 0);
 
+	return true;
+}
+
+bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, const void* pAllocNext, VkBuffer* buffer, VkDeviceMemory* memory)
+{
+	VkBufferCreateInfo bufferCreateInfo{
+		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+		.pNext = nullptr,
+		.flags = 0,
+		.size = size,
+		.usage = usageFlags,
+		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+		.queueFamilyIndexCount = 0,
+		.pQueueFamilyIndices = nullptr,
+	};
+
+	vkCreateBuffer(m_device, &bufferCreateInfo, nullptr, buffer);
+
+	VkMemoryRequirements memReq;
+	vkGetBufferMemoryRequirements(m_device, *buffer, &memReq);
+
+	VkMemoryAllocateInfo scratchAlloc{
+		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+		.pNext = pAllocNext,
+		.allocationSize = memReq.size,
+		.memoryTypeIndex = GetMemoryTypeIndex(&memReq, memoryPropertyFlags, &m_memoryProperties),
+	};
+
+	vkAllocateMemory(m_device, &scratchAlloc, nullptr, memory);
+	vkBindBufferMemory(m_device, *buffer, *memory, 0);
 	return true;
 }
 

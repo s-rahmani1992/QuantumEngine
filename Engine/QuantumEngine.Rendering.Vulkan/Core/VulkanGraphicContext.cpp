@@ -17,6 +17,7 @@
 #include "VulkanShaderRegistery.h"
 #include <Rendering/MeshRenderer.h>
 #include <Rendering/SplineRenderer.h>
+#include "RayTracing/VulkanRayTracingPipelineModule.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::VulkanGraphicContext(const VkInstance vkInstance, VkPhysicalDevice physicalDevice, VkDevice logicDevice, UInt32 graphicsQueueFamilyIndex, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	:m_instance(vkInstance), m_physicalDevice(physicalDevice), m_logicDevice(logicDevice), 
@@ -421,6 +422,8 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		matPair.second->WriteBuffer(HLSL_LIGHT_DATA_NAME, m_lightBuffer, m_lightStride);
 	}
 
+	InitializeRTPipeline();
+
 	return true;
 }
 
@@ -651,4 +654,10 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()
 	}
 
 	vkUnmapMemory(m_logicDevice, m_transformBufferMemory);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeRTPipeline()
+{
+	m_rayTracingModule = std::make_shared<RayTracing::VulkanRayTracingPipelineModule>();
+	m_rayTracingModule->Initialize(m_entityGPUList);
 }

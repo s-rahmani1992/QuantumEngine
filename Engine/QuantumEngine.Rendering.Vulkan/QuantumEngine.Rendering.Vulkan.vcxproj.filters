@@ -51,6 +51,12 @@
       <Filter>Compute</Filter>
     </ClInclude>
     <ClInclude Include="VulkanSplinePipelineModule.h" />
+    <ClInclude Include="RayTracing\VulkanRayTracingPipelineModule.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracing\VulkanBLAS.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -106,6 +112,12 @@
       <Filter>Compute</Filter>
     </ClCompile>
     <ClCompile Include="VulkanSplinePipelineModule.cpp" />
+    <ClCompile Include="RayTracing\VulkanRayTracingPipelineModule.cpp">
+      <Filter>RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\VulkanBLAS.cpp">
+      <Filter>RayTracing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
@@ -116,6 +128,9 @@
     </Filter>
     <Filter Include="Compute">
       <UniqueIdentifier>{1c91e4f1-a766-4ee1-88c6-f5c032c4f645}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RayTracing">
+      <UniqueIdentifier>{f74f22ad-3533-4f6a-8d79-2ec8d07971e7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

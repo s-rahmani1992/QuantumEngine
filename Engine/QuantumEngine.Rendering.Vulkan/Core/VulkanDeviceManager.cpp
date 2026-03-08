@@ -9,6 +9,8 @@
 #include "VulkanBufferFactory.h"
 #include <set>
 
+QuantumEngine::Rendering::Vulkan::VulkanDeviceManager* QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::s_instance;
+
 bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 {
 	// Get Supported Extensions
@@ -38,6 +40,8 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 	enabledExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	enabledExtensions.push_back("VK_KHR_win32_surface");
+
+	enabledExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 #if defined(_DEBUG)
 
@@ -110,6 +114,13 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	std::vector<const char*> requiredDeviceExtensions;
 	requiredDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
+	requiredDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+
 	for (auto& devicePtr : devices) {
 		vkGetPhysicalDeviceProperties(devicePtr, &deviceProperties);
 		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
@@ -164,15 +175,38 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	ubStandardLayoutFeature.pNext = &scalarBlockLayoutFeature;
 	ubStandardLayoutFeature.uniformBufferStandardLayout = VK_TRUE;
 
+	VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddress{};
+	bufferDeviceAddress.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+	bufferDeviceAddress.pNext = &ubStandardLayoutFeature;
+	bufferDeviceAddress.bufferDeviceAddress = VK_TRUE;
+
+	// acceleration structure feature
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeature{};
+	accelStructFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+	accelStructFeature.pNext = &bufferDeviceAddress;
+	accelStructFeature.accelerationStructure = VK_TRUE;
+
+	// ray tracing pipeline feature
+	VkPhysicalDeviceRayTracingPipelineFeaturesKHR rtPipelineFeature{};
+	rtPipelineFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+	rtPipelineFeature.pNext = &accelStructFeature;
+	rtPipelineFeature.rayTracingPipeline = VK_TRUE;
+
+	// top-level features2
+	VkPhysicalDeviceFeatures2 features2{};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &rtPipelineFeature;
+	features2.features = deviceFeatures;
+
 	VkDeviceCreateInfo deviceCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-		.pNext = &ubStandardLayoutFeature,
+		.pNext = &features2,
 		.flags = 0,
 		.queueCreateInfoCount = (UInt32)queueCreateInfos.size(),
 		.pQueueCreateInfos = queueCreateInfos.data(),
 		.enabledExtensionCount = (UInt32)requiredDeviceExtensions.size(),
 		.ppEnabledExtensionNames = requiredDeviceExtensions.data(),
-		.pEnabledFeatures = &deviceFeatures,
+		.pEnabledFeatures = nullptr,
 	};
 
 	result = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_graphicDevice);
@@ -185,6 +219,23 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 	vkDestroySurfaceKHR(m_instance, tempSurface, nullptr);
 	DestroyWindow(tempWindow->GetHandle());
+
+	//VkPhysicalDeviceAccelerationStructurePropertiesKHR accelProps{};
+	m_accelProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
+
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProps{};
+	rtProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+
+	// chain them into VkPhysicalDeviceProperties2
+	VkPhysicalDeviceProperties2 props2{};
+	props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	props2.pNext = &m_accelProps;
+	m_accelProps.pNext = &rtProps;
+
+	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
+
+	s_instance = this;
+	m_bufferFactory = std::make_shared<VulkanBufferFactory>(m_graphicDevice, m_physicalDevice);
 	return true;
 }
 
@@ -192,7 +243,7 @@ ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::
 {
 	ref<VulkanGraphicContext> context = std::make_shared<VulkanGraphicContext>(m_instance, m_physicalDevice, m_graphicDevice, m_graphicsQueueFamilyIndex, m_surfaceQueueFamilyIndex, window);
 
-	if(context->Initialize(CreateBufferFactory()) == false)
+	if(context->Initialize(m_bufferFactory) == false)
 		return nullptr;
 
 	return context;
@@ -235,6 +286,12 @@ QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::~VulkanDeviceManager()
 
 	vkDestroyDevice(m_graphicDevice, nullptr);
 	vkDestroyInstance(m_instance, nullptr);
+}
+VkQueue QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::GetGraphicsQueue() const
+{
+	VkQueue graphicsQueue;
+	vkGetDeviceQueue(m_graphicDevice, m_graphicsQueueFamilyIndex, 0, &graphicsQueue);
+	return graphicsQueue;
 }
 #if defined(_DEBUG)
 
@@ -329,9 +386,4 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CheckDeviceSwapChain
 	uint32_t presentModeCount;
 	vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &presentModeCount, nullptr);
 	return formatCount > 0 && presentModeCount > 0;
-}
-
-ref<QuantumEngine::Rendering::Vulkan::VulkanBufferFactory> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateBufferFactory()
-{
-	return std::make_shared<VulkanBufferFactory>(m_graphicDevice, m_physicalDevice);
 }
