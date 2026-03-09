@@ -24,5 +24,10 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 
 		std::map<ref<VulkanMeshController>, ref<VulkanBLAS>> m_blasMap;
 		VkQueue m_graphicsQueue;
+
+		VkAccelerationStructureKHR m_tlas;
+		VkDeviceAddress m_tlasAddress;
+		VkBuffer m_tlasBuffer;
+		VkDeviceMemory m_tlasMemory;
 	};
 }

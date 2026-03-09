@@ -51,5 +51,12 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanBLAS::CreateCommand(VkC
 	};
 	const VkAccelerationStructureBuildRangeInfoKHR* pRange = &range;
 
+	VkAccelerationStructureDeviceAddressInfoKHR blasAddressInfo{
+		.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR,
+		.accelerationStructure = m_blas,
+	};
+	auto getAccelerationStructureDeviceAddressPtr = (PFN_vkGetAccelerationStructureDeviceAddressKHR)vkGetDeviceProcAddr(m_device, "vkGetAccelerationStructureDeviceAddressKHR");
+	m_blasAddress = getAccelerationStructureDeviceAddressPtr(m_device, &blasAddressInfo);
+
 	m_buildAccelerationStructurePtr(commandBuffer, 1, &(buildInfo->buildInfo), &pRange);
 }

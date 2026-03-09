@@ -14,9 +14,11 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VulkanBLAS();
 		~VulkanBLAS();
 		void CreateCommand(VkCommandBuffer commandBuffer, VulkanBLASBuildInfo* buildInfo);
+		VkDeviceAddress GetBLASAddress() const { return m_blasAddress; }
 	private:
 		VkDevice m_device; 
 		VkAccelerationStructureKHR m_blas;
+		VkDeviceAddress m_blasAddress;
 		VkBuffer m_blasBuffer;
 		VkDeviceMemory m_blasMemory;
 		PFN_vkCmdBuildAccelerationStructuresKHR m_buildAccelerationStructurePtr;
