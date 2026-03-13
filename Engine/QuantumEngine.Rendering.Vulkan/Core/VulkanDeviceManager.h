@@ -33,6 +33,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkQueue GetGraphicsQueue() const;
 		UInt32 GetGraphicsQueueFamilyIndex() const { return m_graphicsQueueFamilyIndex; }
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR* GetAccelerationStructureProperties() { return &m_accelProps; }
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR* GetRayTracingPipelineProperties() { return &m_rtPipelineProps; }
 		static VulkanDeviceManager* Instance() { return s_instance; }
 	private:
 
@@ -59,7 +60,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		UInt32 m_graphicsQueueFamilyIndex;
 		UInt32 m_surfaceQueueFamilyIndex;
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR m_accelProps;
-
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR m_rtPipelineProps;
 		ref<VulkanBufferFactory> m_bufferFactory;
 	};
 }

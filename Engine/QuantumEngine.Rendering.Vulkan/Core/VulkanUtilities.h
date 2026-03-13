@@ -5,6 +5,8 @@
 #define HLSL_OBJECT_TRANSFORM_DATA_NAME "_ObjectTransformData"
 #define HLSL_CAMERA_DATA_NAME "_CameraData"
 #define HLSL_LIGHT_DATA_NAME "_LightData"
+#define HLSL_RT_TLAS_SCENE_NAME "_RTScene"
+#define HLSL_RT_OUTPUT_TEXTURE_NAME "_OutputTexture"
 
 UInt32 GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags targetFlags, const VkPhysicalDeviceMemoryProperties* memoryProperties);
 

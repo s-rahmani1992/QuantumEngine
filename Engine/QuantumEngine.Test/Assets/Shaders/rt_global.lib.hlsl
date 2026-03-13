@@ -3,6 +3,24 @@
 
 CAMERA_VAR_1(b0)
 
+#ifdef _VULKAN
+
+struct Properties
+{
+    float4 missColor;
+    float4 hitColor;
+    uint _missIndex;
+};
+
+[[vk::push_constant]]
+Properties Props;
+
+#define missColor Props.missColor
+#define hitColor Props.hitColor
+#define _missIndex Props._missIndex
+
+#else
+
 RT_PROP_VAR_1(b1)
 
 cbuffer ColorProperties : register(b2)
@@ -11,8 +29,16 @@ cbuffer ColorProperties : register(b2)
     float4 hitColor;
 };
 
+#endif
+
+#ifdef _VULKAN
+[[vk::binding(3, 0)]]
+#endif
 RT_SCENE_VAR_1(t0)
 
+#ifdef _VULKAN
+[[vk::binding(4, 0)]]
+#endif
 RT_OUT_VAR_1(u0)
 
 [shader("raygeneration")]

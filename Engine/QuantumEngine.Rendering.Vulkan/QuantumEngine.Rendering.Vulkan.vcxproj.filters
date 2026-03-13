@@ -57,6 +57,9 @@
     <ClInclude Include="RayTracing\VulkanBLAS.h">
       <Filter>RayTracing</Filter>
     </ClInclude>
+    <ClInclude Include="RayTracing\SPIRVRayTracingProgram.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -116,6 +119,9 @@
       <Filter>RayTracing</Filter>
     </ClCompile>
     <ClCompile Include="RayTracing\VulkanBLAS.cpp">
+      <Filter>RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\SPIRVRayTracingProgram.cpp">
       <Filter>RayTracing</Filter>
     </ClCompile>
   </ItemGroup>

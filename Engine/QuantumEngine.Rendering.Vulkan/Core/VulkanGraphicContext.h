@@ -57,7 +57,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		void InitializeLightBuffer(const SceneLightData& lightData);
 		void InitializeDepthBuffer();
 		void UpdateTransforms();
-		void InitializeRTPipeline();
+		void InitializeRTPipeline(const ref<Scene>& scene);
 
 		ref<QuantumEngine::Platform::GraphicWindow> m_window;		
 		VkInstance m_instance;

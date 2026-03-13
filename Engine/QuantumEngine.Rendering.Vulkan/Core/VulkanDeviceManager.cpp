@@ -120,6 +120,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	requiredDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
 	requiredDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	requiredDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+	requiredDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
 	for (auto& devicePtr : devices) {
 		vkGetPhysicalDeviceProperties(devicePtr, &deviceProperties);
@@ -192,10 +193,16 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	rtPipelineFeature.pNext = &accelStructFeature;
 	rtPipelineFeature.rayTracingPipeline = VK_TRUE;
 
+	// ray query feature (required when SPIR-V uses RayQueryKHR capability)
+	VkPhysicalDeviceRayQueryFeaturesKHR rayQueryFeature{};
+	rayQueryFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+	rayQueryFeature.pNext = &rtPipelineFeature;
+	rayQueryFeature.rayQuery = VK_TRUE;
+
 	// top-level features2
 	VkPhysicalDeviceFeatures2 features2{};
 	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &rtPipelineFeature;
+	features2.pNext = &rayQueryFeature;
 	features2.features = deviceFeatures;
 
 	VkDeviceCreateInfo deviceCreateInfo{
@@ -220,17 +227,15 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	vkDestroySurfaceKHR(m_instance, tempSurface, nullptr);
 	DestroyWindow(tempWindow->GetHandle());
 
-	//VkPhysicalDeviceAccelerationStructurePropertiesKHR accelProps{};
 	m_accelProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
 
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR rtProps{};
-	rtProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+	m_rtPipelineProps.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
 
 	// chain them into VkPhysicalDeviceProperties2
 	VkPhysicalDeviceProperties2 props2{};
 	props2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	props2.pNext = &m_accelProps;
-	m_accelProps.pNext = &rtProps;
+	m_accelProps.pNext = &m_rtPipelineProps;
 
 	vkGetPhysicalDeviceProperties2(m_physicalDevice, &props2);
 

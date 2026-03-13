@@ -7,6 +7,7 @@
 
 #include "SPIRVShader.h"
 #include "Rasterization/SPIRVRasterizationProgram.h"
+#include "RayTracing/SPIRVRayTracingProgram.h"
 #include "Compute/SPIRVComputeProgram.h"
 
 #include <boost/uuid/string_generator.hpp>
@@ -170,6 +171,49 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 		finalProgram = std::make_shared<Rasterization::SPIRVRasterizationProgram>(shaders, m_device);
 	}
 
+	else if(strcmp(programType, "RayTracing") == 0) {
+		m_compileArguments[m_mainIndex] = (WCHAR*)L"";
+		std::string target("lib_");
+		target += properties["model"].as_string().c_str();
+		std::wstring wTarget = CharToString(target.c_str());
+		m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
+
+		ComPtr<IDxcBlob> pshaderObjectData;
+
+		ComPtr<IDxcResult> compileResult;
+		HRESULT result;
+		result = m_dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_compileArguments.size(), m_includeHandler, IID_PPV_ARGS(&compileResult));
+
+		if (FAILED(result)) {
+			error = "Unknown Error when Beginning to compile";
+			return nullptr;
+		}
+
+		ComPtr<IDxcBlobUtf8> pErrors;
+
+		result = compileResult->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(pErrors.GetAddressOf()), nullptr);
+
+		if (FAILED(result)) {
+			error = "Unknown Error when Beginning to compile";
+			return nullptr;
+		}
+
+		if (pErrors && pErrors->GetStringLength() > 0)
+		{
+			error = std::string(pErrors->GetStringPointer(), pErrors->GetStringLength());
+			return nullptr;
+		}
+
+		result = compileResult->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&pshaderObjectData), nullptr);
+
+		if (FAILED(result)) {
+			error = "Unknown Error when Obtaining Shader Bytecode";
+			return nullptr;
+		}
+
+		finalProgram = std::make_shared<RayTracing::SPIRVRayTracingProgram>((Byte*)pshaderObjectData->GetBufferPointer(), pshaderObjectData->GetBufferSize(), m_device);
+	}
+
 	else if (strcmp(programType, "Compute") == 0) {
 		std::wstring wMain = CharToString(properties["csMain"].as_string().c_str());
 		m_compileArguments[m_mainIndex] = (WCHAR*)(wMain.c_str());
@@ -213,9 +257,6 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 		}
 
 		finalProgram = std::make_shared<Compute::SPIRVComputeProgram>((Byte*)pshaderObjectData->GetBufferPointer(), pshaderObjectData->GetBufferSize(), m_device);
-	}
-	else {
-		finalProgram = std::make_shared<SPIRVShaderProgram>();
 	}
 
 	auto uidStr = metaData["uuid"].as_string().c_str();

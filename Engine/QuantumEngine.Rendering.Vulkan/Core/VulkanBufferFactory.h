@@ -8,6 +8,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		bool CreateBuffer(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory);
 		bool CreateBuffer(UInt32 size, UInt32 amount, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkBuffer* buffers, VkDeviceMemory* memory, UInt32* stride);
 		bool CreateBuffer(UInt32 size, VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, const void* pAllocNext, VkBuffer* buffers, VkDeviceMemory* memory);
+		VkPhysicalDeviceMemoryProperties* GetMemoryProperties() { return &m_memoryProperties; }
 	private:
 		static UInt32 GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags targetFlags, const VkPhysicalDeviceMemoryProperties* memoryProperties);
 		

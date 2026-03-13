@@ -305,7 +305,10 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_cameraBuffer, &m_cameraBufferMemory, &m_cameraStride);
 
 	m_camera = scene->mainCamera;
+	m_cameraGPU.viewMatrix = m_camera->ViewMatrix();
 	m_cameraGPU.projectionMatrix = m_camera->ProjectionMatrix();
+	m_cameraGPU.inverseProjectionMatrix = m_camera->InverseProjectionMatrix();
+	m_cameraGPU.inverseProjectionMatrix.SetValue(1, 1, -m_cameraGPU.inverseProjectionMatrix(1, 1));
 	m_cameraGPU.projectionMatrix.SetValue(1, 1, -m_cameraGPU.projectionMatrix(1, 1));
 
 	InitializeLightBuffer(scene->lightData);
@@ -422,7 +425,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::PrepareScene(const 
 		matPair.second->WriteBuffer(HLSL_LIGHT_DATA_NAME, m_lightBuffer, m_lightStride);
 	}
 
-	InitializeRTPipeline();
+	InitializeRTPipeline(scene);
 
 	return true;
 }
@@ -450,6 +453,8 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::Render()
 	for (auto& m_splineModues : m_splineModues) {
 		m_splineModues->ComputeCommand(m_commandBuffer);
 	}
+
+	m_rayTracingModule->RenderCommand(m_commandBuffer);
 
 	VkClearValue clearColor = { .color = { {0.5f, 0.6f, 0.1f, 1.0f} } };
 
@@ -635,6 +640,7 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeDepthBuff
 void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()
 {
 	void* data;
+	m_cameraGPU.inverseProjectionMatrix = m_camera->GetTransform()->Matrix() * m_camera->InverseProjectionMatrix();
 	m_cameraGPU.viewMatrix = m_camera->ViewMatrix();
 	m_cameraGPU.position = m_camera->GetTransform()->Position();
 
@@ -656,8 +662,8 @@ void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::UpdateTransforms()
 	vkUnmapMemory(m_logicDevice, m_transformBufferMemory);
 }
 
-void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeRTPipeline()
+void QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeRTPipeline(const ref<Scene>& scene)
 {
 	m_rayTracingModule = std::make_shared<RayTracing::VulkanRayTracingPipelineModule>();
-	m_rayTracingModule->Initialize(m_entityGPUList);
+	m_rayTracingModule->Initialize(m_entityGPUList, scene->rtGlobalMaterial, m_cameraBuffer, m_lightBuffer, m_cameraStride, m_lightStride, m_swapChainCapability.currentExtent);
 }

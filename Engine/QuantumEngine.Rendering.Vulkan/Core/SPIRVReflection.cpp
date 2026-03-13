@@ -108,6 +108,13 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 			break;
 		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
 			desType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			break;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+			desType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			break;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+			desType = VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
+			break;
 		}
 
 		m_descripters.push_back(DescriptableBufferData{
