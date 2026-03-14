@@ -163,6 +163,7 @@
     <ClInclude Include="Core\VulkanBufferFactory.h" />
     <ClInclude Include="Core\VulkanDeviceManager.h" />
     <ClInclude Include="Core\VulkanGraphicContext.h" />
+    <ClInclude Include="Core\VulkanHybridContext.h" />
     <ClInclude Include="Core\VulkanMaterialFactory.h" />
     <ClInclude Include="Core\VulkanMeshController.h" />
     <ClInclude Include="Core\VulkanShaderRegistery.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="Rasterization\VulkanRasterizationPipelineModule.h" />
     <ClInclude Include="RayTracing\SPIRVRayTracingProgram.h" />
     <ClInclude Include="RayTracing\VulkanBLAS.h" />
+    <ClInclude Include="RayTracing\VulkanRayTracingContext.h" />
     <ClInclude Include="RayTracing\VulkanRayTracingPipelineModule.h" />
     <ClInclude Include="vulkan-pch.h" />
     <ClInclude Include="VulkanSplinePipelineModule.h" />
@@ -192,6 +194,7 @@
     <ClCompile Include="Core\VulkanBufferFactory.cpp" />
     <ClCompile Include="Core\VulkanDeviceManager.cpp" />
     <ClCompile Include="Core\VulkanGraphicContext.cpp" />
+    <ClCompile Include="Core\VulkanHybridContext.cpp" />
     <ClCompile Include="Core\VulkanMaterialFactory.cpp" />
     <ClCompile Include="Core\VulkanMeshController.cpp" />
     <ClCompile Include="Core\VulkanShaderRegistery.cpp" />
@@ -202,6 +205,7 @@
     <ClCompile Include="Rasterization\VulkanRasterizationPipelineModule.cpp" />
     <ClCompile Include="RayTracing\SPIRVRayTracingProgram.cpp" />
     <ClCompile Include="RayTracing\VulkanBLAS.cpp" />
+    <ClCompile Include="RayTracing\VulkanRayTracingContext.cpp" />
     <ClCompile Include="RayTracing\VulkanRayTracingPipelineModule.cpp" />
     <ClCompile Include="vulkan-pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

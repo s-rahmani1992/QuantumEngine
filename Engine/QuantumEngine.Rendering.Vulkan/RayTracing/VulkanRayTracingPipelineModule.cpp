@@ -36,7 +36,7 @@ QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::~V
 	vkFreeMemory(m_device, m_SBTMemory, nullptr);
 }
 
-bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::Initialize(std::vector<VKEntityGPUData>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, UInt32 camStride, UInt32 lightStride, const VkExtent2D& extent)
+bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, UInt32 camStride, UInt32 lightStride, const VkExtent2D& extent)
 {
 	m_extent = extent;
 	VkCommandPool commandPool;
@@ -65,14 +65,14 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 	std::map<ref<VulkanMeshController>, VulkanBLASBuildInfo> meshbuildInfos;
 	std::vector<VKEntityGPUData> rtEntities;
-
+	UInt32 index = 0;
 	for(auto& entityData : entities) {
-		auto rtComponent = entityData.gameEntity->GetRayTracingComponent();
+		auto rtComponent = entityData->GetRayTracingComponent();
 
 		if(rtComponent == nullptr)
 			continue;
 
-		rtEntities.push_back(entityData);
+		rtEntities.push_back({ entityData, index });
 		auto meshController = std::dynamic_pointer_cast<VulkanMeshController>(rtComponent->GetMesh()->GetGPUHandle());
 		
 		auto it = meshbuildInfos.emplace(meshController, VulkanBLASBuildInfo{});
@@ -396,8 +396,6 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::RenderCommand(VkCommandBuffer commandBuffer)
 {
-	// Ensure the ray-tracing output image is in a layout the shaders can write to.
-	// The image was created with undefined layout; transition it to GENERAL before tracing.
 	VkImageMemoryBarrier imageBarrier{};
 	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	imageBarrier.srcAccessMask = 0;
@@ -450,18 +448,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
-	vkCreateImage(m_device, &imgInfo, nullptr, &m_outputImage);
-
-	VkMemoryRequirements memReq;
-	vkGetImageMemoryRequirements(m_device, m_outputImage, &memReq);
-
-	VkMemoryAllocateInfo imAllocInfo{};
-	imAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	imAllocInfo.allocationSize = memReq.size;
-	imAllocInfo.memoryTypeIndex = GetMemoryTypeIndex(&memReq, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, m_bufferFactory->GetMemoryProperties());
-
-	vkAllocateMemory(m_device, &imAllocInfo, nullptr, &m_outputImageMemory);
-	vkBindImageMemory(m_device, m_outputImage, m_outputImageMemory, 0);
+	m_bufferFactory->CreateImage(&imgInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_outputImage, &m_outputImageMemory);
 
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

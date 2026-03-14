@@ -117,6 +117,25 @@ bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 
 	return true;
 }
 
+bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateImage(const VkImageCreateInfo* imageCreateInfo, VkMemoryPropertyFlags memoryPropertyFlags, VkImage* image, VkDeviceMemory* memory)
+{
+	vkCreateImage(m_device, imageCreateInfo, nullptr, image);
+
+	// Allocate memory
+	VkMemoryRequirements memReq;
+	vkGetImageMemoryRequirements(m_device, *image, &memReq);
+
+	VkMemoryAllocateInfo allocInfo{
+	.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+	.allocationSize = memReq.size,
+	.memoryTypeIndex = GetMemoryTypeIndex(&memReq, memoryPropertyFlags, &m_memoryProperties),
+	};
+
+	vkAllocateMemory(m_device, &allocInfo, nullptr, memory);
+	vkBindImageMemory(m_device, *image, *memory, 0);
+	return true;
+}
+
 UInt32 QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::GetMemoryTypeIndex(const VkMemoryRequirements* memoryRequirement, VkMemoryPropertyFlags targetFlags, const VkPhysicalDeviceMemoryProperties* memoryProperties)
 {
 	for (UInt32 i = 0; i < memoryProperties->memoryTypeCount; i++) {

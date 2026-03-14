@@ -2,7 +2,8 @@
 #include "VulkanDeviceManager.h"
 #include "Platform/Application.h"
 #include "Platform/GraphicWindow.h"
-#include "VulkanGraphicContext.h"
+#include "VulkanHybridContext.h"
+#include "RayTracing/VulkanRayTracingContext.h"
 #include "VulkanShaderRegistery.h"
 #include "VulkanAssetManager.h"
 #include "VulkanMaterialFactory.h"
@@ -246,9 +247,9 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 
 ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateHybridContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
 {
-	ref<VulkanGraphicContext> context = std::make_shared<VulkanGraphicContext>(m_instance, m_physicalDevice, m_graphicDevice, m_graphicsQueueFamilyIndex, m_surfaceQueueFamilyIndex, window);
+	ref<VulkanHybridContext> context = std::make_shared<VulkanHybridContext>(m_instance, m_surfaceQueueFamilyIndex, window);
 
-	if(context->Initialize(m_bufferFactory) == false)
+	if(context->Initialize() == false)
 		return nullptr;
 
 	return context;
@@ -256,7 +257,12 @@ ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::
 
 ref<QuantumEngine::Rendering::GraphicContext> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateRayTracingContextForWindows(ref<QuantumEngine::Platform::GraphicWindow>& window)
 {
-	return nullptr;
+	ref<RayTracing::VulkanRayTracingContext> context = std::make_shared<RayTracing::VulkanRayTracingContext>(m_instance, m_surfaceQueueFamilyIndex, window);
+
+	if (context->Initialize() == false)
+		return nullptr;
+
+	return context;
 }
 
 ref<QuantumEngine::Rendering::GPUAssetManager> QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::CreateAssetManager()

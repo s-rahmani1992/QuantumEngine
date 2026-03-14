@@ -2,6 +2,10 @@
 #include "vulkan-pch.h"
 #include <map>
 
+namespace QuantumEngine {
+	class GameEntity;
+}
+
 namespace QuantumEngine::Rendering {
 	class Material;
 }
@@ -21,12 +25,19 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VulkanRayTracingPipelineModule();
 		~VulkanRayTracingPipelineModule();
 
-		bool Initialize(std::vector<VKEntityGPUData>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, UInt32 camStride, UInt32 lightStride, const VkExtent2D& extent);
+		bool Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, UInt32 camStride, UInt32 lightStride, const VkExtent2D& extent);
 		void RenderCommand(VkCommandBuffer commandBuffer);
+		VkImage GetOutputImage() const { return m_outputImage; }
 	private:
 		void CreateOutputImage();
 		void CreatePipelineAndSBT();
 		void WriteBuffers(const std::string name, const VkBuffer buffer, UInt32 stride);
+
+		struct VKEntityGPUData {
+		public:
+			ref<GameEntity> gameEntity;
+			UInt32 index;
+		};
 
 		struct pushConstantData {
 			UInt32 offset;

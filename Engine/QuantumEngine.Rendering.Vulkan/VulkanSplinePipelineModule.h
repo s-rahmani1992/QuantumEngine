@@ -22,7 +22,6 @@ namespace QuantumEngine::Rendering::Vulkan {
 		ref<SplineRenderer> splineRenderer;
 		ref<Rasterization::VulkanRasterizationMaterial> material;
 		ref<Compute::SPIRVComputeProgram> computeProgram;
-		VkPhysicalDeviceMemoryProperties* memoryProperties;
 	};
 
 	struct SplineVertex {

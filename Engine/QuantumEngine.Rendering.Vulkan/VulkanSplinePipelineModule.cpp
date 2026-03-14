@@ -5,6 +5,8 @@
 #include "Compute/SPIRVComputeProgram.h"
 #include "Rasterization/SPIRVRasterizationProgram.h"
 #include "Rasterization/VulkanRasterizationMaterial.h"
+#include "Core/VulkanDeviceManager.h"
+#include "Core/VulkanBufferFactory.h"
 
 VkVertexInputBindingDescription QuantumEngine::Rendering::Vulkan::VulkanSplinePipelineModule::s_bindingDescriptions = {
 	.binding = 0,
@@ -101,34 +103,10 @@ void QuantumEngine::Rendering::Vulkan::VulkanSplinePipelineModule::WriteOffset(c
 
 bool QuantumEngine::Rendering::Vulkan::VulkanSplinePipelineModule::InitializeVertexBuffer(const SplineEntityData& splineEntity)
 {
-	VkBufferCreateInfo bufferCreateInfo{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.size = sizeof(SplineVertex) * (m_splineRenderer->GetSegments() + 1),
-		.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 0,
-		.pQueueFamilyIndices = nullptr,
-	};
+	auto bufferFactory = VulkanDeviceManager::Instance()->GetBufferFactory();
 
-	if (vkCreateBuffer(m_device, &bufferCreateInfo, nullptr, &m_vertexBuffer) != VK_SUCCESS)
+	if(bufferFactory->CreateBuffer(sizeof(SplineVertex) * (m_splineRenderer->GetSegments() + 1), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_vertexBuffer, &m_vertexBufferMemory) == false)
 		return false;
-
-	VkMemoryRequirements bufferMemoryRequirement;
-	vkGetBufferMemoryRequirements(m_device, m_vertexBuffer, &bufferMemoryRequirement);
-
-	VkMemoryAllocateInfo stageAllocInfo{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = bufferMemoryRequirement.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&bufferMemoryRequirement, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, splineEntity.memoryProperties),
-	};
-
-	if (vkAllocateMemory(m_device, &stageAllocInfo, nullptr, &m_vertexBufferMemory) != VK_SUCCESS) {
-		return false;
-	}
-
-	vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
 
 	return true;
 }

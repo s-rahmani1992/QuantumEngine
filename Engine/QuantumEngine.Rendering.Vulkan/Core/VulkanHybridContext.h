@@ -1,0 +1,58 @@
+#pragma once
+#include "vulkan-pch.h"
+#include "VulkanGraphicContext.h"
+
+namespace QuantumEngine {
+	namespace Rendering
+	{
+		class SplineRenderer;
+	}
+}
+
+namespace QuantumEngine::Rendering::Vulkan {
+	class VulkanSplinePipelineModule;
+
+	namespace Rasterization {
+		class VulkanRasterizationPipelineModule;
+	}
+
+	class VulkanHybridContext : public VulkanGraphicContext {
+	public:
+		VulkanHybridContext(const VkInstance vkInstance, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window);
+		~VulkanHybridContext();
+		bool Initialize();
+		virtual bool PrepareScene(const ref<Scene>& scene) override;
+		virtual void Render() override;
+	private:
+
+		struct VKEntityGPUData {
+		public:
+			ref<GameEntity> gameEntity;
+			UInt32 index;
+		};
+
+		void UploadMeshesToGPU(const std::vector<ref<GameEntity>>& entities);
+		bool InitializeDepthBuffer();
+		bool InitializeRenderPass();
+		void UpdateEntityTransforms();
+
+		UInt32 m_transformStride;
+		VkBuffer m_transformBuffer;
+		VkDeviceMemory m_transformBufferMemory;
+		TransformGPU m_transformData;
+
+		VkRenderPass m_renderPass;
+		std::vector<VkFramebuffer> m_swapChainFramebuffers;
+
+		VkFormat m_depthFormat = VK_FORMAT_D32_SFLOAT;
+		VkImage m_depthImage;
+		VkDeviceMemory m_depthMemory;
+		VkImageView m_depthImageView;
+
+		std::vector<VKEntityGPUData> m_entityGPUList;
+		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_rasterizationModules;
+		std::vector<ref<VulkanSplinePipelineModule>> m_splineModues;
+
+		VkDescriptorPool m_descriptorPool;
+	};
+}
