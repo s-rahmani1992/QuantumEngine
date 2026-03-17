@@ -110,7 +110,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGraphicContext::InitializeSwapChain
 	vkGetPhysicalDeviceSurfaceFormatsKHR(m_physicalDevice, m_surface, &formatCount, formats.data());
 
 	for (const auto& availableFormat : formats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+		if (availableFormat.format == VK_FORMAT_R8G8B8A8_UNORM && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
 			m_swapChainFormat = availableFormat;
 			break;
 		}
