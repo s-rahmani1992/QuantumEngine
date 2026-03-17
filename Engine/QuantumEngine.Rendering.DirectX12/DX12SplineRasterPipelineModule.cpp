@@ -42,10 +42,11 @@ QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRaster
 	m_widthRootIndex = (*widthIt).rootParameterIndex;
 
 	auto computeReflection = computeProgram->GetReflectionData();
+	auto& computeRootConstantList = computeReflection->GetRootConstants();
 
 	auto curveIt = std::find_if(
-		rootConstantList.begin(),
-		rootConstantList.end(),
+		computeRootConstantList.begin(),
+		computeRootConstantList.end(),
 		[](const RootConstantBufferData& binding) {
 			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
 		});
