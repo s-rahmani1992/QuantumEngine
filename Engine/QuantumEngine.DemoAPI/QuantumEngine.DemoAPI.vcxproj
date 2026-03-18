@@ -19,14 +19,15 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CameraController.h" />
-    <ClInclude Include="CurveModifier.h" />
+    <ClInclude Include="Behaviours\CameraController.h" />
+    <ClInclude Include="Behaviours\CurveModifier.h" />
+    <ClInclude Include="Behaviours\EntityMover.h" />
+    <ClInclude Include="Behaviours\EntityRotator.h" />
+    <ClInclude Include="Behaviours\FrameRateLogger.h" />
+    <ClInclude Include="Behaviours\TextureAnimator.h" />
+    <ClInclude Include="Behaviours\TextureSwitcher.h" />
     <ClInclude Include="DemoAPI.h" />
-    <ClInclude Include="EntityMover.h" />
-    <ClInclude Include="EntityRotator.h" />
-    <ClInclude Include="FrameRateLogger.h" />
     <ClInclude Include="SceneBuilder.h" />
-    <ClInclude Include="TextureAnimator.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantumEngine.Core\QuantumEngine.Core.vcxproj">
@@ -37,14 +38,96 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="CameraController.cpp" />
-    <ClCompile Include="CurveModifier.cpp" />
+    <ClCompile Include="Behaviours\CameraController.cpp" />
+    <ClCompile Include="Behaviours\CurveModifier.cpp" />
+    <ClCompile Include="Behaviours\EntityMover.cpp" />
+    <ClCompile Include="Behaviours\EntityRotator.cpp" />
+    <ClCompile Include="Behaviours\FrameRateLogger.cpp" />
+    <ClCompile Include="Behaviours\TextureAnimator.cpp" />
+    <ClCompile Include="Behaviours\TextureSwitcher.cpp" />
     <ClCompile Include="DemoAPI.cpp" />
-    <ClCompile Include="EntityMover.cpp" />
-    <ClCompile Include="EntityRotator.cpp" />
-    <ClCompile Include="FrameRateLogger.cpp" />
     <ClCompile Include="SceneBuilder.cpp" />
-    <ClCompile Include="TextureAnimator.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Shaders\Common\LightStructs.hlsli" />
+    <None Include="Assets\Shaders\Common\RTStructs.hlsli" />
+    <None Include="Assets\Shaders\Common\TransformStructs.hlsli" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -127,7 +210,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>XCOPY "$(SolutionDir)Engine\QuantumEngine.Test\Assets\" "$(TargetDir)Assets\" /E /Y</Command>
+      <Command>XCOPY "$(ProjectDir)Assets\" "$(TargetDir)Assets\" /E /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,7 +232,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>XCOPY "$(SolutionDir)Engine\QuantumEngine.Test\Assets\" "$(TargetDir)Assets\" /E /Y</Command>
+      <Command>XCOPY "$(ProjectDir)Assets\" "$(TargetDir)Assets\" /E /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -169,7 +252,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>XCOPY "$(SolutionDir)Engine\QuantumEngine.Test\Assets\" "$(TargetDir)Assets\" /E /Y</Command>
+      <Command>XCOPY "$(ProjectDir)Assets\" "$(TargetDir)Assets\" /E /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -191,7 +274,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>XCOPY "$(SolutionDir)Engine\QuantumEngine.Test\Assets\" "$(TargetDir)Assets\" /E /Y</Command>
+      <Command>XCOPY "$(ProjectDir)Assets\" "$(TargetDir)Assets\" /E /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

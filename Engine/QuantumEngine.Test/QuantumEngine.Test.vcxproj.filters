@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Assets">
-      <UniqueIdentifier>{892544ca-585d-4aa6-874e-3cc2e80c9f1d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Assets\Common">
-      <UniqueIdentifier>{773f6960-ea0e-4126-955f-a919e4ac3e02}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Resource.h">
@@ -27,28 +21,7 @@
     <ClInclude Include="QuantumEngine.Test.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CameraController.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FrameRateLogger.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="SceneBuilder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EntityMover.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="EntityRotator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="TextureAnimator.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CurveModifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -56,115 +29,11 @@
     <ClCompile Include="QuantumEngine.Test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CameraController.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FrameRateLogger.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SceneBuilder.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="EntityMover.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="EntityRotator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="TextureAnimator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CurveModifier.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="QuantumEngine.Test.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Assets\Shaders\rt_global.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_rt.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\g_buffer_raster.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\curve_raster_program.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\curve_raster_program.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\g_buffer_raster.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\rt_global.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\simple_rt.lib.hlsl.json">
-      <Filter>Assets</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\Common\LightStructs.hlsli">
-      <Filter>Assets\Common</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\Common\RTStructs.hlsli">
-      <Filter>Assets\Common</Filter>
-    </Text>
-    <Text Include="Assets\Shaders\Common\TransformStructs.hlsli">
-      <Filter>Assets\Common</Filter>
-    </Text>
   </ItemGroup>
   <ItemGroup>
     <Image Include="engine-icon.ico">

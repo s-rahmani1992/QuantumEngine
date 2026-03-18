@@ -23,7 +23,7 @@ bool Run_Light_Scene_Rasterization_DX12(HWND parentWindow)
 	gpuContext->RegisterShaderRegistery(shaderRegistery);
 	auto materialRegistery = gpuDevice->CreateMaterialFactory();
 	std::string error;
-	auto scene = SceneBuilder::BuildLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
+	auto scene = SceneBuilder::BuildSimpleLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
 	
 	if (scene == nullptr) {
 	    MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + error).c_str(), "Render Error Error", 0);
