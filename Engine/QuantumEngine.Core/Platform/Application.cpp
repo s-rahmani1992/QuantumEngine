@@ -93,6 +93,11 @@ void QuantumEngine::Platform::Application::RunFixed(const ref<GraphicWindow>& wi
     }
 }
 
+void QuantumEngine::Platform::Application::Release()
+{
+    UnregisterClass((LPCTSTR)m_instance.winClass, m_instance.m_app_instance);
+}
+
 void QuantumEngine::Platform::Application::CreateWindowClass()
 {
     WNDCLASSEXW wcex;
