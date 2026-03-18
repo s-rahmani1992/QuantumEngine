@@ -1,6 +1,10 @@
 #pragma once
 #include <Windows.h>
 
-#define DEMP_API extern "C" __declspec(dllexport) 
+//#if defined(DEMP_API_EXPORTS)
+#define DEMO_API extern "C" __declspec(dllexport)
+//#else
+// define DEMO_API extern "C" __declspec(dllimport)
+//#endif
 
-DEMP_API bool Run_Light_Scene_Rasterization_DX12(HWND parentWindow);
+DEMO_API bool Run_Light_Scene_Rasterization_DX12(HWND parentWindow);

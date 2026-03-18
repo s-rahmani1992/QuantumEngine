@@ -2,5 +2,22 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="DemoAPI.h" />
+    <ClInclude Include="SceneBuilder.h" />
+    <ClInclude Include="CameraController.h" />
+    <ClInclude Include="CurveModifier.h" />
+    <ClInclude Include="EntityMover.h" />
+    <ClInclude Include="EntityRotator.h" />
+    <ClInclude Include="FrameRateLogger.h" />
+    <ClInclude Include="TextureAnimator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DemoAPI.cpp" />
+    <ClCompile Include="SceneBuilder.cpp" />
+    <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="CurveModifier.cpp" />
+    <ClCompile Include="EntityMover.cpp" />
+    <ClCompile Include="EntityRotator.cpp" />
+    <ClCompile Include="FrameRateLogger.cpp" />
+    <ClCompile Include="TextureAnimator.cpp" />
   </ItemGroup>
 </Project>
