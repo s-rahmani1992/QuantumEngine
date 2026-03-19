@@ -32,6 +32,7 @@
 #include "Behaviours/EntityRotator.h"
 #include "Behaviours/TextureAnimator.h"
 #include "Behaviours/CurveModifier.h"
+#include "Behaviours/TextureSwitcher.h"
 
 using namespace QuantumEngine;
 
@@ -51,7 +52,7 @@ using namespace QuantumEngine;
         error = "Error in Importing Model At: \n" + WStringToString(pickupTruckModelPath) + "Error: \n" + ERROR_VAR;   \
         return nullptr; \
     }   \
-    auto MESH_VAR = pickupTruckModel->GetMesh("Mesh.004");
+    auto MESH_VAR = pickupTruckModel->GetMesh("Mesh.006");
 
 #define IMPORT_PEDESTAL_MESH(MESH_VAR, ERROR_VAR)   \
     auto pedestalModelPath = root + L"\\Assets\\Models\\tech_pedestal.fbx";  \
@@ -61,6 +62,15 @@ using namespace QuantumEngine;
         return nullptr; \
     }   \
     auto MESH_VAR = pedestalModel->GetMesh("Circle.001");
+
+#define IMPORT_CONTAINER_MESH(MESH_VAR, ERROR_VAR)   \
+    auto containerModelPath = root + L"\\Assets\\Models\\Scifi_Container.fbx";  \
+    auto containerModel = AssimpModel3DImporter::Import(WCharToString(containerModelPath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(1.0f) }, ERROR_VAR);    \
+    if (containerModel == nullptr) { \
+        error = "Error in Importing Model At: \n" + WStringToString(containerModelPath) + "Error: \n" + ERROR_VAR;   \
+        return nullptr; \
+    }   \
+    auto MESH_VAR = containerModel->GetMesh("Container Free");
 
 ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager>& assetManager, const ref<Render::ShaderRegistery>& shaderRegistery, const ref<Render::MaterialFactory>& materialFactory, ref<Platform::GraphicWindow> win, std::string& error)
 {
@@ -105,22 +115,35 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
 
     ////// Creating the camera
 
-    auto camtransform = std::make_shared<Transform>(Vector3(-6.0f, 2.6f, 1.8f), Vector3(1.0f), Vector3(0.0f, -0.85f, 0.12f), 111);
+    auto camtransform = std::make_shared<Transform>(Vector3(-5.2f, 1.9f, -1.1f), Vector3(1.0f), Vector3(-0.17f, -0.95f, 0.17f), 84);
     ref<Camera> mainCamera = std::make_shared<PerspectiveCamera>(camtransform, 0.1f, 1000.0f, (float)win->GetWidth() / win->GetHeight(), 45);
     ref<CameraController> cameraController = std::make_shared<CameraController>(mainCamera);
 
 	////// Importing Textures
 
-    ref<QuantumEngine::Texture2D> retroCarTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\RetroCarAlbedo.png", errorStr);
-    ref<QuantumEngine::Texture2D> rabbitStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Rabbit_basecolor.jpg", errorStr);
-    ref<QuantumEngine::Texture2D> lionStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Lion_statue_raw_texture.jpg", errorStr);
-    ref<QuantumEngine::Texture2D> chairTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\leather_chair_BaseColor.png", errorStr);
-    ref<QuantumEngine::Texture2D> groundBrickTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\brickGround.png", errorStr);
+    auto retroCarTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\RetroCarAlbedo.png", errorStr);
+    auto pickupTruckGreenTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\truck_color-green.jpg", errorStr);
+    auto pickupTruckRedTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\truck_color-red.jpg", errorStr);
+    auto pickupTruckSilverTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\truck_color-silver.jpg", errorStr);
+    auto pedestalTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\tech_pedestal_COL.png", errorStr);
+    auto containerTex = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Sci-fi_Container_BaseColor.png", errorStr);
+    auto groundBrickTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\brickGround.png", errorStr);
+
+
+    auto rabbitStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Rabbit_basecolor.jpg", errorStr);
+    auto lionStatueTex1 = QuantumEngine::WICTexture2DImporter::Import(root + L"\\Assets\\Textures\\Lion_statue_raw_texture.jpg", errorStr);
+    
     assetManager->UploadTextureToGPU(retroCarTex);
+    assetManager->UploadTextureToGPU(pickupTruckGreenTex);
+    assetManager->UploadTextureToGPU(pickupTruckRedTex);
+    assetManager->UploadTextureToGPU(pickupTruckSilverTex);
+    assetManager->UploadTextureToGPU(pedestalTex);
+    assetManager->UploadTextureToGPU(containerTex);
+    assetManager->UploadTextureToGPU(groundBrickTex1);
+
+
 	assetManager->UploadTextureToGPU(rabbitStatueTex1);
     assetManager->UploadTextureToGPU(lionStatueTex1);
-    assetManager->UploadTextureToGPU(groundBrickTex1);
-    assetManager->UploadTextureToGPU(chairTex1);
 
 	////// Importing meshes
 
@@ -130,7 +153,9 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
 
     IMPORT_PEDESTAL_MESH(pedestalMesh, errorStr)
 
-    auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
+    IMPORT_CONTAINER_MESH(containerMesh, errorStr)
+
+    auto rabbitStatuePath = root + L"\\Assets\\Models\\Scifi_Container.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
     if (rabbitStatueModel1 == nullptr) {
         error = "Error in Importing Model At: \n" + WStringToString(rabbitStatuePath) + "Error: \n" + errorStr;
@@ -160,9 +185,9 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
 
     std::vector<Vertex> planeVertices = {
         Vertex(Vector3(-1.0f, 0, -1.0f), Vector2(0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
-        Vertex(Vector3(1.0f, 0, -1.0f), Vector2(1.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
-        Vertex(Vector3(1.0f, 0, 1.0f), Vector2(1.0f, 1.0f), Vector3(0.0f, 1.0f, 0.0f)),
-        Vertex(Vector3(-1.0f, 0, 1.0f), Vector2(0.0f, 1.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(1.0f, 0, -1.0f), Vector2(10.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(1.0f, 0, 1.0f), Vector2(10.0f, 10.0f), Vector3(0.0f, 1.0f, 0.0f)),
+        Vertex(Vector3(-1.0f, 0, 1.0f), Vector2(0.0f, 10.0f), Vector3(0.0f, 1.0f, 0.0f)),
     };
 
     std::vector<UInt32> planeIndices = {
@@ -183,11 +208,35 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
     retroCarMaterial->SetValue("specular", 2.1f);
     retroCarMaterial->SetTexture2D("mainTexture", retroCarTex);
 
+    auto pedestalMaterial = materialFactory->CreateMaterial(lightRasterProgram);
+    pedestalMaterial->SetValue("ambient", 0.1f);
+    pedestalMaterial->SetValue("diffuse", 0.5f);
+    pedestalMaterial->SetValue("specular", 2.1f);
+    pedestalMaterial->SetTexture2D("mainTexture", pedestalTex);
+
+    auto pedestalRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
+    pedestalRTMaterial->SetTexture2D("mainTexture", pedestalTex);
+    pedestalRTMaterial->SetValue("ambient", 0.1f);
+    pedestalRTMaterial->SetValue("diffuse", 0.5f);
+    pedestalRTMaterial->SetValue("specular", 2.1f);
+
 	auto retroCarRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
 	retroCarRTMaterial->SetTexture2D("mainTexture", retroCarTex);
 	retroCarRTMaterial->SetValue("ambient", 0.1f);
-	retroCarRTMaterial->SetValue("diffuse", 1.0f);
-	retroCarRTMaterial->SetValue("specular", 0.1f);
+	retroCarRTMaterial->SetValue("diffuse", 0.5f);
+	retroCarRTMaterial->SetValue("specular", 2.1f);
+
+    auto pickupTruckMaterial = materialFactory->CreateMaterial(lightRasterProgram);
+    pickupTruckMaterial->SetValue("ambient", 0.1f);
+    pickupTruckMaterial->SetValue("diffuse", 0.5f);
+    pickupTruckMaterial->SetValue("specular", 2.1f);
+    pickupTruckMaterial->SetTexture2D("mainTexture", pickupTruckGreenTex);
+
+    auto pickupTruckRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
+    pickupTruckRTMaterial->SetTexture2D("mainTexture", pickupTruckGreenTex);
+    pickupTruckRTMaterial->SetValue("ambient", 0.1f);
+    pickupTruckRTMaterial->SetValue("diffuse", 0.5f);
+    pickupTruckRTMaterial->SetValue("specular", 2.1f);
 
     auto rabbitStatueMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     rabbitStatueMaterial1->SetTexture2D("mainTexture", rabbitStatueTex1);
@@ -213,17 +262,17 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
     lionStatueRTMaterial->SetValue("diffuse", 0.8f);
     lionStatueRTMaterial->SetValue("specular", 0.1f);
 
-    auto chairMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
-    chairMaterial1->SetTexture2D("mainTexture", chairTex1);
-    chairMaterial1->SetValue("ambient", 0.1f);
-    chairMaterial1->SetValue("diffuse", 0.8f);
-    chairMaterial1->SetValue("specular", 0.1f);
+    auto containerMaterial = materialFactory->CreateMaterial(lightRasterProgram);
+    containerMaterial->SetTexture2D("mainTexture", containerTex);
+    containerMaterial->SetValue("ambient", 0.1f);
+    containerMaterial->SetValue("diffuse", 0.8f);
+    containerMaterial->SetValue("specular", 0.1f);
 
-    auto chairRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
-    chairRTMaterial->SetTexture2D("mainTexture", chairTex1);
-    chairRTMaterial->SetValue("ambient", 0.1f);
-    chairRTMaterial->SetValue("diffuse", 0.8f);
-    chairRTMaterial->SetValue("specular", 0.3f);
+    auto containerRTMaterial = materialFactory->CreateMaterial(simpleRTLightProgram);
+    containerRTMaterial->SetTexture2D("mainTexture", containerTex);
+    containerRTMaterial->SetValue("ambient", 0.1f);
+    containerRTMaterial->SetValue("diffuse", 0.8f);
+    containerRTMaterial->SetValue("specular", 0.3f);
 
     auto groundMaterial1 = materialFactory->CreateMaterial(lightRasterProgram);
     groundMaterial1->SetTexture2D("mainTexture", groundBrickTex1);
@@ -245,16 +294,29 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
 
 	////// Creating the entities
 
-    auto retroCarTransform = std::make_shared<Transform>(Vector3(-2.0f, 0.5f, -2.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto retroCarTransform = std::make_shared<Transform>(Vector3(-2.0f, 0.3f, -2.0f), Vector3(0.3f), Vector3(0.0f, 1.0f, 0.0f), -30);
     auto retroCarRenderer = std::make_shared<Render::MeshRenderer>(retroCarMesh, retroCarMaterial);
     auto retroCarRTComponent = std::make_shared<Render::RayTracingComponent>(retroCarMesh, retroCarRTMaterial);
     auto retroCarEntity = std::make_shared<QuantumEngine::GameEntity>(retroCarTransform, retroCarRenderer, retroCarRTComponent);
 
-    auto retroCarTransform1 = std::make_shared<Transform>(Vector3(-2.0f, 0.5f, -2.0f), Vector3(0.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto retroCarTransform1 = std::make_shared<Transform>(Vector3(2.0f, 0.3f, 2.0f), Vector3(0.3f), Vector3(0.0f, 1.0f, 0.0f), 100);
     auto retroCarRenderer1 = std::make_shared<Render::MeshRenderer>(retroCarMesh, retroCarMaterial);
     auto retroCarRTComponent1 = std::make_shared<Render::RayTracingComponent>(retroCarMesh, retroCarRTMaterial);
     auto retroCarEntity1 = std::make_shared<QuantumEngine::GameEntity>(retroCarTransform1, retroCarRenderer1, retroCarRTComponent1);
 
+    auto pedestalTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(2.5f, 1.0f, 2.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto pedestalRenderer = std::make_shared<Render::MeshRenderer>(pedestalMesh, pedestalMaterial);
+    auto pedestalRTComponent = std::make_shared<Render::RayTracingComponent>(pedestalMesh, pedestalRTMaterial);
+    auto pedestalEntity = std::make_shared<QuantumEngine::GameEntity>(pedestalTransform, pedestalRenderer, pedestalRTComponent);
+
+    auto pickupTruckTransform = std::make_shared<Transform>(Vector3(0.0f, 0.14f, 0.0f), Vector3(0.23f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto pickupTruckRenderer = std::make_shared<Render::MeshRenderer>(pickupTruckMesh, pickupTruckMaterial);
+    auto pickupTruckRTComponent = std::make_shared<Render::RayTracingComponent>(pickupTruckMesh, pickupTruckRTMaterial);
+    auto pickupTruckEntity = std::make_shared<QuantumEngine::GameEntity>(pickupTruckTransform, pickupTruckRenderer, pickupTruckRTComponent);
+
+    auto pickupTruckRotator = std::make_shared<EntityRotator>(pickupTruckTransform, 15);
+    auto pickupTruckTextureSwitcher = std::make_shared<TextureSwitcher>(pickupTruckMaterial, "mainTexture", std::vector<ref<Texture2D>>({pickupTruckGreenTex, pickupTruckRedTex, pickupTruckSilverTex}));
+    auto pickupTruckTextureRTSwitcher = std::make_shared<TextureSwitcher>(pickupTruckRTMaterial, "mainTexture", std::vector<ref<Texture2D>>({ pickupTruckGreenTex, pickupTruckRedTex, pickupTruckSilverTex }));
 
     auto rabbitStatueTransform1 = std::make_shared<Transform>(Vector3(2.0f, 0.0f, -2.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), -90);
     auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(rabbitStatueMesh1, rabbitStatueMaterial1);
@@ -271,15 +333,15 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
     auto rtComponent4 = std::make_shared<Render::RayTracingComponent>(planeMesh, groundRTMaterial);
     auto grountEntity1 = std::make_shared<QuantumEngine::GameEntity>(groundTransform1, meshRenderer4, rtComponent4);
 
-    auto chairTransform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, -2.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer5 = std::make_shared<Render::MeshRenderer>(chairMesh1, chairMaterial1);
-    auto rtComponent5 = std::make_shared<Render::RayTracingComponent>(chairMesh1, chairRTMaterial);
-    auto chairEntity1 = std::make_shared<QuantumEngine::GameEntity>(chairTransform1, meshRenderer5, rtComponent5);
+    auto containerTransform = std::make_shared<Transform>(Vector3(-1.0f, 0.0f, 2.0f), Vector3(0.5f), Vector3(0.0f, 1.0f, 0.0f), 30);
+    auto containerMeshRenderer = std::make_shared<Render::MeshRenderer>(containerMesh, containerMaterial);
+    auto containerRTComponent = std::make_shared<Render::RayTracingComponent>(containerMesh, containerRTMaterial);
+    auto containerEntity1 = std::make_shared<QuantumEngine::GameEntity>(containerTransform, containerMeshRenderer, containerRTComponent);
 
-    auto chairTransform2 = std::make_shared<Transform>(Vector3(3.0f, 2.0f, -2.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 20);
-    auto meshRenderer6 = std::make_shared<Render::MeshRenderer>(chairMesh1, chairMaterial1);
-    auto rtComponent6 = std::make_shared<Render::RayTracingComponent>(chairMesh1, chairRTMaterial);
-    auto chairEntity2 = std::make_shared<QuantumEngine::GameEntity>(chairTransform2, meshRenderer6, rtComponent6);
+    auto containerTransform2 = std::make_shared<Transform>(Vector3(1.5f, 0.25f, -1.5f), Vector3(0.3f), Vector3(0.0f, 0.0f, 1.0f), 90);
+    auto containerMeshRenderer2 = std::make_shared<Render::MeshRenderer>(containerMesh, containerMaterial);
+    auto containerRTComponent2 = std::make_shared<Render::RayTracingComponent>(containerMesh, containerRTMaterial);
+    auto containerEntity2 = std::make_shared<QuantumEngine::GameEntity>(containerTransform2, containerMeshRenderer2, containerRTComponent2);
 
 	auto curveTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
 	auto curveRenderer = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, -4.0f), Vector3(0.0f, 4.0f, 0.0f), Vector3(4.0f, 0.0f, 4.0f) }, 2.2f, 10);
@@ -296,7 +358,7 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
     lightData.directionalLights.push_back(DirectionalLight{
         .color = Color(1.0f, 1.0f, 1.0f, 1.0f),
         .direction = Vector3(2.0f, -6.0f, 2.0f),
-		.intensity = 0.1f,
+		.intensity = 0.5f,
         });
 
     lightData.pointLights.push_back(PointLight{
@@ -312,13 +374,14 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
         });
     
     auto frameLogger = std::make_shared<FrameRateLogger>();
-	//auto textureAnimator = std::make_shared<TextureAnimator>(carMaterial1, retroCarTex, lionStatueTex1, 1.0f);
 	auto curveModifier = std::make_shared<CurveModifier>(curveRenderer, 2.0f);
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { retroCarEntity, retroCarEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity, curveEntity1};
-    scene->behaviours = { cameraController, curveModifier };
+    //scene->entities = { retroCarEntity, retroCarEntity1, rabbitStatueEntity1, lionStatueEntity1, grountEntity1, chairEntity1, chairEntity2, curveEntity, curveEntity1};
+    scene->entities = { retroCarEntity, retroCarEntity1, pedestalEntity, pickupTruckEntity, containerEntity1, containerEntity2, grountEntity1 };
+
+    scene->behaviours = { cameraController, pickupTruckTextureSwitcher, pickupTruckTextureRTSwitcher, pickupTruckRotator };
 	scene->rtGlobalMaterial = rtGlobalMaterial;
     
     return scene;

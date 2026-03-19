@@ -6,7 +6,8 @@
         xmlns:local="clr-namespace:QuantumEditor.Demo"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <Button HorizontalAlignment="Center" VerticalAlignment="Center" Click="OnLightClicked">Light_DX12</Button>
-    </Grid>
+    <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Button Margin="6" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OnLightClicked">Simple Rasterization DX12</Button>
+        <Button Margin="6" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OnSimpleRasterizationDX12Clicked">Simple Ry Tracing DX12</Button>
+    </WrapPanel>
 </Window>

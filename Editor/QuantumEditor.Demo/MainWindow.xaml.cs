@@ -25,7 +25,13 @@ namespace QuantumEditor.Demo
         private void OnLightClicked(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper interop = new(this);
-            DemoNativeAPI.RunLight(interop.Handle);
+            DemoNativeAPI.RunSimpleSceneRasterizationDX12(interop.Handle);
+        }
+
+        private void OnSimpleRasterizationDX12Clicked(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(this);
+            DemoNativeAPI.RunSimpleSceneRayTracingDX12(interop.Handle);
         }
     }
 }

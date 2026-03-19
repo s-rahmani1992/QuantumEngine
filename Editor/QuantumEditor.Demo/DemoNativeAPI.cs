@@ -10,6 +10,9 @@ namespace QuantumEditor.Demo
     internal static partial class DemoNativeAPI
     {
         [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Light_Scene_Rasterization_DX12")]
-        public static extern bool RunLight(IntPtr handle);
+        public static extern bool RunSimpleSceneRasterizationDX12(IntPtr handle);
+
+        [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Light_Scene_RayTracing_DX12")]
+        public static extern bool RunSimpleSceneRayTracingDX12(IntPtr handle);
     }
 }
