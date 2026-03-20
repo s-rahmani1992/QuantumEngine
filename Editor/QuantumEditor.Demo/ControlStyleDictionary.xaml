@@ -1,0 +1,40 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <FontFamily x:Key="Global_Font">Times New Roman</FontFamily>
+    <SolidColorBrush x:Key="Hybrid_Color" Color="DarkViolet"/>
+    <SolidColorBrush x:Key="RayTracing_Color" Color="DarkCyan"/>
+    <SolidColorBrush x:Key="DX12_Color" Color="Green"/>
+    <SolidColorBrush x:Key="VK_Color" Color="Red"/>
+    <SolidColorBrush x:Key="Title_Color" Color="#FF370101"/>
+    <Style x:Key="Run_Button_Style" TargetType="Button">
+        <Setter Property="Background" Value="LightGreen"/>
+        <Setter Property="Foreground" Value="Black"/>
+        <Setter Property="Padding" Value="20 3"/>
+        <Setter Property="Margin" Value="2 2"/>
+        <Setter Property="FontSize" Value="25"/>
+        <Setter Property="FontFamily" Value="{StaticResource Global_Font}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="border" CornerRadius="8" HorizontalAlignment="Center"
+                            Padding="{TemplateBinding Padding}"
+                            Margin="{TemplateBinding Margin}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter  HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="SpringGreen"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="border" Property="Background" Value="DarkGreen"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

@@ -4,10 +4,17 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:QuantumEditor.Demo"
+        xmlns:view="clr-namespace:QuantumEditor.Demo.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <WrapPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-        <Button Margin="6" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OnLightClicked">Simple Rasterization DX12</Button>
-        <Button Margin="6" HorizontalAlignment="Center" VerticalAlignment="Center" Click="OnSimpleRasterizationDX12Clicked">Simple Ry Tracing DX12</Button>
-    </WrapPanel>
+        Title="MainWindow" Height="720" Width="1280">
+    <DockPanel>
+        <StackPanel HorizontalAlignment="Center" DockPanel.Dock="Left" Width="300">
+            <Button Width="100" Margin="20" Click="OnSimpleSceneClicked">
+                Simple Scene
+            </Button>
+        </StackPanel>
+        <ContentPresenter Name="viewHost">
+            
+        </ContentPresenter>
+    </DockPanel>
 </Window>

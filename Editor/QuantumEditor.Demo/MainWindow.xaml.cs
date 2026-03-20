@@ -1,14 +1,4 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows;
 
 namespace QuantumEditor.Demo
 {
@@ -20,18 +10,12 @@ namespace QuantumEditor.Demo
         public MainWindow()
         {
             InitializeComponent();
+            viewHost.Content = new Views.SimpleSceneInfoView();
         }
 
-        private void OnLightClicked(object sender, RoutedEventArgs e)
+        private void OnSimpleSceneClicked(object sender, RoutedEventArgs e)
         {
-            WindowInteropHelper interop = new(this);
-            DemoNativeAPI.RunSimpleSceneRasterizationDX12(interop.Handle);
-        }
-
-        private void OnSimpleRasterizationDX12Clicked(object sender, RoutedEventArgs e)
-        {
-            WindowInteropHelper interop = new(this);
-            DemoNativeAPI.RunSimpleSceneRayTracingDX12(interop.Handle);
+            viewHost.Content = new Views.SimpleSceneInfoView();
         }
     }
 }
