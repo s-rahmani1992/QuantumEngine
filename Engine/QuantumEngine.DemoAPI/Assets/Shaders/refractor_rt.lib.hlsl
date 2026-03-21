@@ -40,7 +40,7 @@ void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes 
         GeneralPayload innerPayload;
         innerPayload.targetMode = 1;
         innerPayload.recursionCount = payload.recursionCount + 1;
-        TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, innerPayload);
+        TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, 0, ray, innerPayload);
         payload.color = innerPayload.color.xyz;
     }
     else

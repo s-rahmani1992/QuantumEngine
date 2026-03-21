@@ -61,13 +61,14 @@ inline float3 Refract(float3 rayDirection, float3 normal, float refractionFactor
     else // from inside to outside
         refractionIndex = refractionFactor;
         
-    float sinT2 = refractionIndex * refractionIndex * (1.0 - cosI * cosI);
+    cosI = abs(cosI);
+    float sinT2 = refractionIndex * refractionIndex * (1.0f - cosI * cosI);
     isReflect = sinT2 > 1.0f;
     
     if (isReflect) // Total internal reflection
         return normalize(rayDirection - 2 * cosI * normal);
     else
-        return normalize(refractionIndex * rayDirection + (refractionIndex * cosI - sqrt(1 - sinT2)) * normal);
+        return normalize(refractionIndex * rayDirection + (refractionIndex * cosI - sqrt(1.0f - sinT2)) * normal);
 }
 
 #define RT_SCENE_VAR_1(t) \
