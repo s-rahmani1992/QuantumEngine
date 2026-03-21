@@ -22,5 +22,10 @@ namespace QuantumEditor.Demo
         {
             viewHost.Content = new Views.ReflectionSceneInfoView();
         }
+
+        private void OnShadowSceneClicked(object sender, RoutedEventArgs e)
+        {
+            viewHost.Content = new Views.ShadowSceneInfoView();
+        }
     }
 }

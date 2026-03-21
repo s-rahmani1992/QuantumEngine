@@ -15,6 +15,9 @@
             <Button Width="100" Margin="20" Click="OnReflectionSceneClicked">
                 Reflection Scene
             </Button>
+            <Button Width="100" Margin="20" Click="OnShadowSceneClicked">
+                Shadow Scene
+            </Button>
         </StackPanel>
         <ContentPresenter Name="viewHost">
             
