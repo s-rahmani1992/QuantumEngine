@@ -24,6 +24,9 @@
     <ClInclude Include="Behaviours\TextureSwitcher.h">
       <Filter>Behaviours</Filter>
     </ClInclude>
+    <ClInclude Include="Behaviours\MaterialValueModifier.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="DemoAPI.cpp" />
@@ -47,6 +50,9 @@
       <Filter>Behaviours</Filter>
     </ClCompile>
     <ClCompile Include="Behaviours\TextureSwitcher.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\MaterialValueModifier.cpp">
       <Filter>Behaviours</Filter>
     </ClCompile>
   </ItemGroup>
@@ -135,6 +141,18 @@
       <Filter>Assets\Shaders</Filter>
     </Text>
     <Text Include="Assets\Shaders\simple_rt.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_rt.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_rt.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl.json">
       <Filter>Assets\Shaders</Filter>
     </Text>
   </ItemGroup>

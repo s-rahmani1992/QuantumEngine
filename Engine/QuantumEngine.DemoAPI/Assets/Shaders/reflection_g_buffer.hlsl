@@ -61,8 +61,5 @@ float4 ps_main(VS_OUTPUT input) : SV_TARGET
     
     float4 texColor = mainTexture.Sample(mainSampler, input.texCoord);
     
-    if (reflectionData.w < 0.1f)
-        return float4(lightFactor * texColor.xyz, 1);
-    else
-        return float4(lightFactor * ((1 - reflectivity) * texColor.xyz + reflectivity * reflectionData.xyz), 1);
+    return float4(lightFactor * ((1 - reflectivity) * texColor.xyz + reflectivity * reflectionData.xyz), 1);
 }

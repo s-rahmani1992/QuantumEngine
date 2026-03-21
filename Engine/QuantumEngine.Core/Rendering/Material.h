@@ -111,6 +111,24 @@ namespace QuantumEngine::Rendering {
 		}
 
 		/// <summary>
+		/// Sets the value of a field in the material. the value type must be a simple type such as int, color, etc.
+		/// </summary>
+		/// <typeparam name="T">type of value</typeparam>
+		/// <param name="fieldName">name of the field</param>
+		/// <param name="value">value data</param>
+		template<typename T>
+		T GetValue(const std::string& fieldName, const T& defaultValue) {
+			auto it = m_valueFields.find(fieldName);
+			if (it == m_valueFields.end()) {
+				return defaultValue;
+			}
+
+			MaterialValueData& valueData = it->second;
+			T* data = (T*)valueData.data;
+			return *data;
+		}
+
+		/// <summary>
 		/// Sets the texture of a texture field in the material.
 		/// </summary>
 		/// <param name="fieldName">name of the field</param>

@@ -6,3 +6,7 @@
 DEMO_API bool Run_Light_Scene_Rasterization_DX12(HWND parentWindow);
 
 DEMO_API bool Run_Light_Scene_RayTracing_DX12(HWND parentWindow);
+
+DEMO_API bool Run_Reflection_Scene_Hybrid_DX12(HWND parentWindow);
+
+DEMO_API bool Run_Reflection_Scene_RayTracing_DX12(HWND parentWindow);

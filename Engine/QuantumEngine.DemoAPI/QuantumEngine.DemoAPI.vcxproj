@@ -24,6 +24,7 @@
     <ClInclude Include="Behaviours\EntityMover.h" />
     <ClInclude Include="Behaviours\EntityRotator.h" />
     <ClInclude Include="Behaviours\FrameRateLogger.h" />
+    <ClInclude Include="Behaviours\MaterialValueModifier.h" />
     <ClInclude Include="Behaviours\TextureAnimator.h" />
     <ClInclude Include="Behaviours\TextureSwitcher.h" />
     <ClInclude Include="DemoAPI.h" />
@@ -43,6 +44,7 @@
     <ClCompile Include="Behaviours\EntityMover.cpp" />
     <ClCompile Include="Behaviours\EntityRotator.cpp" />
     <ClCompile Include="Behaviours\FrameRateLogger.cpp" />
+    <ClCompile Include="Behaviours\MaterialValueModifier.cpp" />
     <ClCompile Include="Behaviours\TextureAnimator.cpp" />
     <ClCompile Include="Behaviours\TextureSwitcher.cpp" />
     <ClCompile Include="DemoAPI.cpp" />
@@ -128,6 +130,38 @@
     <None Include="Assets\Shaders\Common\LightStructs.hlsli" />
     <None Include="Assets\Shaders\Common\RTStructs.hlsli" />
     <None Include="Assets\Shaders\Common\TransformStructs.hlsli" />
+    <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_rt.hlsl.json">
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\reflection_standard_rt.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">4.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <FileType>Document</FileType>
+    </Text>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>

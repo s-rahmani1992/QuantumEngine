@@ -13,6 +13,9 @@ const GuidMap<GUID> QuantumEngine::WICTexture2DImporter::m_convertFormatMaps{
 	{GUID_WICPixelFormat24bppBGR, GUID_WICPixelFormat32bppBGRA},
 	{GUID_WICPixelFormat48bppRGB, GUID_WICPixelFormat32bppRGBA},
 	{GUID_WICPixelFormat48bppBGR, GUID_WICPixelFormat32bppBGRA},
+	{GUID_WICPixelFormat64bppRGBA, GUID_WICPixelFormat32bppRGBA},
+	{GUID_WICPixelFormat64bppBGRA, GUID_WICPixelFormat32bppBGRA},
+	{GUID_WICPixelFormat16bppGray, GUID_WICPixelFormat32bppRGBA},
 };
 
 ref<QuantumEngine::Texture2D> QuantumEngine::WICTexture2DImporter::Import(const std::wstring& filePath, std::string& error)
