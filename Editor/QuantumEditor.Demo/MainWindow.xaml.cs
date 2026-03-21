@@ -27,5 +27,10 @@ namespace QuantumEditor.Demo
         {
             viewHost.Content = new Views.ShadowSceneInfoView();
         }
+
+        private void OnRefractionSceneClicked(object sender, RoutedEventArgs e)
+        {
+            viewHost.Content = new Views.RefractionSceneInfoView();
+        }
     }
 }
