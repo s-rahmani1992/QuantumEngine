@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Runtime.InteropServices;
 
 namespace QuantumEditor.Demo
 {
@@ -14,5 +9,11 @@ namespace QuantumEditor.Demo
 
         [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Light_Scene_RayTracing_DX12")]
         public static extern bool RunSimpleSceneRayTracingDX12(IntPtr handle);
+
+        [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Reflection_Scene_Hybrid_DX12")]
+        public static extern bool RunReflectionSceneHybridDX12(IntPtr handle);
+
+        [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Reflection_Scene_RayTracing_DX12")]
+        public static extern bool RunReflectionSceneRayTracingDX12(IntPtr handle);
     }
 }

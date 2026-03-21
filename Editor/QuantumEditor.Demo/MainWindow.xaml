@@ -12,6 +12,9 @@
             <Button Width="100" Margin="20" Click="OnSimpleSceneClicked">
                 Simple Scene
             </Button>
+            <Button Width="100" Margin="20" Click="OnReflectionSceneClicked">
+                Reflection Scene
+            </Button>
         </StackPanel>
         <ContentPresenter Name="viewHost">
             

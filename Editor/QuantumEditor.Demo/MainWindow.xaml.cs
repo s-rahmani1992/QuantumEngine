@@ -17,5 +17,10 @@ namespace QuantumEditor.Demo
         {
             viewHost.Content = new Views.SimpleSceneInfoView();
         }
+
+        private void OnReflectionSceneClicked(object sender, RoutedEventArgs e)
+        {
+            viewHost.Content = new Views.ReflectionSceneInfoView();
+        }
     }
 }
