@@ -964,13 +964,9 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
 
     ////// Importing meshes
 
-    auto carModelPath1 = root + L"\\Assets\\Models\\RetroCar.fbx";
-    auto carModel1 = AssimpModel3DImporter::Import(WCharToString(carModelPath1.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(0.05f) }, errorStr);
-    if (carModel1 == nullptr) {
-        error = "Error in Importing Model At: \n" + WStringToString(carModelPath1) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-    auto carMesh1 = carModel1->GetMesh("Cube.002");
+    IMPORT_RETRO_CAR_MESH(retroCarMesh, error)
+
+    IMPORT_LION_STATUE_MESH(lionStatueMesh, error)
 
     auto rabbitStatuePath = root + L"\\Assets\\Models\\RabbitStatue.fbx";
     auto rabbitStatueModel1 = AssimpModel3DImporter::Import(WCharToString(rabbitStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(20.0f) }, errorStr);
@@ -979,16 +975,6 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
         return nullptr;
     }
     auto rabbitStatueMesh1 = rabbitStatueModel1->GetMesh("Rabbit_low_Stereo_textured_mesh");
-
-    auto lionStatuePath = root + L"\\Assets\\Models\\lion-lp.fbx";
-    auto lionStatueModel1 = AssimpModel3DImporter::Import(WCharToString(lionStatuePath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 0, .scale = Vector3(1.0f) }, errorStr);
-
-    if (lionStatueModel1 == nullptr) {
-        error = "Error in Importing Model At: \n" + WStringToString(lionStatuePath) + "Error: \n" + errorStr;
-        return nullptr;
-    }
-
-    auto lionStatueMesh1 = lionStatueModel1->GetMesh("Model.004");
 
     auto chairPath = root + L"\\Assets\\Models\\leather_chair.fbx";
     auto chairModel1 = AssimpModel3DImporter::Import(WCharToString(chairPath.c_str()), ModelImportProperties{ .axis = Vector3(1.0f, 0.0f, 0.0f), .angleDeg = 90, .scale = Vector3(1.0f) }, errorStr);
@@ -1059,44 +1045,46 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     groundRTMaterial1->SetValue("specular", 0.1f);
 
     auto refractionRTMaterial1 = materialFactory->CreateMaterial(rtRefractionProgram);
-    refractionRTMaterial1->SetValue("refractionFactor", 1.3f);
+    refractionRTMaterial1->SetValue("refractionFactor", 1.2f);
     refractionRTMaterial1->SetValue("maxRecursion", 5);
 
     ////// Creating the entities
 
-    auto carTransform1 = std::make_shared<Transform>(Vector3(-1.0f, 1.0f, 1.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer1 = std::make_shared<Render::MeshRenderer>(carMesh1, carMaterial1);
-    auto rtComponent1 = std::make_shared<Render::RayTracingComponent>(carMesh1, carRTMaterial);
-    auto carEntity1 = std::make_shared<QuantumEngine::GameEntity>(carTransform1, meshRenderer1, rtComponent1);
+    auto retroCarTransform = std::make_shared<Transform>(Vector3(-2.0f, 1.0f, 1.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto retroCarMeshRenderer = std::make_shared<Render::MeshRenderer>(retroCarMesh, carMaterial1);
+    auto retroCarRTComponent = std::make_shared<Render::RayTracingComponent>(retroCarMesh, carRTMaterial);
+    auto retroCarEntity = std::make_shared<QuantumEngine::GameEntity>(retroCarTransform, retroCarMeshRenderer, retroCarRTComponent);
 
-    auto rabbitStatueTransform1 = std::make_shared<Transform>(Vector3(-0.2f, 2.5f, 1.0f), Vector3(2.0f), Vector3(0.0f, 1.0f, 0.0f), 180);
-    auto meshRenderer2 = std::make_shared<Render::MeshRenderer>(rabbitStatueMesh1, carRTMaterial);
-    auto rtComponent2 = std::make_shared<Render::RayTracingComponent>(rabbitStatueMesh1, rabbitStatueRTMaterial);
-    auto rabbitStatueEntity1 = std::make_shared<QuantumEngine::GameEntity>(rabbitStatueTransform1, meshRenderer2, rtComponent2);
+    auto rabbitStatueTransform = std::make_shared<Transform>(Vector3(-0.5f, 0.0f, 1.0f), Vector3(2.0f), Vector3(0.0f, 1.0f, 0.0f), 180);
+    auto rabbitStatueMeshRenderer = std::make_shared<Render::MeshRenderer>(rabbitStatueMesh1, carRTMaterial);
+    auto rabbitStatueRTComponent = std::make_shared<Render::RayTracingComponent>(rabbitStatueMesh1, rabbitStatueRTMaterial);
+    auto rabbitStatueEntity = std::make_shared<QuantumEngine::GameEntity>(rabbitStatueTransform, rabbitStatueMeshRenderer, rabbitStatueRTComponent);
 
-    auto lionStatueTransform1 = std::make_shared<Transform>(Vector3(3.2f, 3.4f, 2.0f), Vector3(0.8f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer3 = std::make_shared<Render::MeshRenderer>(lionStatueMesh1, carRTMaterial);
-    auto rtComponent3 = std::make_shared<Render::RayTracingComponent>(lionStatueMesh1, lionStatueRTMaterial);
-    auto lionStatueEntity1 = std::make_shared<QuantumEngine::GameEntity>(lionStatueTransform1, meshRenderer3, rtComponent3);
+    auto lionStatueTransform1 = std::make_shared<Transform>(Vector3(1.5f, 1.0f, 2.0f), Vector3(0.8f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto lionStatueMeshRenderer = std::make_shared<Render::MeshRenderer>(lionStatueMesh, carRTMaterial);
+    auto lionStatueRTComponent = std::make_shared<Render::RayTracingComponent>(lionStatueMesh, lionStatueRTMaterial);
+    auto lionStatueEntity = std::make_shared<QuantumEngine::GameEntity>(lionStatueTransform1, lionStatueMeshRenderer, lionStatueRTComponent);
 
-    auto chairTransform1 = std::make_shared<Transform>(Vector3(2.2f, 0.0f, 1.0f), Vector3(1.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto meshRenderer4 = std::make_shared<Render::MeshRenderer>(chairMesh1, carRTMaterial);
+    auto chairTransform = std::make_shared<Transform>(Vector3(3.7f, 0.0f, 1.0f), Vector3(1.5f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto chairMeshRenderer = std::make_shared<Render::MeshRenderer>(chairMesh1, carRTMaterial);
     auto rtComponent4 = std::make_shared<Render::RayTracingComponent>(chairMesh1, chairRTMaterial);
-    auto chairEntity1 = std::make_shared<QuantumEngine::GameEntity>(chairTransform1, meshRenderer4, rtComponent4);
+    auto chairEntity1 = std::make_shared<QuantumEngine::GameEntity>(chairTransform, chairMeshRenderer, rtComponent4);
 
     auto groundTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(20.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto gBufferRenderer = std::make_shared<Render::MeshRenderer>(planeMesh, carRTMaterial);
-    auto rtComponent5 = std::make_shared<Render::RayTracingComponent>(planeMesh, groundRTMaterial1);
-    auto groundEntity1 = std::make_shared<QuantumEngine::GameEntity>(groundTransform, gBufferRenderer, rtComponent5);
+    auto groundGBufferRenderer = std::make_shared<Render::MeshRenderer>(planeMesh, carRTMaterial);
+    auto groundRTComponent = std::make_shared<Render::RayTracingComponent>(planeMesh, groundRTMaterial1);
+    auto groundEntity = std::make_shared<QuantumEngine::GameEntity>(groundTransform, groundGBufferRenderer, groundRTComponent);
 
-    auto refractorTransform1 = std::make_shared<Transform>(Vector3(-0.2f, 0.4f, -3.0f), Vector3(2.0f, 5.0f, 0.5f), Vector3(0.0f, 0.0f, 1.0f), 90);
-    auto Renderer = std::make_shared<Render::GBufferRTReflectionRenderer>(cubeMesh, carMaterial1);
-    auto rtComponent6 = std::make_shared<Render::RayTracingComponent>(cubeMesh, refractionRTMaterial1);
-    auto glassEntity1 = std::make_shared<QuantumEngine::GameEntity>(refractorTransform1, Renderer, rtComponent6);
+    auto slabTransform = std::make_shared<Transform>(Vector3(-0.2f, 0.4f, -3.0f), Vector3(2.0f, 5.0f, 0.5f), Vector3(0.0f, 0.0f, 1.0f), 90);
+    auto slabRenderer = std::make_shared<Render::GBufferRTReflectionRenderer>(cubeMesh, carMaterial1);
+    auto slabRTComponent = std::make_shared<Render::RayTracingComponent>(cubeMesh, refractionRTMaterial1);
+    auto slabEntity = std::make_shared<QuantumEngine::GameEntity>(slabTransform, slabRenderer, slabRTComponent);
 
-    auto refractorTransform2 = std::make_shared<Transform>(Vector3(3.2f, 2.4f, -2.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
-    auto rtComponent7 = std::make_shared<Render::RayTracingComponent>(sphereMesh, refractionRTMaterial1);
-    auto glassEntity2 = std::make_shared<QuantumEngine::GameEntity>(refractorTransform2, Renderer, rtComponent7);
+    auto sphereTransform = std::make_shared<Transform>(Vector3(3.2f, 2.4f, -2.0f), Vector3(1.0f), Vector3(0.0f, 0.0f, 1.0f), 0);
+    auto sphereRTComponent = std::make_shared<Render::RayTracingComponent>(sphereMesh, refractionRTMaterial1);
+    auto sphereEntity = std::make_shared<QuantumEngine::GameEntity>(sphereTransform, slabRenderer, sphereRTComponent);
+
+    ref<MaterialValueModifier> sphereReflectionModifier = std::make_shared<MaterialValueModifier>(refractionRTMaterial1, "refractionFactor", 0.2f, 1.0f, 1.5f);
 
 
     ////// Creating the lights
@@ -1126,8 +1114,8 @@ ref<Scene> SceneBuilder::BuildRefractionScene(const ref<Render::GPUAssetManager>
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
-    scene->entities = { carEntity1, rabbitStatueEntity1, lionStatueEntity1, chairEntity1, groundEntity1, glassEntity1, glassEntity2 };
-    scene->behaviours = { cameraController };
+    scene->entities = { retroCarEntity, rabbitStatueEntity, lionStatueEntity, chairEntity1, groundEntity, slabEntity, sphereEntity };
+    scene->behaviours = { cameraController, sphereReflectionModifier };
     scene->rtGlobalMaterial = rtGlobalMaterial;
 
     return scene;
