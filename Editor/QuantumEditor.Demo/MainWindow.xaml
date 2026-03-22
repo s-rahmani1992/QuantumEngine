@@ -21,6 +21,9 @@
             <Button Width="100" Margin="20" Click="OnRefractionSceneClicked">
                 Refraction Scene
             </Button>
+            <Button Width="100" Margin="20" Click="OnCompleteSceneClicked">
+                Complete Scene
+            </Button>
         </StackPanel>
         <ContentPresenter Name="viewHost">
             

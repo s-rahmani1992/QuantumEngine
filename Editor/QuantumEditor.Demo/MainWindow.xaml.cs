@@ -32,5 +32,10 @@ namespace QuantumEditor.Demo
         {
             viewHost.Content = new Views.RefractionSceneInfoView();
         }
+
+        private void OnCompleteSceneClicked(object sender, RoutedEventArgs e)
+        {
+            viewHost.Content = new Views.CompleteSceneInfoView();
+        }
     }
 }
