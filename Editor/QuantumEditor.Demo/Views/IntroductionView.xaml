@@ -1,0 +1,45 @@
+﻿<UserControl x:Class="QuantumEditor.Demo.Views.IntroductionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:QuantumEditor.Demo.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ControlStyleDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <DockPanel>
+        <RichTextBox
+                    IsReadOnly="True"
+                    BorderThickness="0"
+                    VerticalScrollBarVisibility="Disabled"
+                    HorizontalScrollBarVisibility="Disabled"
+                    Padding="10" DockPanel.Dock="Top">
+            <FlowDocument FontFamily="{StaticResource Global_Font}">
+                <Paragraph Foreground="{StaticResource Title_Color}" TextAlignment="Center" FontSize="40">
+                    Welcome to QuantumEngine Demo
+                </Paragraph>
+                <Paragraph Margin="6 0 6 10" FontSize="25">
+                    This application is a demo for the render engine which showcases several scenes with different illumination and rendering effects.
+                </Paragraph>
+                <Paragraph Margin="6 0 6 10" FontSize="25">
+                    It is still in an early stage of development, but the long‑term goal is to evolve this demo into a fully featured editor for the rendering engine.
+                </Paragraph>
+                <Paragraph Margin="6" FontSize="25">
+                    The purpose of the engine is to render arbitrary scenes composed of multiple objects, each with its own position, rotation, scale and material.
+                </Paragraph>
+                <Paragraph Margin="6" FontSize="25">
+                    It supports both full ray tracing and a hybrid approach that combines rasterization with ray tracing.
+                </Paragraph>
+                <Paragraph Margin="6" FontSize="25">
+                    A selection of sample scenes is available in the left panel, where each one can be loaded and executed.
+                </Paragraph>
+            </FlowDocument>
+        </RichTextBox>
+    </DockPanel>
+</UserControl>

@@ -88,7 +88,7 @@ void QuantumEngine::Rendering::DX12::DX12HybridContext::Render()
 	m_commandList->ClearDepthStencilView(m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart(),
 		D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, 1.0f, 0, 0, nullptr);
 
-	float clearColor[] = { 0.1f, 0.7f, 0.3f, 1.0f };
+	float clearColor[] = { 0.2f, 0.4f, 0.6f, 1.0f };
 	auto dsvHandle = m_depthStencilvHeap->GetCPUDescriptorHandleForHeapStart();
 	m_commandList->ClearRenderTargetView(m_rtvHandles[m_current_buffer_index], clearColor, 0, nullptr);
 	m_commandList->OMSetRenderTargets(1, &m_rtvHandles[m_current_buffer_index], false, &dsvHandle);

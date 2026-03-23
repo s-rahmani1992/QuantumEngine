@@ -1,0 +1,55 @@
+﻿<Window x:Class="QuantumEditor.Demo.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:QuantumEditor.Demo"
+        xmlns:view="clr-namespace:QuantumEditor.Demo.Views"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="720" Width="1280"
+        WindowStartupLocation="Manual" Left="50" Top="50">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ControlStyleDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+    <DockPanel>
+        <StackPanel HorizontalAlignment="Center" DockPanel.Dock="Left">
+            <RadioButton IsChecked="True" Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnIntroductionClicked"
+                         GroupName="tab">
+                Introduction
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnSimpleSceneClicked"
+                         GroupName="tab">
+                Simple Scene
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnReflectionSceneClicked"
+                         GroupName="tab">
+                Reflection Scene
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnShadowSceneClicked"
+                         GroupName="tab">
+                Shadow Scene
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnRefractionSceneClicked"
+                         GroupName="tab">
+                Refraction Scene
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnCompleteSceneClicked"
+                         GroupName="tab">
+                Complete Scene
+            </RadioButton>
+        </StackPanel>
+        <ContentPresenter Name="viewHost">
+            
+        </ContentPresenter>
+    </DockPanel>
+</Window>

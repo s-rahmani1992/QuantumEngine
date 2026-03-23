@@ -1,0 +1,170 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="DemoAPI.h" />
+    <ClInclude Include="SceneBuilder.h" />
+    <ClInclude Include="Behaviours\CameraController.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\CurveModifier.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\EntityMover.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\EntityRotator.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\FrameRateLogger.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\TextureSwitcher.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\MaterialValueModifier.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+    <ClInclude Include="Behaviours\EntityPositionController.h">
+      <Filter>Behaviours</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="DemoAPI.cpp" />
+    <ClCompile Include="SceneBuilder.cpp" />
+    <ClCompile Include="Behaviours\CameraController.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\CurveModifier.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\EntityMover.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\EntityRotator.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\FrameRateLogger.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\TextureSwitcher.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\MaterialValueModifier.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+    <ClCompile Include="Behaviours\EntityPositionController.cpp">
+      <Filter>Behaviours</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Behaviours">
+      <UniqueIdentifier>{eb370c6c-3480-43dd-941a-7ba21d248bc0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>{803b8660-fc2b-47f7-9b3a-65bfe6092941}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Shaders">
+      <UniqueIdentifier>{ce34b495-5986-4c71-bba5-925a1b39dc5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets\Shaders\Common">
+      <UniqueIdentifier>{df0a3d9d-bc90-4688-b248-5e71d1860268}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_mesh_compute.cs.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\curve_raster_program.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_raster.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\g_buffer_rt_global.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_g_buffer.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_rt.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\refractor_rt.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\rt_global.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\shadow_rt.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_raster_program.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_light_rt.lib.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\simple_rt.lib.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_rt.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_rt.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+    <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl.json">
+      <Filter>Assets\Shaders</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Assets\Shaders\Common\LightStructs.hlsli">
+      <Filter>Assets\Shaders\Common</Filter>
+    </None>
+    <None Include="Assets\Shaders\Common\RTStructs.hlsli">
+      <Filter>Assets\Shaders\Common</Filter>
+    </None>
+    <None Include="Assets\Shaders\Common\TransformStructs.hlsli">
+      <Filter>Assets\Shaders\Common</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -47,6 +47,11 @@ void QuantumEngine::Transform::RotateAround(const Vector3& axis, Float angleDeg)
 	m_angle = atan2f(sT, cT) * ( 180 / PI);
 }
 
+void QuantumEngine::Transform::Translate(const Vector3& delta)
+{
+	SetPosition(m_position + delta);
+}
+
 void QuantumEngine::Transform::UpdateDirections()
 {
 	Matrix4 mat = Matrix4::Rotate(m_axis, m_angle);

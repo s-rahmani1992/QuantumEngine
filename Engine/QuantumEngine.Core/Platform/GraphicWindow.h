@@ -12,6 +12,7 @@ namespace QuantumEngine::Platform {
 		UInt16 width;
 		UInt16 height;
 		std::wstring title;
+		HWND parentWinHandle = nullptr;
 	};
 
 	/// <summary>

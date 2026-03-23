@@ -36,7 +36,7 @@ namespace QuantumEngine::Platform {
 		static std::wstring GetExecutablePath();
 		static void Run(const ref<GraphicWindow>& window, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours);
 		static void RunFixed(const ref<GraphicWindow>& window, const ref<Rendering::GraphicContext>& renderer, const std::vector<ref<Behaviour>>& behaviours, UInt32 fps = 60);
-
+		static void Release();
 	private:
 		void CreateWindowClass();
 		static Application m_instance;
@@ -44,6 +44,7 @@ namespace QuantumEngine::Platform {
 		HINSTANCE m_app_instance;
 		ATOM winClass;
 		ref<Rendering::GPUDeviceManager> m_gpu_device;
+		HWND hostWindow;
 
 		static LRESULT CALLBACK OnWindowMessage(HWND, UINT, WPARAM, LPARAM);
 	};

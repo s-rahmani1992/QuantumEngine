@@ -9,6 +9,10 @@
 #include <vector>
 
 namespace QuantumEngine {
+	namespace Rendering {
+		class Material;
+	}
+
 	class Scene {
 	public:
 		ref<Camera> mainCamera;
