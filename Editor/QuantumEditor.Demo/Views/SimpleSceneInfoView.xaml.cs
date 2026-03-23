@@ -25,5 +25,11 @@ namespace QuantumEditor.Demo.Views
             WindowInteropHelper interop = new(Window.GetWindow(this));
             DemoNativeAPI.RunSimpleSceneRayTracingDX12(interop.Handle);
         }
+
+        private void OnSimpleRasterizationVK(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(Window.GetWindow(this));
+            DemoNativeAPI.RunSimpleSceneRasterizationVK(interop.Handle);
+        }
     }
 }
