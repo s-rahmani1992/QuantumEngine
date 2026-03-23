@@ -17,6 +17,8 @@ void QuantumEngine::Platform::Application::CreateApplication(HINSTANCE hInstance
 
 ref<QuantumEngine::Platform::GraphicWindow> QuantumEngine::Platform::Application::CreateGraphicWindow(const WindowProperties& properties)
 {
+    m_instance.hostWindow = properties.parentWinHandle;
+    EnableWindow(m_instance.hostWindow, FALSE);
 	return std::make_shared<GraphicWindow>(properties, m_instance.winClass);
 }
 
@@ -95,6 +97,8 @@ void QuantumEngine::Platform::Application::RunFixed(const ref<GraphicWindow>& wi
 
 void QuantumEngine::Platform::Application::Release()
 {
+    EnableWindow(m_instance.hostWindow, TRUE);
+    SetForegroundWindow(m_instance.hostWindow);
     UnregisterClass((LPCTSTR)m_instance.winClass, m_instance.m_app_instance);
 }
 

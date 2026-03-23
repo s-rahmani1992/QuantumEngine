@@ -44,6 +44,7 @@ namespace QuantumEngine::Platform {
 		HINSTANCE m_app_instance;
 		ATOM winClass;
 		ref<Rendering::GPUDeviceManager> m_gpu_device;
+		HWND hostWindow;
 
 		static LRESULT CALLBACK OnWindowMessage(HWND, UINT, WPARAM, LPARAM);
 	};

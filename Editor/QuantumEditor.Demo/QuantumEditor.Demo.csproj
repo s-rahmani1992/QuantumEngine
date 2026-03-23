@@ -17,7 +17,12 @@
 
   <PropertyGroup>
     <OutputPath>$(SolutionDir)Build\$(Configuration)\</OutputPath>
+    <ApplicationIcon>Resources\engine-icon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\engine-icon.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Engine\QuantumEngine.DemoAPI\QuantumEngine.DemoAPI.vcxproj" />

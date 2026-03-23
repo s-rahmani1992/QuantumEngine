@@ -199,7 +199,7 @@ bool Run_Complete_Scene_RayTracing_DX12(HWND parentWindow)
 {
 	OS::Application::CreateApplication(GetModuleHandleA(nullptr));
 	auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
-	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Refraction Scene ---- Ray Tracing ---- DirectX 12", .parentWinHandle = parentWindow });
+	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Complete Scene ---- Ray Tracing ---- DirectX 12", .parentWinHandle = parentWindow });
 
 	auto gpuContext = gpuDevice->CreateRayTracingContextForWindows(win);
 	auto assetManager = gpuDevice->CreateAssetManager();
