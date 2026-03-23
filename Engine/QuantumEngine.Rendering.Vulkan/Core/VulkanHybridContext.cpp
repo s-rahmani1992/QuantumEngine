@@ -214,10 +214,8 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 		m_splineModues->ComputeCommand(m_commandBuffer);
 	}
 
-	VkClearValue clearColor = { .color = { {0.5f, 0.6f, 0.1f, 1.0f} } };
-
 	VkClearValue clearValues[2];
-	clearValues[0].color = { {0.5f, 0.6f, 0.1f, 1.0f} };
+	clearValues[0].color = { {0.2f, 0.4f, 0.6f, 1.0f} };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
 	VkRenderPassBeginInfo renderPassInfo{
