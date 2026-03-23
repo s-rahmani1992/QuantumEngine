@@ -41,19 +41,19 @@ void CameraController::Update(Float deltaTime)
 	xPos = mousePos.x;
 	yPos = mousePos.y;
 
-	if (GetKeyState(VK_UP) & 0x80 || GetKeyState('W') & 0x80) {
+	if (GetKeyState('W') & 0x80) {
 		m_camera->GetTransform()->MoveForward(m_moveSpeed * deltaTime);
 	}
 
-	if (GetKeyState(VK_DOWN) & 0x80 || GetKeyState('S') & 0x80) {
+	if (GetKeyState('S') & 0x80) {
 		m_camera->GetTransform()->MoveForward(-m_moveSpeed * deltaTime);
 	}
 
-	if (GetKeyState(VK_LEFT) & 0x80 || GetKeyState('A') & 0x80) {
+	if (GetKeyState('A') & 0x80) {
 		m_camera->GetTransform()->MoveRight(-m_moveSpeed * deltaTime);
 	}
 
-	if (GetKeyState(VK_RIGHT) & 0x80 || GetKeyState('D') & 0x80) {
+	if (GetKeyState('D') & 0x80) {
 		m_camera->GetTransform()->MoveRight(m_moveSpeed * deltaTime);
 	}
 

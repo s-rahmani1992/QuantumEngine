@@ -27,22 +27,27 @@
                             Reflection Scene
                         </Paragraph>
                         <Paragraph Margin="6 0 6 20" FontSize="25">
-                            This scene has two reflective objects and a few other normal objects like car, container, floor, etc.
-                            It has one directional light and one point light.
+                            This scene showcases the engine’s reflection rendering. It contains two reflective objects alongside several standard objects such as a car, a container, and the floor. 
+                            The lighting setup includes one directional light and one point light. 
+                            The engine supports multiple reflection ray tracing, and this scene demonstrates up to three levels of recursive reflections.
                         </Paragraph>
                         <Paragraph Margin="6 0 6 20" FontSize="25">
                             One reflective object is a wall that uses a texture as a reflection map.
                             other is a sphere implementing simple reflection rendering.
-                            In hybrid rendering mode, the reflection is implemented using G Buffer, Ray tracing and rasterization
+                            In hybrid rendering mode, the reflection is implemented using G Buffer, Ray tracing and rasterization.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="30">
                             User Guide:
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            1. Use WASD keys and mouse movement to navigate in the scene
+                            1. Hold the
+                            <Bold>right mouse button</Bold> and use the
+                            <Bold>W, A, S, D</Bold> keys along with mouse movement to navigate through the scene.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            2. Use '-' and '+' Keys to change the sphere's reflectivity between 0 and 1
+                            2. Use
+                            <Bold>-</Bold> and
+                            <Bold>+</Bold> Keys to change the sphere's reflectivity between 0 and 1
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>

@@ -7,23 +7,45 @@
         xmlns:view="clr-namespace:QuantumEditor.Demo.Views"
         mc:Ignorable="d"
         Title="MainWindow" Height="720" Width="1280">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/ControlStyleDictionary.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
     <DockPanel>
-        <StackPanel HorizontalAlignment="Center" DockPanel.Dock="Left" Width="300">
-            <Button Width="100" Margin="20" Click="OnSimpleSceneClicked">
+        <StackPanel HorizontalAlignment="Center" DockPanel.Dock="Left">
+            <RadioButton IsChecked="True" Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnIntroductionClicked"
+                         GroupName="tab">
+                Introduction
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnSimpleSceneClicked"
+                         GroupName="tab">
                 Simple Scene
-            </Button>
-            <Button Width="100" Margin="20" Click="OnReflectionSceneClicked">
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnReflectionSceneClicked"
+                         GroupName="tab">
                 Reflection Scene
-            </Button>
-            <Button Width="100" Margin="20" Click="OnShadowSceneClicked">
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnShadowSceneClicked"
+                         GroupName="tab">
                 Shadow Scene
-            </Button>
-            <Button Width="100" Margin="20" Click="OnRefractionSceneClicked">
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnRefractionSceneClicked"
+                         GroupName="tab">
                 Refraction Scene
-            </Button>
-            <Button Width="100" Margin="20" Click="OnCompleteSceneClicked">
+            </RadioButton>
+            <RadioButton Style="{StaticResource Toggle_Radio_Button_Style }" 
+                         Width="250" Margin="20" Click="OnCompleteSceneClicked"
+                         GroupName="tab">
                 Complete Scene
-            </Button>
+            </RadioButton>
         </StackPanel>
         <ContentPresenter Name="viewHost">
             

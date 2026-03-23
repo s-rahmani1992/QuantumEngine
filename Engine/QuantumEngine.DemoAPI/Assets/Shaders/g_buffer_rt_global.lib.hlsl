@@ -42,7 +42,7 @@ void rayGen()
     payLoad.targetMode = 1;
     TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, payLoad);
     if(payLoad.hit == 0)
-        _OutputTexture[launchIndex.xy] = float4(0.1f, 0.7f, 0.1f, 0.0f);
+        _OutputTexture[launchIndex.xy] = float4(0.2f, 0.4f, 0.6f, 0.0f);
     else
         _OutputTexture[launchIndex.xy] = float4(payLoad.color, 1.0f);
 }
@@ -50,6 +50,6 @@ void rayGen()
 [shader("miss")]
 void miss(inout GeneralPayload payload)
 {
-    payload.color = float3(0.2f, 0.0f, 1.0f);
+    payload.color = float3(0.2f, 0.4f, 0.6f);
     payload.hit = 0;
 }

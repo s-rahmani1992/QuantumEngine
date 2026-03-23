@@ -37,4 +37,48 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <Style TargetType="RadioButton" x:Key="Toggle_Radio_Button_Style">
+        <Setter Property="Focusable" Value="True"/>
+        <Setter Property="FontFamily" Value="{StaticResource Global_Font}"/>
+        <Setter Property="FontSize" Value="30"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Border"
+                        Padding="8 4"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="4">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+                    </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#2D7DFF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#1A5FCC"/>
+                            <Setter Property="Foreground" Value="White"/>
+                        </Trigger>
+
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="IsChecked" Value="False"/>
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="Border" Property="Background" Value="#E5F0FF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#2D7DFF"/>
+                        </MultiTrigger>
+
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="#C7DFFF"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="#1A5FCC"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

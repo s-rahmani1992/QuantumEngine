@@ -27,20 +27,22 @@
                             Complete Scene
                         </Paragraph>
                         <Paragraph Margin="6 0 6 20" FontSize="25">
-                            This is a comprehensive scene that renders light, reflection, refraction and shadow.
-                            The reflective objects are sphere, wall and pickup truck.
-                            The refractive objects are sphere and slab.
-                            All of the objects except refractive ones can cast and receive shadows.
-                            It has one directional light and one point light.
+                            This is a scene that renders lighting, reflection, refraction, and shadow effects simultaneously.
+                            The reflective objects include the sphere, the wall, and the pickup truck.
+                            The refractive objects are the sphere and the slab.
+                            All objects, except the refractive ones, are capable of casting and receiving shadows.
+                            The lighting setup consists of one directional light and one point light.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="30">
                             User Guide:
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            1. Use WASD keys and mouse movement to navigate in the scene
+                            1. Hold the
+                            <Bold>right mouse button</Bold> and use the
+                            <Bold>W, A, S, D</Bold> keys along with mouse movement to navigate through the scene.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            2. Use UHJK Keys to move the reflective sphere object along the XZ plane.
+                            2. Use Arrow Keys to move the reflective sphere object along the XZ plane.
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>

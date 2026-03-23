@@ -27,17 +27,19 @@
                             Simple Scene With Lighting
                         </Paragraph>
                         <Paragraph Margin="6 0 6 20" FontSize="25">
-                            This scene has a few objects like car, container, floor, etc.
-                    It has one directional light and one point light.
+                            This scene is designed to demonstrate a basic lighting configuration within the engine. It includes several static meshes such as car, container, and ground plane, lit by a single directional light and a single point light.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="30">
                             User Guide:
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            1. Use WASD keys and mouse movement to navigate in the scene
+                            1. Hold the
+                            <Bold>right mouse button</Bold> and use the
+                            <Bold>W, A, S, D</Bold> keys along with mouse movement to navigate through the scene.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            2. Use 'Space' Key to change the pickup truck object's texture
+                            2. Use
+                            <Bold>Space</Bold> Key to change the pickup truck object's texture
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>

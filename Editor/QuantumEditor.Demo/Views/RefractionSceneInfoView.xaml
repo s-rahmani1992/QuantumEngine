@@ -27,18 +27,23 @@
                             Refraction Scene
                         </Paragraph>
                         <Paragraph Margin="6 0 6 20" FontSize="25">
-                            This scene has a few objects and Two Refractive objects.
-                            the refractive objects are a Slab and a sphere with the same refraction material. So they both have the same refraction constant.
-                            It has one directional light and one point light.
+                            This scene demonstrates the engine's refraction rendering. 
+                            It contains several objects, including two refractive bodies: a slab and a sphere, both using the same refraction material. 
+                            As a result, they share the same refraction constant.
+                            The lighting setup includes one directional light and one point light.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="30">
                             User Guide:
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            1. Use WASD keys and mouse movement to navigate in the scene
+                            1. Hold the
+                            <Bold>right mouse button</Bold> and use the
+                            <Bold>W, A, S, D</Bold> keys along with mouse movement to navigate through the scene.
                         </Paragraph>
                         <Paragraph Margin="6" FontSize="25">
-                            2. Use '-' and '+' Keys to change refraction factor of the two refractors between 1 and 1.5f.
+                            2. Use the
+                            <Bold>-</Bold> and
+                            <Bold>+</Bold> Keys to adjust the refraction factor of the two refractive objects, ranging from 1.0 to 1.5 .
                         </Paragraph>
                     </FlowDocument>
                 </RichTextBox>

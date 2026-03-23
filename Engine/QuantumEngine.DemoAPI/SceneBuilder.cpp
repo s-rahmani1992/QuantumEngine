@@ -538,7 +538,7 @@ ref<Scene> SceneBuilder::BuildReflectionScene(const ref<Render::GPUAssetManager>
     ////// Creating the materials
 
     auto rtGlobalMaterial = materialFactory->CreateMaterial(globalRTProgram);
-    rtGlobalMaterial->SetValue("missColor", Color(0.9f, 0.4f, 0.6f, 1.0f));
+    rtGlobalMaterial->SetValue("missColor", Color(0.2f, 0.4f, 0.6f, 1.0f));
     rtGlobalMaterial->SetValue("hitColor", Color(0.8f, 0.1f, 0.3f, 1.0f));
 
     auto retroCarMaterial = materialFactory->CreateMaterial(lightRasterProgram);

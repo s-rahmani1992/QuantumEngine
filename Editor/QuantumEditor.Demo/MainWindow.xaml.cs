@@ -10,7 +10,7 @@ namespace QuantumEditor.Demo
         public MainWindow()
         {
             InitializeComponent();
-            viewHost.Content = new Views.SimpleSceneInfoView();
+            viewHost.Content = new Views.IntroductionView();
         }
 
         private void OnSimpleSceneClicked(object sender, RoutedEventArgs e)
@@ -36,6 +36,11 @@ namespace QuantumEditor.Demo
         private void OnCompleteSceneClicked(object sender, RoutedEventArgs e)
         {
             viewHost.Content = new Views.CompleteSceneInfoView();
+        }
+
+        private void OnIntroductionClicked(object sender, RoutedEventArgs e)
+        {
+            viewHost.Content = new Views.IntroductionView();
         }
     }
 }

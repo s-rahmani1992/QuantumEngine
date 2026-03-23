@@ -8,19 +8,19 @@ EntityPositionController::EntityPositionController(ref<QuantumEngine::Transform>
 
 void EntityPositionController::Update(Float deltaTime)
 {
-	if (GetKeyState('U') & 0x80) {
+	if (GetKeyState(VK_UP) & 0x80) {
 		m_transform->Translate((deltaTime * m_speed) * Vector3(0.0f, 0.0f, -1.0f));
 	}
 
-	if (GetKeyState('J') & 0x80) {
+	if (GetKeyState(VK_DOWN) & 0x80) {
 		m_transform->Translate((deltaTime * m_speed) * Vector3(0.0f, 0.0f, 1.0f));
 	}
 
-	if (GetKeyState('H') & 0x80) {
+	if (GetKeyState(VK_LEFT) & 0x80) {
 		m_transform->Translate((deltaTime * m_speed) * Vector3(1.0f, 0.0f, 0.0f));
 	}
 
-	if (GetKeyState('K') & 0x80) {
+	if (GetKeyState(VK_RIGHT) & 0x80) {
 		m_transform->Translate((deltaTime * m_speed) * Vector3(-1.0f, 0.0f, 0.0f));
 	}
 }

@@ -12,7 +12,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    Run_Light_Scene_Rasterization_DX12(nullptr);
+    Run_Complete_Scene_RayTracing_DX12(nullptr);
 
     return 0;
 }
