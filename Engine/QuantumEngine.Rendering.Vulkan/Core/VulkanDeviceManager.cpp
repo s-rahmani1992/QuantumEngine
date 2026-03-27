@@ -167,25 +167,10 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 
-	VkPhysicalDeviceScalarBlockLayoutFeatures scalarBlockLayoutFeature{};
-	scalarBlockLayoutFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES;
-	scalarBlockLayoutFeature.pNext = nullptr;
-	scalarBlockLayoutFeature.scalarBlockLayout = VK_TRUE;
-
-	VkPhysicalDeviceUniformBufferStandardLayoutFeatures ubStandardLayoutFeature{};
-	ubStandardLayoutFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES;
-	ubStandardLayoutFeature.pNext = &scalarBlockLayoutFeature;
-	ubStandardLayoutFeature.uniformBufferStandardLayout = VK_TRUE;
-
-	VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddress{};
-	bufferDeviceAddress.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-	bufferDeviceAddress.pNext = &ubStandardLayoutFeature;
-	bufferDeviceAddress.bufferDeviceAddress = VK_TRUE;
-
 	// acceleration structure feature
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR accelStructFeature{};
 	accelStructFeature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
-	accelStructFeature.pNext = &bufferDeviceAddress;
+	accelStructFeature.pNext = nullptr;
 	accelStructFeature.accelerationStructure = VK_TRUE;
 
 	// ray tracing pipeline feature
@@ -200,10 +185,19 @@ bool QuantumEngine::Rendering::Vulkan::VulkanDeviceManager::Initialize()
 	rayQueryFeature.pNext = &rtPipelineFeature;
 	rayQueryFeature.rayQuery = VK_TRUE;
 
+	VkPhysicalDeviceVulkan12Features enabled12{};
+	enabled12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+	enabled12.pNext = &rayQueryFeature;
+	enabled12.descriptorIndexing = VK_TRUE;
+	enabled12.runtimeDescriptorArray = VK_TRUE;
+	enabled12.bufferDeviceAddress = VK_TRUE;
+	enabled12.uniformBufferStandardLayout = VK_TRUE;
+	enabled12.scalarBlockLayout = VK_TRUE;
+
 	// top-level features2
 	VkPhysicalDeviceFeatures2 features2{};
 	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	features2.pNext = &rayQueryFeature;
+	features2.pNext = &enabled12;
 	features2.features = deviceFeatures;
 
 	VkDeviceCreateInfo deviceCreateInfo{

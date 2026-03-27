@@ -2,7 +2,7 @@
 #include "SPIRVReflection.h"
 #include <algorithm>
 
-void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(const SpvReflectShaderModule* shaderReflectionModule)
+void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(const SpvReflectShaderModule* shaderReflectionModule, bool isRayTracing)
 {
 	UInt32 pc_count = 0;
 	spvReflectEnumeratePushConstantBlocks(shaderReflectionModule, &pc_count, nullptr);
@@ -63,14 +63,6 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 				}
 			}
 		} while (i < pushConstant->member_count);
-		
-		/*for (UInt32 i = 0; i < pushConstant->member_count; ++i) {
-			auto& member = pushConstant->members[i];
-			pushConstantItem.variables.push_back(PushConstantVariableData{
-				.name = member.name,
-				.variableDesc = member,
-			});
-		}*/
 	}
 
 	// Extract Descriptors
@@ -82,7 +74,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 	
 	for (auto& descriptor : descriptorBindings) {
 		auto it = std::find_if(m_descripters.begin(), m_descripters.end(),
-			[descriptor](const DescriptableBufferData& data) { return data.name.compare(descriptor->name) == 0; });
+			[descriptor](const DescriptableBufferData& data) { return data.data.binding == descriptor->binding && data.data.set == descriptor->set; });
 
 		if (it != m_descripters.end())//checking if the resource is already processed because it can exist in multiple shaders
 			continue;
@@ -101,7 +93,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 
 		switch (descriptor->descriptor_type) {
 		case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-			desType = descriptor->name[0] != '_' ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+			desType = (isRayTracing || descriptor->name[0] != '_') ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			break;
 		case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
 			desType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -117,8 +109,12 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 			break;
 		}
 
+		bool isDynamic = (descriptor->array.dims_count > 0) &&
+			(descriptor->array.dims[0] == 0);
+
 		m_descripters.push_back(DescriptableBufferData{
 			.name = std::string(descriptor->name),
+			.isDynamicArray = isDynamic,
 			.offsetIndex = UINT32_MAX,
 			.descriptorType = desType,
 			.data = *descriptor,
@@ -159,12 +155,16 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 	VkDescriptorType desType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
 	std::vector<std::vector<VkDescriptorSetLayoutBinding>> descriptorLayoutBindings(GetDescriptorLayoutCount());
-	
+	std::vector<std::vector<VkDescriptorBindingFlags>> bindingFlags(GetDescriptorLayoutCount());
+
 	for (auto& descriptor : m_descripters) {
+		bindingFlags[descriptor.data.set].push_back(descriptor.isDynamicArray ? VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT |
+			VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT : 0);
+
 		descriptorLayoutBindings[descriptor.data.set].push_back(VkDescriptorSetLayoutBinding{
 			.binding = descriptor.data.binding,
 			.descriptorType = descriptor.descriptorType,
-			.descriptorCount = descriptor.data.count,
+			.descriptorCount = descriptor.isDynamicArray ? 200 : descriptor.data.count, //TODO fix te hard-coded size
 			.stageFlags = stageFlags,
 			.pImmutableSamplers = nullptr,
 		});
@@ -175,12 +175,17 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 			.binding = samplerDescriptor.data.binding,
 			.descriptorType = samplerDescriptor.descriptorType,
 			.descriptorCount = samplerDescriptor.data.count,
-			.stageFlags = VK_SHADER_STAGE_ALL_GRAPHICS,
+			.stageFlags = stageFlags,
 			.pImmutableSamplers = &sampler,
 			});
 	}
 
 	for (UInt32 i = 0; i < descriptorLayoutBindings.size(); i++) {
+		VkDescriptorSetLayoutBindingFlagsCreateInfo createInfoFlag{};
+		createInfoFlag.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO;
+		createInfoFlag.bindingCount = (UInt32)bindingFlags[i].size();         
+		createInfoFlag.pBindingFlags = bindingFlags[i].data();
+
 		VkDescriptorSetLayoutCreateInfo descriptorCreateInfo{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
@@ -198,8 +203,8 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 		.flags = 0,
 		.setLayoutCount = (UInt32)descriptorLayoutBindings.size(),
 		.pSetLayouts = descriptorSetLayout,
-		.pushConstantRangeCount = (UInt32)(pushConstantRanges.size()),
-		.pPushConstantRanges = pushConstantRanges.data(),
+		.pushConstantRangeCount = (UInt32)m_pushConstant.blocks.size(),
+		.pPushConstantRanges = m_pushConstant.blocks.size() == 0 ? nullptr : pushConstantRanges.data(),
 	};
 
 	vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, pipelineLayout);
@@ -235,7 +240,7 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::Vulkan::S
 		}
 
 		MaterialTextureFieldInfo textureFieldInfo{
-			.name = descriptor.name,
+			.name = descriptor.isDynamicArray ? descriptor.name.substr(0, descriptor.name.size() - 5) : descriptor.name,
 			.fieldIndex = textureIndex,
 		};
 
@@ -273,6 +278,9 @@ QuantumEngine::Rendering::Vulkan::DescriptableBufferData* QuantumEngine::Renderi
 
 void QuantumEngine::Rendering::Vulkan::SPIRVReflection::Initializes()
 {
+	if (m_descripters.size() == 0)
+		return;
+
 	auto h = std::max_element(m_descripters.begin(), m_descripters.end()
 		, [](const DescriptableBufferData& desc1, const DescriptableBufferData& desc2) {
 			return desc1.data.set < desc2.data.set;

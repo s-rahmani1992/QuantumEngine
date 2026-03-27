@@ -1,5 +1,6 @@
 #pragma once
 #include "vulkan-pch.h"
+#include "Core/SPIRVReflection.h"
 #include <map>
 
 namespace QuantumEngine {
@@ -19,30 +20,35 @@ namespace QuantumEngine::Rendering::Vulkan {
 namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 	class VulkanBLAS;
 	class SPIRVRayTracingProgram;
+	class SPIRVRayTracingProgramVariant;
 
 	class VulkanRayTracingPipelineModule {
 	public:
 		VulkanRayTracingPipelineModule();
 		~VulkanRayTracingPipelineModule();
 
-		bool Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, UInt32 camStride, UInt32 lightStride, const VkExtent2D& extent);
+		bool Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, VkBuffer transformBuffer, const VkExtent2D& extent);
 		void RenderCommand(VkCommandBuffer commandBuffer);
 		VkImage GetOutputImage() const { return m_outputImage; }
 	private:
 		void CreateOutputImage();
-		void CreatePipelineAndSBT();
-		void WriteBuffers(const std::string name, const VkBuffer buffer, UInt32 stride);
-
+		void WriteBuffers(const std::string name, const VkBuffer buffer);
+		void WriteArrayBuffer(const std::string name, const std::vector<VkBuffer>& buffers);
 		struct VKEntityGPUData {
 		public:
 			ref<GameEntity> gameEntity;
 			UInt32 index;
 		};
 
-		struct pushConstantData {
-			UInt32 offset;
-			Byte* location;
-			UInt32 size;
+		struct MaterialTextureFieldData {
+			UInt32 binding;
+			UInt32 set;
+			std::vector<VkImageView> images;
+		};
+
+		struct MaterialResourceData {
+			std::map<ref<Material>, UInt32> materialIndexMap;
+			std::map<std::string, MaterialTextureFieldData> images;
 		};
 
 		struct DescriptorData {
@@ -51,9 +57,16 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 			VkDescriptorType descriptorType;
 		};
 
+		struct MaterialSBTData {
+			UInt32 missEntryIndex = VK_SHADER_UNUSED_KHR;
+			UInt32 hitEntryIndex = VK_SHADER_UNUSED_KHR;
+		};
+
 		VkDevice m_device;
 		VkDescriptorPool m_descriptorPool;
 		ref<VulkanBufferFactory> m_bufferFactory;
+
+		std::vector<VKEntityGPUData> m_entities;
 
 		std::map<ref<VulkanMeshController>, ref<VulkanBLAS>> m_blasMap;
 		VkQueue m_graphicsQueue;
@@ -69,7 +82,6 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		ref<SPIRVRayTracingProgram> m_globalRtProgram;
 		VkPipeline m_rtPipeline;
 
-		std::vector<pushConstantData> m_pushConstantValues;
 		std::vector<VkDescriptorSet> m_descriptorSets;		
 		std::vector<DescriptorData> m_descriptorData;
 
@@ -81,5 +93,18 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VkStridedDeviceAddressRegionKHR m_missRegion;
 		VkStridedDeviceAddressRegionKHR m_hitRegion;
 		VkStridedDeviceAddressRegionKHR m_callableRegion = {0, 0, 0};
+
+		std::map<ref<Material>, MaterialSBTData> m_rtUniqueMaterial; // TODO Might Be redundent
+		std::map<ref<SPIRVRayTracingProgram>, ref<SPIRVRayTracingProgramVariant>> m_programVariantMap;
+		VkPipelineLayout m_rtPipelineLayout;
+		std::vector<VkDescriptorSetLayout> m_descriptorLayouts;
+		VkSampler m_sampler;
+		ref<Material> m_globalMaterial;
+		SPIRVReflection m_reflection;
+
+		std::vector<VkBuffer> m_indexStorageBuffers;
+		std::vector<VkBuffer> m_vertexStorageBuffers;
+
+		std::map<ref<SPIRVRayTracingProgramVariant>, MaterialResourceData> m_resourceMaps;
 	};
 }

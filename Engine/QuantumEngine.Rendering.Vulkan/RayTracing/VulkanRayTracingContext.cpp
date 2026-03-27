@@ -6,6 +6,9 @@
 #include "Core/Scene.h"
 #include "Core/VulkanAssetManager.h"
 #include "RayTracing/VulkanRayTracingPipelineModule.h"
+#include "Core/VulkanBufferFactory.h"
+#include "Core/VulkanDeviceManager.h"
+#include "Core/Transform.h"
 
 QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::VulkanRayTracingContext(const VkInstance vkInstance, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	: VulkanGraphicContext(vkInstance, surfaceQueueFamilyIndex, window),
@@ -37,7 +40,20 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Prep
 	if (InitializeLightBuffer(scene->lightData) == false)
 		return false;
 
-	if(m_rayTracingModule->Initialize(scene->entities, scene->rtGlobalMaterial, m_cameraBuffer, m_lightBuffer, m_cameraStride, m_lightStride, m_swapChainCapability.currentExtent) == false)
+    auto bufferFactory = VulkanDeviceManager::Instance()->GetBufferFactory();
+    bufferFactory->CreateBuffer(sizeof(TransformGPU) * scene->entities.size()
+        , VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_transformBuffer, &m_transformBufferMemory);
+
+    UInt32 index = 0;
+    m_entityGPUList.reserve(scene->entities.size());
+
+    for (auto& entity : scene->entities) {
+        m_entityGPUList.push_back({ entity, index });
+        index++;
+    }
+
+	if(m_rayTracingModule->Initialize(scene->entities, scene->rtGlobalMaterial, m_cameraBuffer, m_lightBuffer, m_transformBuffer, m_swapChainCapability.currentExtent) == false)
 		return false;
 
 	return true;
@@ -46,6 +62,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Prep
 void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Render()
 {
     UpdateCameraBuffer();
+    UpdateTransforms();
 
     vkResetFences(m_logicDevice, 1, &m_fence);
 
@@ -187,4 +204,20 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Uplo
 	}
 
 	m_assetManager->UploadMeshesToGPU(std::vector<ref<Mesh>>(uniqueMeshes.begin(), uniqueMeshes.end()));
+}
+
+void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::UpdateTransforms()
+{
+    void* data;
+    vkMapMemory(m_logicDevice, m_transformBufferMemory, 0, VK_WHOLE_SIZE, 0, &data);
+
+    for (auto& entityGPU : m_entityGPUList) {
+        m_transformData.modelMatrix = entityGPU.gameEntity->GetTransform()->Matrix();
+        m_transformData.modelViewMatrix = m_cameraGPU.viewMatrix * m_transformData.modelMatrix;
+        m_transformData.rotationMatrix = entityGPU.gameEntity->GetTransform()->RotateMatrix();
+
+        std::memcpy((Byte*)data + entityGPU.index * sizeof(TransformGPU), &m_transformData, sizeof(TransformGPU));
+    }
+
+    vkUnmapMemory(m_logicDevice, m_transformBufferMemory);
 }

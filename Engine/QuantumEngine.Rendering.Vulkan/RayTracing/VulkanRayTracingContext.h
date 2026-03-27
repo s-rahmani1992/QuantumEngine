@@ -13,7 +13,21 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		virtual void Render() override;
 
 	private:
+		struct VKEntityGPUData {
+		public:
+			ref<GameEntity> gameEntity;
+			UInt32 index;
+		};
+
 		void UploadMeshes(const std::vector<ref<GameEntity>>& entities);
+		void UpdateTransforms();
+
+		VkBuffer m_transformBuffer;
+		VkDeviceMemory m_transformBufferMemory;
+		TransformGPU m_transformData;
+
+		std::vector<VKEntityGPUData> m_entityGPUList;
+
 		ref<RayTracing::VulkanRayTracingPipelineModule> m_rayTracingModule;
 	};
 }

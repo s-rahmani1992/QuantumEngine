@@ -1,5 +1,7 @@
 #include "vulkan-pch.h"
 #include "SPIRVRayTracingProgram.h"
+#include "SPIRVRayTracingProgramVariant.h"
+#include "Core/VulkanUtilities.h"
 
 QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTracingProgram(Byte* bytecode, UInt64 codeSize, VkDevice device)
 	:m_codeSize(codeSize)
@@ -22,9 +24,38 @@ QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTr
 	m_reflection.AddShaderReflection(&m_reflectionModule);
 
 	m_reflection.Initializes();
-	InitializeSampler();
+	//InitializeSampler();
 
+	UInt32 inputCount;
 
+	spvReflectEnumerateInterfaceVariables(&m_reflectionModule, &inputCount, nullptr);
+	std::vector<SpvReflectInterfaceVariable*> inputs(inputCount);
+	spvReflectEnumerateInterfaceVariables(&m_reflectionModule, &inputCount, inputs.data());
+	
+	auto shaderRecordIT = std::find_if(inputs.begin(), inputs.end(), [](SpvReflectInterfaceVariable* interfaceVar) {
+		return interfaceVar->storage_class == SpvStorageClassShaderRecordBufferKHR;
+		});
+
+	m_shaderRecord = shaderRecordIT != inputs.end() ? *shaderRecordIT : nullptr;
+
+	if (m_shaderRecord != nullptr) {
+		UInt32 varOffset = 0;
+		for (UInt32 i = 0; i < m_shaderRecord->member_count; i++) {
+			auto member = m_shaderRecord->members[i];
+			auto numeric = member.type_description->traits.numeric;
+			auto varSize = (numeric.scalar.width / 8) * (numeric.vector.component_count == 0 ? 1 : numeric.vector.component_count);
+			m_shaderRecordVariables.push_back(ShaderRecordVariableData
+				{
+					.name = std::string(member.type_description->struct_member_name),
+					.offset = varOffset,
+					.size = varSize,
+				});
+
+			varOffset += varSize;
+		}
+
+	}
+	
 	auto shaderStageFlags = 0;
 
 	for(UInt32 i = 0; i < m_reflectionModule.entry_point_count; i++) {
@@ -54,8 +85,8 @@ QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTr
 		}
 	}
 
-	m_descriptorSetLayout.resize(m_reflection.GetDescriptorLayoutCount());
-	m_reflection.CreatePipelineLayout(m_device, shaderStageFlags, m_sampler, &m_pipelineLayout, m_descriptorSetLayout.data());
+	//m_descriptorSetLayout.resize(m_reflection.GetDescriptorLayoutCount());
+	//m_reflection.CreatePipelineLayout(m_device, shaderStageFlags, m_sampler, &m_pipelineLayout, m_descriptorSetLayout.data());
 
 
 	int h = 0;
@@ -118,4 +149,73 @@ std::vector<VkPipelineShaderStageCreateInfo> QuantumEngine::Rendering::Vulkan::R
 		stages.push_back(intersectionStage);
 	}
 	return stages;
+}
+
+ref<QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgramVariant> QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::CreateVariantForRT(UInt32& startBinding)
+{
+	Byte* variantByteCode = new Byte[m_codeSize];
+	std::memcpy(variantByteCode, m_bytecode, m_codeSize);
+
+	UInt32 descriptorCount;
+
+	std::map<std::string, UInt32> specialNames = {
+		{HLSL_CAMERA_DATA_NAME, 1},
+		{HLSL_LIGHT_DATA_NAME, 2},
+		{HLSL_TRANSFORM_ARRAY, 3},
+		{HLSL_RT_TLAS_SCENE_NAME, 4},
+		{HLSL_RT_OUTPUT_TEXTURE_NAME, 5},
+		{HLSL_RT_VERTEX_BUFFER_ARRAY, 6},
+		{HLSL_RT_INDEX_BUFFER_ARRAY, 7},
+	};
+
+	spvReflectEnumerateDescriptorBindings(&m_reflectionModule, &descriptorCount, nullptr);
+	std::vector<SpvReflectDescriptorBinding*> descriptors(descriptorCount);
+	spvReflectEnumerateDescriptorBindings(&m_reflectionModule, &descriptorCount, descriptors.data());
+
+	UInt32* wordByteCode = (UInt32*)variantByteCode;
+
+	for (auto& descriptor : descriptors) {
+
+		if (descriptor->descriptor_type == SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER) {
+			*(wordByteCode + descriptor->word_offset.set) = 1;
+			*(wordByteCode + descriptor->word_offset.binding) = 0;
+			continue;
+		}
+
+		UInt32 binding = *(wordByteCode + descriptor->word_offset.binding);
+		
+		auto nameIt = specialNames.find(descriptor->name);
+
+		if (nameIt != specialNames.end()) {
+			*(wordByteCode + descriptor->word_offset.set) = 1;
+			*(wordByteCode + descriptor->word_offset.binding) = (*nameIt).second;
+			continue;
+		}
+
+		*(wordByteCode + descriptor->word_offset.set) = 0;
+		*(wordByteCode + descriptor->word_offset.binding) = startBinding;
+		startBinding++;
+	}
+
+	return std::make_shared<SPIRVRayTracingProgramVariant>(variantByteCode, m_codeSize);
+}
+
+UInt32 QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::GetShaderRecordSize()
+{
+	if (m_shaderRecord == nullptr)
+		return 0;
+
+	UInt32 size = 0;
+
+	for (auto& var : m_shaderRecordVariables)
+		size += var.size;
+	
+	return size;
+}
+
+bool QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::HasHitGroup()
+{
+	return m_closestHitEntryPoint != nullptr ||
+		m_anyHitEntryPoint != nullptr ||
+		m_intersectionEntryPoint != nullptr;
 }

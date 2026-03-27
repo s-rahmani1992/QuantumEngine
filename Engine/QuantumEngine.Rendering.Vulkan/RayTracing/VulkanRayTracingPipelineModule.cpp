@@ -12,7 +12,13 @@
 #include "RayTracing/VulkanBLAS.h"
 #include "Core/VulkanUtilities.h"
 #include "SPIRVRayTracingProgram.h"
+#include "SPIRVRayTracingProgramVariant.h"
 #include "Rendering/Material.h"
+#include "VulkanRayTracingPipelineBuilder.h"
+#include <algorithm>
+#include <iterator>
+#include "Core/Texture2D.h"
+#include "Core/VulkanTexture2DController.h"
 
 QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::VulkanRayTracingPipelineModule()
 	: m_device(VulkanDeviceManager::Instance()->GetGraphicDevice()),
@@ -36,7 +42,7 @@ QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::~V
 	vkFreeMemory(m_device, m_SBTMemory, nullptr);
 }
 
-bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, UInt32 camStride, UInt32 lightStride, const VkExtent2D& extent)
+bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, VkBuffer transformBuffer, const VkExtent2D& extent)
 {
 	m_extent = extent;
 	VkCommandPool commandPool;
@@ -63,8 +69,70 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	if (vkAllocateCommandBuffers(m_device, &allocInfo, &commandBuffer) != VK_SUCCESS)
 		return false;
 
+	// Create Pipeline
+	m_globalMaterial = rtMaterial;
+	m_globalRtProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(rtMaterial->GetProgram());
+
+	RayTracePipelineBuildResult pipelineResult;
+	std::vector<ref<SPIRVRayTracingProgram>> localPrograms;
+
+	std::transform(entities.begin(), entities.end(), std::back_inserter(localPrograms),
+		[](const ref<GameEntity> entity)
+		{
+			auto rtComponent = entity->GetRayTracingComponent();
+
+			if (rtComponent == nullptr)
+				return ref<SPIRVRayTracingProgram>{nullptr};
+
+			return std::dynamic_pointer_cast<SPIRVRayTracingProgram>(rtComponent->GetRTMaterial()->GetProgram()); 
+		});
+
+	VulkanRayTracingPipelineBuilder::BuildRayTracingPipeline(m_globalRtProgram, localPrograms, pipelineResult);
+
+	for (auto& matPair : pipelineResult.programPipelineBlueprintMap)
+		m_programVariantMap.emplace(matPair.first, matPair.second.variant);
+
+	m_rtPipelineLayout = pipelineResult.rtPipelineLayout;
+	m_descriptorLayouts.insert(m_descriptorLayouts.end(), pipelineResult.rtDescriptorLayouts.begin(), pipelineResult.rtDescriptorLayouts.end());
+	m_rtPipeline = pipelineResult.rtPipeline;
+	m_sampler = pipelineResult.sampler;
+	m_reflection = pipelineResult.reflection;
+	// Create SBT
+	RayTraceSBTBuildResult sbtBuildResult;
+	std::vector<ref<Material>> localRTMaterials;
+
+	std::transform(entities.begin(), entities.end(), std::back_inserter(localRTMaterials),
+		[](const ref<GameEntity> entity)
+		{
+			auto rtComponent = entity->GetRayTracingComponent();
+
+			if (rtComponent == nullptr)
+				return ref<Material>{nullptr};
+
+			return rtComponent->GetRTMaterial();
+		});
+	VulkanRayTracingPipelineBuilder::BuildRayTracingSBT(m_globalMaterial, localRTMaterials, pipelineResult, sbtBuildResult);
+
+	m_SBT = sbtBuildResult.sbtBuffer;
+	m_SBTMemory = sbtBuildResult.sbtMemory;
+	m_rayGenRegion = sbtBuildResult.rayGenRegion;
+	m_missRegion = sbtBuildResult.missRegion;
+	m_hitRegion = sbtBuildResult.hitRegion;
+
+
+	for (auto& program : pipelineResult.programPipelineBlueprintMap) {
+		m_resourceMaps.emplace(program.second.variant, MaterialResourceData{});
+	}
+
+	for (auto& mat : sbtBuildResult.materialSBTBlueprintMap) {
+		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(mat.first->GetProgram());
+		auto& matResourceData = m_resourceMaps[pipelineResult.programPipelineBlueprintMap.at(localProgram).variant];
+		matResourceData.materialIndexMap.emplace(mat.first, matResourceData.materialIndexMap.size());
+	}
+
+	// Create TLAS
 	std::map<ref<VulkanMeshController>, VulkanBLASBuildInfo> meshbuildInfos;
-	std::vector<VKEntityGPUData> rtEntities;
+
 	UInt32 index = 0;
 	for(auto& entityData : entities) {
 		auto rtComponent = entityData->GetRayTracingComponent();
@@ -72,7 +140,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		if(rtComponent == nullptr)
 			continue;
 
-		rtEntities.push_back({ entityData, index });
+		m_entities.push_back({ entityData, index });
 		auto meshController = std::dynamic_pointer_cast<VulkanMeshController>(rtComponent->GetMesh()->GetGPUHandle());
 		
 		auto it = meshbuildInfos.emplace(meshController, VulkanBLASBuildInfo{});
@@ -131,23 +199,23 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	// Create TLAS
 
 	std::vector<VkAccelerationStructureInstanceKHR> vkBLASInstances;
-	vkBLASInstances.reserve(rtEntities.size());
+	vkBLASInstances.reserve(m_entities.size());
 	Matrix4 m;
 
-	for(auto& entityData : rtEntities) {
+	for(auto& entityData : m_entities) {
 		auto rtComponent = entityData.gameEntity->GetRayTracingComponent();
 		auto meshController = std::dynamic_pointer_cast<VulkanMeshController>(rtComponent->GetMesh()->GetGPUHandle());
 		auto& blas = m_blasMap[meshController];
-
+		auto program = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(rtComponent->GetRTMaterial()->GetProgram());
 		auto& blasInstance = vkBLASInstances.emplace_back(VkAccelerationStructureInstanceKHR{});
 
 		VulkanBLASBuildInfo buildInfo = meshbuildInfos[meshController];
 		UInt32 primitiveCount = buildInfo.primitiveCount;
 		m = entityData.gameEntity->GetTransform()->Matrix();
 		std::memcpy(&blasInstance.transform, &m, 12 * sizeof(Float));
-		blasInstance.instanceCustomIndex = entityData.index;
+		blasInstance.instanceCustomIndex = m_resourceMaps[pipelineResult.programPipelineBlueprintMap[program].variant].materialIndexMap[rtComponent->GetRTMaterial()];
 		blasInstance.mask = 0xFF;
-		blasInstance.instanceShaderBindingTableRecordOffset = 0;
+		blasInstance.instanceShaderBindingTableRecordOffset = sbtBuildResult.materialSBTBlueprintMap[entityData.gameEntity->GetRayTracingComponent()->GetRTMaterial()].hitEntryIndex;
 		blasInstance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 		blasInstance.accelerationStructureReference = blas->GetBLASAddress();
 	}
@@ -180,7 +248,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	asGeom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
 	asGeom.geometry.instances = instancesData;
 
-	UInt32 primitiveCount = static_cast<UInt32>(rtEntities.size());
+	UInt32 primitiveCount = static_cast<UInt32>(m_entities.size());
 
 	// 3. Build sizes
 	VkAccelerationStructureBuildGeometryInfoKHR TLASBuildInfo{
@@ -243,28 +311,8 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	// create output texture
 	CreateOutputImage();
 
-	// Ray tracing pipeline
-	m_globalRtProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(rtMaterial->GetProgram());
-	CreatePipelineAndSBT();
-
 	// Material Descriptors
-	auto& reflection = m_globalRtProgram->GetReflection();
-	auto& pushConstants = reflection.GetPushConstants();
-
-	for (auto& pushConstantBlock : pushConstants.blocks)
-	{
-		auto valueLocation = rtMaterial->GetValueLocation(pushConstantBlock.variables[0].name);
-		if (valueLocation != nullptr)
-		{
-			m_pushConstantValues.push_back({
-				.offset = pushConstantBlock.offset,
-				.location = valueLocation,
-				.size = pushConstantBlock.size,
-				});
-		}
-	}
-
-	auto& descriptors = reflection.GetDescriptors();
+	auto& descriptors = m_reflection.GetDescriptors();
 	auto textureFields = rtMaterial->GetTextureFields();
 	UInt32 fieldIndex = 0;
 
@@ -289,30 +337,27 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 	std::vector<VkDescriptorPoolSize> poolSizes;
 	poolSizes.reserve(20);
-	UInt32 setcount = reflection.GetDescriptorLayoutCount();
+	UInt32 setcount = m_reflection.GetDescriptorLayoutCount();
 
 	for (auto& descriptor : descriptors) {
 		auto it = std::find_if(poolSizes.begin(), poolSizes.end(), [descriptor](const VkDescriptorPoolSize& poolSize) {
 			return descriptor.descriptorType == poolSize.type;
 			});
 
+		UInt32 newCount = descriptor.isDynamicArray ? 200 : 1; //TODO fix hard coded size for dynamic arrays
+
 		if (it != poolSizes.end())
-			(*it).descriptorCount++;
+			(*it).descriptorCount += newCount;
 		else
 			poolSizes.push_back(VkDescriptorPoolSize{
 			.type = descriptor.descriptorType,
-			.descriptorCount = 1,
+			.descriptorCount = newCount,
 				});
 	}
 
 	poolSizes.push_back(VkDescriptorPoolSize{
 				.type = VK_DESCRIPTOR_TYPE_SAMPLER,
-				.descriptorCount = 3,
-		});
-
-	poolSizes.push_back(VkDescriptorPoolSize{
-				.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-				.descriptorCount = 3,
+				.descriptorCount = 1,
 		});
 
 	VkDescriptorPoolCreateInfo poolCreateInfo{
@@ -327,9 +372,8 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	if (vkCreateDescriptorPool(m_device, &poolCreateInfo, nullptr, &m_descriptorPool) != VK_SUCCESS)
 		return false;
 
-	auto& layouts = m_globalRtProgram->GetDiscriptorLayouts();
-	m_descriptorSets.resize(layouts.size());
-	m_descriptorData.resize(layouts.size());
+	m_descriptorSets.resize(m_descriptorLayouts.size());
+	m_descriptorData.resize(m_descriptorLayouts.size());
 
 	VkDescriptorSetAllocateInfo descSetAlloc{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -338,17 +382,18 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		.pSetLayouts = nullptr,
 	};
 
-	for (UInt32 i = 0; i < layouts.size(); i++) {
-		descSetAlloc.pSetLayouts = layouts.data() + i;
+	for (UInt32 i = 0; i < m_descriptorLayouts.size(); i++) {
+		descSetAlloc.pSetLayouts = m_descriptorLayouts.data() + i;
 
 		if (vkAllocateDescriptorSets(m_device, &descSetAlloc, m_descriptorSets.data() + i) != VK_SUCCESS)
 			return false;
 	}
 
-	WriteBuffers(HLSL_CAMERA_DATA_NAME, camBuffer, camStride);
-	WriteBuffers(HLSL_LIGHT_DATA_NAME, lightBuffer, lightStride);
+	WriteBuffers(HLSL_CAMERA_DATA_NAME, camBuffer);
+	WriteBuffers(HLSL_LIGHT_DATA_NAME, lightBuffer);
+	WriteBuffers(HLSL_TRANSFORM_ARRAY, transformBuffer);
 
-	auto descriptorData = m_globalRtProgram->GetReflection().GetDescriptorData(HLSL_RT_OUTPUT_TEXTURE_NAME);
+	auto descriptorData = m_reflection.GetDescriptorData(HLSL_RT_OUTPUT_TEXTURE_NAME);
 
 	if (descriptorData != nullptr) {
 		VkDescriptorImageInfo imgDesc{};
@@ -366,7 +411,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 	}
 
-	descriptorData = m_globalRtProgram->GetReflection().GetDescriptorData(HLSL_RT_TLAS_SCENE_NAME);
+	descriptorData = m_reflection.GetDescriptorData(HLSL_RT_TLAS_SCENE_NAME);
 	
 	if (descriptorData != nullptr) {
 		VkWriteDescriptorSetAccelerationStructureKHR asInfo{};
@@ -383,6 +428,77 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		writeAS.pNext = &asInfo;
 
 		vkUpdateDescriptorSets(m_device, 1, &writeAS, 0, nullptr);
+	}
+
+	m_vertexStorageBuffers.reserve(m_entities.size());
+	m_indexStorageBuffers.reserve(m_entities.size());
+
+	for (auto& entityData : m_entities) {
+		auto rtComponent = entityData.gameEntity->GetRayTracingComponent();
+		auto meshController = std::dynamic_pointer_cast<VulkanMeshController>(rtComponent->GetMesh()->GetGPUHandle());
+		
+		m_vertexStorageBuffers.push_back(meshController->CreateVertexStorageBuffer());
+		m_indexStorageBuffers.push_back(meshController->CreateIndexStorageBuffer());
+	}
+
+	WriteArrayBuffer(HLSL_RT_VERTEX_BUFFER_ARRAY, m_vertexStorageBuffers);
+	WriteArrayBuffer(HLSL_RT_INDEX_BUFFER_ARRAY, m_indexStorageBuffers);
+
+	for (auto& matResource : m_resourceMaps) {
+		auto& material = matResource.second.materialIndexMap.begin()->first;
+
+		auto& textureFields = *(material->GetTextureFields());
+
+		for (auto& textureField : textureFields) {
+			auto it = matResource.second.images.emplace(textureField.first + "Array", MaterialTextureFieldData{
+				.images = std::vector<VkImageView>(matResource.second.materialIndexMap.size()),
+				});
+
+			matResource.first->GetBindingAndSet(textureField.first + "Array", &it.first->second.binding, &it.first->second.set);
+		}
+
+		for (auto& matIndex : matResource.second.materialIndexMap) {
+			auto& innerTextureFields = *(matIndex.first->GetTextureFields());
+
+			for (auto& textureField : innerTextureFields) {
+				auto& texVec = matResource.second.images[textureField.first + "Array"];
+				auto textureController = std::dynamic_pointer_cast<VulkanTexture2DController>(textureField.second.texture->GetGPUHandle());
+				texVec.images[matIndex.second] = textureController->GetImageView();
+			}
+		}
+	}
+
+	for (auto& matResource : m_resourceMaps) {
+		for (auto& matIndex : matResource.second.materialIndexMap) {
+			auto& innerTextureFields = *(matIndex.first->GetTextureFields());
+
+			for (auto& image : matResource.second.images) {
+				std::vector<VkDescriptorImageInfo> imageInfos;
+				auto& imageViews = image.second.images;
+				imageInfos.reserve(imageViews.size());
+
+				for (uint32_t i = 0; i < imageViews.size(); i++) {
+					VkDescriptorImageInfo info{};
+					info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					info.imageView = imageViews[i];
+					info.sampler = VK_NULL_HANDLE;
+					imageInfos.push_back(info);
+				}
+
+
+
+				VkWriteDescriptorSet write{};
+				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				write.dstSet = m_descriptorSets[image.second.set];
+				write.dstBinding = image.second.binding;              // matches HLSL binding
+				write.dstArrayElement = 0;
+				write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				write.descriptorCount = (UInt32)imageInfos.size();
+				write.pImageInfo = imageInfos.data();
+
+				vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+			}
+		}
 	}
 
 	vkDestroyBuffer(m_device, instanceBuffer, nullptr);
@@ -421,14 +537,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 	int shaderFlag = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
-	for (auto& pushConstant : m_pushConstantValues)
-	{
-		vkCmdPushConstants(commandBuffer, m_globalRtProgram->GetPipelineLayout(), shaderFlag, pushConstant.offset, pushConstant.size, pushConstant.location);
-	}
-
-	UInt32 offsets[2] = { 0, 0 };
-
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, m_globalRtProgram->GetPipelineLayout(), 0, (UInt32)m_descriptorSets.size(), m_descriptorSets.data(), 1, offsets);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, m_rtPipelineLayout, 0, (UInt32)m_descriptorSets.size(), m_descriptorSets.data(), 0, nullptr);
 
 	auto vkCmdTraceRaysPtr = (PFN_vkCmdTraceRaysKHR)vkGetDeviceProcAddr(m_device, "vkCmdTraceRaysKHR");
 
@@ -462,130 +571,9 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	vkCreateImageView(m_device, &viewInfo, nullptr, &m_outputImageView);
 }
 
-void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::CreatePipelineAndSBT()
+void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::WriteBuffers(const std::string name, const VkBuffer buffer)
 {
-	std::vector<VkPipelineShaderStageCreateInfo> stages;
-
-	auto rtGlobalStages = m_globalRtProgram->GetShaderStages();
-	stages.insert(stages.end(), rtGlobalStages.begin(), rtGlobalStages.end());
-
-	std::vector<VkRayTracingShaderGroupCreateInfoKHR> groups;
-
-	groups.push_back(VkRayTracingShaderGroupCreateInfoKHR{
-		.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-		.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
-		.generalShader = 0, // Ray Gen shader index
-		.closestHitShader = VK_SHADER_UNUSED_KHR,
-		.anyHitShader = VK_SHADER_UNUSED_KHR,
-		.intersectionShader = VK_SHADER_UNUSED_KHR,
-		});
-
-	groups.push_back(VkRayTracingShaderGroupCreateInfoKHR{
-		.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-		.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR,
-		.generalShader = 1, // Miss shader index
-		.closestHitShader = VK_SHADER_UNUSED_KHR,
-		.anyHitShader = VK_SHADER_UNUSED_KHR,
-		.intersectionShader = VK_SHADER_UNUSED_KHR,
-		});
-
-	groups.push_back(VkRayTracingShaderGroupCreateInfoKHR{
-		.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR,
-		.type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR,
-		.generalShader = VK_SHADER_UNUSED_KHR,
-		.closestHitShader = 2, // Closest Hit shader index
-		.anyHitShader = VK_SHADER_UNUSED_KHR,
-		.intersectionShader = VK_SHADER_UNUSED_KHR,
-		});
-
-	VkRayTracingPipelineCreateInfoKHR rtPipelineInfo{
-	.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR,
-	.stageCount = (UInt32)stages.size(),
-	.pStages = stages.data(),
-	.groupCount = (uint32_t)groups.size(),
-	.pGroups = groups.data(),
-	.maxPipelineRayRecursionDepth = 7,
-	.layout = m_globalRtProgram->GetPipelineLayout(),
-	};
-
-	auto createRayTracingPipelinesPtr = (PFN_vkCreateRayTracingPipelinesKHR)vkGetDeviceProcAddr(m_device, "vkCreateRayTracingPipelinesKHR");
-
-	createRayTracingPipelinesPtr(m_device, VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &rtPipelineInfo, nullptr, &m_rtPipeline);
-
-	// Create SBT
-	auto rtProperties = VulkanDeviceManager::Instance()->GetRayTracingPipelineProperties();
-
-	UInt32 groupCount = (UInt32)groups.size(); // raygen + miss + hit groups
-	UInt32 dataSize = groupCount * rtProperties->shaderGroupHandleSize;
-
-	std::vector<UInt8> shaderHandleStorage(dataSize);
-
-	auto getShaderGroupHandlesPtr = (PFN_vkGetRayTracingShaderGroupHandlesKHR)vkGetDeviceProcAddr(m_device, "vkGetRayTracingShaderGroupHandlesKHR");
-
-	getShaderGroupHandlesPtr(m_device, m_rtPipeline, 0, groupCount, dataSize, shaderHandleStorage.data());
-	
-	UInt32 groupHandleSize = rtProperties->shaderGroupHandleSize;
-	UInt32 groupHandleAlignment = rtProperties->shaderGroupHandleAlignment;
-	UInt32 baseAlignment = rtProperties->shaderGroupBaseAlignment;
-
-	UInt32 raygenSize = ALIGN(groupHandleSize, groupHandleAlignment);
-	UInt32 missSize = ALIGN(groupHandleSize, groupHandleAlignment);
-	UInt32 hitSize = ALIGN(groupHandleSize, groupHandleAlignment);
-	UInt32 callableSize = 0;  // No callable shaders for now
-	
-	// Ensure each region starts at a baseAlignment boundary
-	UInt32 raygenOffset = 0;
-	UInt32 missOffset = ALIGN(raygenSize, baseAlignment);
-	UInt32 hitOffset = ALIGN(missOffset + missSize, baseAlignment);
-	UInt32 callableOffset = ALIGN(hitOffset + hitSize, baseAlignment);
-
-	auto SBTBufferSize = callableOffset + callableSize;
-	
-	VkMemoryAllocateFlagsInfo allocFlags{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
-		.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
-	};
-
-	m_bufferFactory->CreateBuffer(SBTBufferSize, VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &allocFlags, &m_SBT, &m_SBTMemory);
-
-	// map and copy handles at aligned offset
-	VkBufferDeviceAddressInfo addrInfo{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-		.buffer = m_SBT
-	};
-
-	VkDeviceAddress sbtAddress = vkGetBufferDeviceAddress(m_device, &addrInfo);
-
-	void* mapped;
-	vkMapMemory(m_device, m_SBTMemory, 0, VK_WHOLE_SIZE, 0, &mapped);
-
-	UInt8* dst = (UInt8*)(mapped);
-
-	memcpy(dst + raygenOffset, shaderHandleStorage.data(), groupHandleSize);
-	memcpy(dst + missOffset, shaderHandleStorage.data() + groupHandleSize, groupHandleSize);
-	memcpy(dst + hitOffset, shaderHandleStorage.data() + 2 * groupHandleSize, groupHandleSize);
-	vkUnmapMemory(m_device, m_SBTMemory);
-
-
-	m_rayGenRegion.deviceAddress = sbtAddress + raygenOffset;
-	m_rayGenRegion.stride = raygenSize;
-	m_rayGenRegion.size = raygenSize;
-
-	m_missRegion.deviceAddress = sbtAddress + missOffset;
-	m_missRegion.stride = missSize;
-	m_missRegion.size = missSize;
-
-	m_hitRegion.deviceAddress = sbtAddress + hitOffset;
-	m_hitRegion.stride = hitSize;
-	m_hitRegion.size = hitSize;
-	
-	int h = 0;
-}
-
-void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::WriteBuffers(const std::string name, const VkBuffer buffer, UInt32 stride)
-{
-	auto descriptorData = m_globalRtProgram->GetReflection().GetDescriptorData(name);
+	auto descriptorData = m_reflection.GetDescriptorData(name);
 
 	if (descriptorData == nullptr)
 		return;
@@ -593,7 +581,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	VkDescriptorBufferInfo descBufferInfo{
 		.buffer = buffer,
 		.offset = 0,
-		.range = stride,
+		.range = VK_WHOLE_SIZE,
 	};
 
 	VkWriteDescriptorSet writeDescriptor{
@@ -610,4 +598,33 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	};
 
 	vkUpdateDescriptorSets(m_device, 1, &writeDescriptor, 0, nullptr);
+}
+
+void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::WriteArrayBuffer(const std::string name, const std::vector<VkBuffer>& buffers)
+{
+	auto descriptorData = m_reflection.GetDescriptorData(name);
+
+	if (descriptorData == nullptr)
+		return;
+
+	std::vector<VkDescriptorBufferInfo> bufferInfos;
+	bufferInfos.reserve(buffers.size());
+
+	for (auto& buffer : buffers) {
+		bufferInfos.push_back(VkDescriptorBufferInfo{
+			.buffer = buffer,
+			.offset = 0,
+			.range = VK_WHOLE_SIZE,
+			});
+	}
+
+	VkWriteDescriptorSet write{};
+	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write.dstSet = m_descriptorSets[descriptorData->data.set];
+	write.dstBinding = descriptorData->data.binding;
+	write.descriptorType = descriptorData->descriptorType;
+	write.descriptorCount = (UInt32)(bufferInfos.size()); // Current dynamic size
+	write.pBufferInfo = bufferInfos.data();
+
+	vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 }

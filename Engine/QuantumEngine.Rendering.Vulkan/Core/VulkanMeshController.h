@@ -22,6 +22,8 @@ namespace QuantumEngine::Rendering::Vulkan {
 		inline VkBuffer GetIndexBuffer() { return m_indexBuffer; }
 		void CopyCommand(VkCommandBuffer commandBuffer, VkBuffer stageBuffer, UInt32 offset);
 		void GetBLASBuildInfo(RayTracing::VulkanBLASBuildInfo* blasBuildInfo);
+		VkBuffer CreateVertexStorageBuffer();
+		VkBuffer CreateIndexStorageBuffer();
 	private:
 
 		ref<Mesh> m_mesh;

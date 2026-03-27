@@ -114,3 +114,33 @@ void QuantumEngine::Rendering::Vulkan::VulkanMeshController::GetBLASBuildInfo(Ra
 		&(blasBuildInfo->sizeInfo)
 	);
 }
+
+VkBuffer QuantumEngine::Rendering::Vulkan::VulkanMeshController::CreateVertexStorageBuffer()
+{
+	VkBufferCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	info.size = sizeof(Vertex) * m_mesh->GetVertexCount(); // same size as your index data
+	info.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkBuffer vertexStorageBuffer;
+	vkCreateBuffer(m_device, &info, nullptr, &vertexStorageBuffer);
+	vkBindBufferMemory(m_device, vertexStorageBuffer, m_vertexBufferMemory, 0);
+
+	return vertexStorageBuffer;
+}
+
+VkBuffer QuantumEngine::Rendering::Vulkan::VulkanMeshController::CreateIndexStorageBuffer()
+{
+	VkBufferCreateInfo info{};
+	info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	info.size = sizeof(UInt32) * m_mesh->GetIndexCount(); // same size as your index data
+	info.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+	VkBuffer indexStorageBuffer;
+	vkCreateBuffer(m_device, &info, nullptr, &indexStorageBuffer);
+	vkBindBufferMemory(m_device, indexStorageBuffer, m_indexBufferMemory, 0);
+
+	return indexStorageBuffer;
+}

@@ -66,6 +66,12 @@
     <ClInclude Include="Core\VulkanHybridContext.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="RayTracing\SPIRVRayTracingProgramVariant.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
+    <ClInclude Include="RayTracing\VulkanRayTracingPipelineBuilder.h">
+      <Filter>RayTracing</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Core\VulkanDeviceManager.cpp">
@@ -135,6 +141,12 @@
     </ClCompile>
     <ClCompile Include="Core\VulkanHybridContext.cpp">
       <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\SPIRVRayTracingProgramVariant.cpp">
+      <Filter>RayTracing</Filter>
+    </ClCompile>
+    <ClCompile Include="RayTracing\VulkanRayTracingPipelineBuilder.cpp">
+      <Filter>RayTracing</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

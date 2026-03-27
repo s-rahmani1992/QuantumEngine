@@ -4,21 +4,15 @@
 
 #ifdef _VULKAN
 
-struct Properties
+[[vk::shader_record_ext]]
+cbuffer MaterialProps
 {
     float ambient;
     float diffuse;
     float specular;
     uint castShadow;
+    float4 color;
 };
-
-[[vk::push_constant]]
-Properties Props;
-
-#define ambient Props.ambient
-#define diffuse Props.diffuse
-#define specular Props.specular
-#define castShadow Props.castShadow
 
 #else
 
@@ -28,15 +22,18 @@ cbuffer MaterialProps : register(b0, space1)
     float diffuse;
     float specular;
     uint castShadow = 0;
+    float4 color;
 };
 
 #endif
 
 #ifdef _VULKAN
 [[vk::binding(0, 1)]]
-#endif
+StructuredBuffer<TransformData> _ObjectTransformDataArray;
+#define transformData _ObjectTransformDataArray[InstanceIndex()]
+#else
 TRANSFORM_VAR_2(b1, space1)
-
+#endif
 #ifdef _VULKAN
 [[vk::binding(1, 1)]]
 #endif
@@ -49,8 +46,11 @@ LIGHT_VAR_2(b3, space1)
 
 #ifdef _VULKAN
 [[vk::binding(3, 1)]]
-#endif
+Texture2D mainTextureArray[];
+#define mainTexture mainTextureArray[InstanceID()]
+#else
 Texture2D mainTexture : register(t0, space1);
+#endif
 
 #ifdef _VULKAN
 [[vk::binding(5, 1)]]

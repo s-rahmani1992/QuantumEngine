@@ -23,6 +23,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 
 	struct DescriptableBufferData {
 		std::string name;
+		bool isDynamicArray;
 		UInt32 offsetIndex;
 		VkDescriptorType descriptorType;
 		SpvReflectDescriptorBinding data;
@@ -32,7 +33,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 	{
 	public:
 		SPIRVReflection() = default;
-		void AddShaderReflection(const SpvReflectShaderModule* shaderReflection);
+		void AddShaderReflection(const SpvReflectShaderModule* shaderReflection, bool isRayTracing = false);
 		UInt32 GetDescriptorLayoutCount();
 		UInt32 GetDynamicDescriptorCount();
 		void CreatePipelineLayout(const VkDevice device, VkShaderStageFlags stageFlags, const VkSampler sampler, VkPipelineLayout* pipelineLayout, VkDescriptorSetLayout* m_descriptorSetLayout);

@@ -95,14 +95,42 @@ RWTexture2D<float4> _OutputTexture : register(u);
 #define RT_OUT_VAR_2(u, space) \
 RWTexture2D<float4> _OutputTexture : register(u, space);
 
+
+#ifdef _VULKAN
 #define RT_INDEX_BUFFER_VAR_1(t) \
-StructuredBuffer<uint> _indexBuffer : register(t);
+    StructuredBuffer<uint> _indexBufferArray[]; \
+    static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
+#else
+#define RT_INDEX_BUFFER_VAR_1(t) \
+    StructuredBuffer<uint> _indexBuffer : register(t);
+#endif
 
+
+#ifdef _VULKAN
 #define RT_INDEX_BUFFER_VAR_2(t, space) \
-StructuredBuffer<uint> _indexBuffer : register(t, space);
+    StructuredBuffer<uint> _indexBufferArray[]; \
+    static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
+#else
+#define RT_INDEX_BUFFER_VAR_2(t, space) \
+    StructuredBuffer<uint> _indexBuffer : register(t, space);
+#endif
 
+
+#ifdef _VULKAN
 #define RT_VERTEX_BUFFER_VAR_1(t) \
-StructuredBuffer<Vertex> _vertexBuffer : register(t);
+    StructuredBuffer<Vertex> _vertexBufferArray[]; \
+    static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
+#else
+#define RT_VERTEX_BUFFER_VAR_1(t) \
+    StructuredBuffer<Vertex> _vertexBuffer : register(t);
+#endif
 
+
+#ifdef _VULKAN
 #define RT_VERTEX_BUFFER_VAR_2(t, space) \
-StructuredBuffer<Vertex> _vertexBuffer : register(t, space);
+    StructuredBuffer<Vertex> _vertexBufferArray[]; \
+    static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
+#else
+#define RT_VERTEX_BUFFER_VAR_2(t, space) \
+    StructuredBuffer<Vertex> _vertexBuffer : register(t, space);
+#endif

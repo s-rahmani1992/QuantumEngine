@@ -5,19 +5,13 @@ CAMERA_VAR_1(b0)
 
 #ifdef _VULKAN
 
-struct Properties
+[[vk::shader_record_ext]]
+cbuffer ColorProperties
 {
     float4 missColor;
     float4 hitColor;
     uint _missIndex;
 };
-
-[[vk::push_constant]]
-Properties Props;
-
-#define missColor Props.missColor
-#define hitColor Props.hitColor
-#define _missIndex Props._missIndex
 
 #else
 
@@ -55,7 +49,7 @@ void rayGen()
     GeneralPayload payLoad;
     payLoad.recursionCount = 1;
     payLoad.targetMode = 0;
-    TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, 0, _missIndex, ray, payLoad);
+    TraceRay(_RTScene, 0 /*rayFlags*/, 0xFF, 0 /* ray index*/, _missIndex, 0, ray, payLoad);
     
     uint3 launchIndex = DispatchRaysIndex();
     _OutputTexture[launchIndex.xy] = float4(payLoad.color, 1);
