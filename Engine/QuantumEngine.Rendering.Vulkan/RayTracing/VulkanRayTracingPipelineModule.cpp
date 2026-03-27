@@ -446,60 +446,15 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	WriteArrayBuffer(HLSL_RT_VERTEX_BUFFER_ARRAY, m_vertexStorageBuffers);
 	WriteArrayBuffer(HLSL_RT_INDEX_BUFFER_ARRAY, m_indexStorageBuffers);
 
-	for (auto& matResource : m_resourceMaps) {
-		auto& material = matResource.second.materialIndexMap.begin()->first;
+	for (auto& [variantProgram, matResourceData] : m_resourceMaps) {
+		auto& material = matResourceData.materialIndexMap.begin()->first;
 
 		auto& textureFields = *(material->GetTextureFields());
+		matResourceData.images.resize(textureFields.size());
 
-		for (auto& textureField : textureFields) {
-			auto it = matResource.second.images.emplace(textureField.first + "Array", MaterialTextureFieldData{
-				.images = std::vector<VkImageView>(matResource.second.materialIndexMap.size()),
-				});
-
-			matResource.first->GetBindingAndSet(textureField.first + "Array", &it.first->second.binding, &it.first->second.set);
-		}
-
-		for (auto& matIndex : matResource.second.materialIndexMap) {
-			auto& innerTextureFields = *(matIndex.first->GetTextureFields());
-
-			for (auto& textureField : innerTextureFields) {
-				auto& texVec = matResource.second.images[textureField.first + "Array"];
-				auto textureController = std::dynamic_pointer_cast<VulkanTexture2DController>(textureField.second.texture->GetGPUHandle());
-				texVec.images[matIndex.second] = textureController->GetImageView();
-			}
-		}
-	}
-
-	for (auto& matResource : m_resourceMaps) {
-		for (auto& matIndex : matResource.second.materialIndexMap) {
-			auto& innerTextureFields = *(matIndex.first->GetTextureFields());
-
-			for (auto& image : matResource.second.images) {
-				std::vector<VkDescriptorImageInfo> imageInfos;
-				auto& imageViews = image.second.images;
-				imageInfos.reserve(imageViews.size());
-
-				for (uint32_t i = 0; i < imageViews.size(); i++) {
-					VkDescriptorImageInfo info{};
-					info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-					info.imageView = imageViews[i];
-					info.sampler = VK_NULL_HANDLE;
-					imageInfos.push_back(info);
-				}
-
-
-
-				VkWriteDescriptorSet write{};
-				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-				write.dstSet = m_descriptorSets[image.second.set];
-				write.dstBinding = image.second.binding;              // matches HLSL binding
-				write.dstArrayElement = 0;
-				write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-				write.descriptorCount = (UInt32)imageInfos.size();
-				write.pImageInfo = imageInfos.data();
-
-				vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
-			}
+		for (auto& [name, MatTextureData] : textureFields) {
+			auto& x = matResourceData.images[MatTextureData.fieldIndex];
+			variantProgram->GetBindingAndSet(name + "Array", &x.binding, &x.set);
 		}
 	}
 
@@ -510,6 +465,40 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::RenderCommand(VkCommandBuffer commandBuffer)
 {
+	for (auto& [variantProgram, matResourceData]  : m_resourceMaps) {
+		for (auto& [material, index] : matResourceData.materialIndexMap) {
+			auto& innerTextureFields = material->GetModifiedTextures();
+
+			if (innerTextureFields.size() == 0)
+				continue;
+
+			for (auto& modifiedTextureField : innerTextureFields) {
+				auto& n = matResourceData.images[modifiedTextureField->fieldIndex];
+				auto textureController = std::dynamic_pointer_cast<VulkanTexture2DController>(modifiedTextureField->texture->GetGPUHandle());
+
+				VkDescriptorImageInfo info{};
+				info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				info.imageView = textureController->GetImageView();
+				info.sampler = VK_NULL_HANDLE;
+
+				VkWriteDescriptorSet write{};
+				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+				write.dstSet = m_descriptorSets[n.set];
+				write.dstBinding = n.binding;              // matches HLSL binding
+				write.dstArrayElement = index;
+				write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+				write.descriptorCount = 1;
+				write.pImageInfo = &info;
+
+				vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+			}
+
+			material->ClearModifiedTextures();
+		}
+	}
+
+
+
 	VkImageMemoryBarrier imageBarrier{};
 	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
 	imageBarrier.srcAccessMask = 0;
@@ -525,8 +514,6 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	imageBarrier.subresourceRange.baseArrayLayer = 0;
 	imageBarrier.subresourceRange.layerCount = 1;
 
-	// Transition to GENERAL before ray tracing shaders write to it.
-	// Use TOP_OF_PIPE -> RAY_TRACING_SHADER stage to guarantee availability.
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
 		0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 

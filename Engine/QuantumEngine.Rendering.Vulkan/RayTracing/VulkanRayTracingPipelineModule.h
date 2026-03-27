@@ -44,12 +44,11 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		struct MaterialTextureFieldData {
 			UInt32 binding;
 			UInt32 set;
-			std::vector<VkImageView> images;
 		};
 
 		struct MaterialResourceData {
 			std::map<ref<Material>, UInt32> materialIndexMap;
-			std::map<std::string, MaterialTextureFieldData> images;
+			std::vector<MaterialTextureFieldData> images;
 		};
 
 		struct DescriptorData {

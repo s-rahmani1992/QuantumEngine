@@ -25,7 +25,6 @@ ref<QuantumEngine::Rendering::Material> QuantumEngine::Rendering::Vulkan::Vulkan
 
 		for (auto& shaderRecordVar : shaderRecords) {
 			if (shaderRecordVar.name[0] == '_') {// Skip internal variables
-				fieldIndex++;
 				continue;
 			}
 
@@ -37,6 +36,13 @@ ref<QuantumEngine::Rendering::Material> QuantumEngine::Rendering::Vulkan::Vulkan
 
 			matReflection.valueFields.push_back(valueFieldInfo);
 			fieldIndex++;
+		}
+
+		UInt32 textureIndex = 0;
+
+		for (auto& texFiels : matReflection.textureFields) {
+			texFiels.fieldIndex = textureIndex;
+			textureIndex++;
 		}
 
 		return std::make_shared<Material>(program, &matReflection);
