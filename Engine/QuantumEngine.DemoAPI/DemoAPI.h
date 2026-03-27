@@ -3,13 +3,17 @@
 
 #define DEMO_API extern "C" __declspec(dllexport)
 
-DEMO_API bool Run_Light_Scene_Rasterization_DX12(HWND parentWindow);
+enum Graphics_API {
+	DIRECTX_12 = 0,
+	VULKAN = 1,
+};
 
-DEMO_API bool Run_Light_Scene_Rasterization_VK(HWND parentWindow);
+enum RenderMode {
+	HYBRID = 0,
+	FULL_RAY_TRACING = 1,
+};
 
-DEMO_API bool Run_Light_Scene_RayTracing_DX12(HWND parentWindow);
-
-DEMO_API bool Run_Light_Scene_RayTracing_VK(HWND parentWindow);
+DEMO_API bool Run_Simple_Scene(HWND parentWindow, Graphics_API graphicApi, RenderMode renderMode);
 
 DEMO_API bool Run_Reflection_Scene_Hybrid_DX12(HWND parentWindow);
 

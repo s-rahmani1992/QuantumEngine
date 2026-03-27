@@ -11,44 +11,41 @@ namespace OS = QuantumEngine::Platform;
 namespace DX12 = QuantumEngine::Rendering::DX12;
 namespace VK = QuantumEngine::Rendering::Vulkan;
 
-bool Run_Light_Scene_Rasterization_DX12(HWND parentWindow)
+DEMO_API bool Run_Simple_Scene(HWND parentWindow, Graphics_API graphicApi, RenderMode renderMode)
 {
 	OS::Application::CreateApplication(GetModuleHandleA(nullptr));
-	auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
-	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Simple Scene ---- Rasterization ---- DirectX 12", .parentWinHandle = parentWindow });
 
-	auto gpuContext = gpuDevice->CreateHybridContextForWindows(win);
-	auto assetManager = gpuDevice->CreateAssetManager();
-	gpuContext->RegisterAssetManager(assetManager);
-	auto shaderRegistery = gpuDevice->CreateShaderRegistery();
-	gpuContext->RegisterShaderRegistery(shaderRegistery);
-	auto materialRegistery = gpuDevice->CreateMaterialFactory();
-	std::string error;
-	auto scene = SceneBuilder::BuildSimpleLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
+	ref<Render::GPUDeviceManager> gpuDevice;
+	std::wstring graphicAPIStr;
+
+	switch (graphicApi) {
+	case DIRECTX_12:
+		gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
+		graphicAPIStr = L"DirectX 12";
+		break;
+	case VULKAN:
+		gpuDevice = OS::Application::InitializeGraphicDevice<VK::VulkanDeviceManager>();
+		graphicAPIStr = L"Vulkan";
+		break;
+	default:
+		return false;
+	}
+
+	std::wstring renderModeString = renderMode == HYBRID ? L"Rasterization" : L"Ray Tracing";
 	
-	if (scene == nullptr) {
-	    MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + error).c_str(), "Render Error Error", 0);
-		DestroyWindow(win->GetHandle());
-		Platform::Application::Release();
+	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Simple Scene ---- " + renderModeString + L" ---- " + graphicAPIStr, .parentWinHandle = parentWindow });
+	ref<Render::GraphicContext> gpuContext;
+	switch (renderMode) {
+	case HYBRID:
+		gpuContext = gpuDevice->CreateHybridContextForWindows(win);		
+		break;
+	case VULKAN:
+		gpuContext = gpuDevice->CreateRayTracingContextForWindows(win);
+		break;
+	default:
 		return false;
 	}
 
-	gpuContext->PrepareScene(scene);
-	Platform::Application::Run(win, gpuContext, scene->behaviours);
-
-	DestroyWindow(win->GetHandle());
-	Platform::Application::Release();
-
-	return true;
-}
-
-bool Run_Light_Scene_Rasterization_VK(HWND parentWindow)
-{
-	OS::Application::CreateApplication(GetModuleHandleA(nullptr));
-	auto gpuDevice = OS::Application::InitializeGraphicDevice<VK::VulkanDeviceManager>();
-	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Simple Scene ---- Rasterization ---- Vulkan", .parentWinHandle = parentWindow });
-
-	auto gpuContext = gpuDevice->CreateHybridContextForWindows(win);
 	auto assetManager = gpuDevice->CreateAssetManager();
 	gpuContext->RegisterAssetManager(assetManager);
 	auto shaderRegistery = gpuDevice->CreateShaderRegistery();
@@ -70,67 +67,6 @@ bool Run_Light_Scene_Rasterization_VK(HWND parentWindow)
 	DestroyWindow(win->GetHandle());
 	Platform::Application::Release();
 
-	return true;
-}
-
-bool Run_Light_Scene_RayTracing_DX12(HWND parentWindow)
-{
-	OS::Application::CreateApplication(GetModuleHandleA(nullptr));
-	auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
-	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Simple Scene ---- Ray Tracing ---- DirectX 12", .parentWinHandle = parentWindow });
-
-	auto gpuContext = gpuDevice->CreateRayTracingContextForWindows(win);
-	auto assetManager = gpuDevice->CreateAssetManager();
-	gpuContext->RegisterAssetManager(assetManager);
-	auto shaderRegistery = gpuDevice->CreateShaderRegistery();
-	gpuContext->RegisterShaderRegistery(shaderRegistery);
-	auto materialRegistery = gpuDevice->CreateMaterialFactory();
-	std::string error;
-	auto scene = SceneBuilder::BuildSimpleLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
-
-	if (scene == nullptr) {
-		MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + error).c_str(), "Render Error Error", 0);
-		DestroyWindow(win->GetHandle());
-		Platform::Application::Release();
-		return false;
-	}
-
-	gpuContext->PrepareScene(scene);
-	Platform::Application::Run(win, gpuContext, scene->behaviours);
-
-	DestroyWindow(win->GetHandle());
-	Platform::Application::Release();
-
-	return true;
-}
-
-bool Run_Light_Scene_RayTracing_VK(HWND parentWindow)
-{
-	OS::Application::CreateApplication(GetModuleHandleA(nullptr));
-	auto gpuDevice = OS::Application::InitializeGraphicDevice<VK::VulkanDeviceManager>();
-	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Simple Scene ---- Ray Tracing ---- DirectX 12", .parentWinHandle = parentWindow });
-
-	auto gpuContext = gpuDevice->CreateRayTracingContextForWindows(win);
-	auto assetManager = gpuDevice->CreateAssetManager();
-	gpuContext->RegisterAssetManager(assetManager);
-	auto shaderRegistery = gpuDevice->CreateShaderRegistery();
-	gpuContext->RegisterShaderRegistery(shaderRegistery);
-	auto materialRegistery = gpuDevice->CreateMaterialFactory();
-	std::string error;
-	auto scene = SceneBuilder::BuildSimpleLightScene(assetManager, shaderRegistery, materialRegistery, win, error);
-
-	if (scene == nullptr) {
-		MessageBoxA(win->GetHandle(), (std::string("Error in Running the app: \n") + error).c_str(), "Render Error Error", 0);
-		DestroyWindow(win->GetHandle());
-		Platform::Application::Release();
-		return false;
-	}
-
-	gpuContext->PrepareScene(scene);
-	Platform::Application::Run(win, gpuContext, scene->behaviours);
-
-	DestroyWindow(win->GetHandle());
-	Platform::Application::Release();
 
 	return true;
 }
