@@ -29,6 +29,10 @@ QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::Vu
 
 QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::~VulkanRayTracingPipelineModule()
 {
+	vkDestroyBuffer(m_device, m_scratchBuffer, nullptr);
+	vkFreeMemory(m_device, m_scratchMemory, nullptr);
+	vkDestroyBuffer(m_device, m_instanceBuffer, nullptr);
+	vkFreeMemory(m_device, m_instanceMemory, nullptr);
 	auto vkDestroyAccelerationStructurePtr = (PFN_vkDestroyAccelerationStructureKHR)vkGetDeviceProcAddr(m_device, "vkDestroyAccelerationStructureKHR");
 	vkDestroyAccelerationStructurePtr(m_device, m_tlas, nullptr);
 	vkDestroyBuffer(m_device, m_tlasBuffer, nullptr);
@@ -97,6 +101,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	m_rtPipeline = pipelineResult.rtPipeline;
 	m_sampler = pipelineResult.sampler;
 	m_reflection = pipelineResult.reflection;
+
 	// Create SBT
 	RayTraceSBTBuildResult sbtBuildResult;
 	std::vector<ref<Material>> localRTMaterials;
@@ -130,7 +135,9 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		matResourceData.materialIndexMap.emplace(mat.first, matResourceData.materialIndexMap.size());
 	}
 
-	// Create TLAS
+	////// Create Acceleration Structures
+
+	// Create BLASs
 	std::map<ref<VulkanMeshController>, VulkanBLASBuildInfo> meshbuildInfos;
 
 	UInt32 index = 0;
@@ -161,17 +168,14 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
         .flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
     };
 
-    VkBuffer scratchBuffer;
-    VkDeviceMemory scratchMemory;
-
-	m_bufferFactory->CreateBuffer(scratchBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocFlags, &scratchBuffer, &scratchMemory);
+	m_bufferFactory->CreateBuffer(scratchBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocFlags, &m_scratchBuffer, &m_scratchMemory);
 
     VkBufferDeviceAddressInfo scratchAddrInfo{};
     scratchAddrInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-    scratchAddrInfo.buffer = scratchBuffer;
+    scratchAddrInfo.buffer = m_scratchBuffer;
 
     VkDeviceAddress scratchAddress = vkGetBufferDeviceAddress(m_device, &scratchAddrInfo);
-	VkDeviceAddress baseScratchAddress = scratchAddress;
+	m_baseScratchAddress = scratchAddress;
 	VkCommandBufferBeginInfo beginInfo{
 		.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
 		.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -198,8 +202,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 	// Create TLAS
 
-	std::vector<VkAccelerationStructureInstanceKHR> vkBLASInstances;
-	vkBLASInstances.reserve(m_entities.size());
+	m_vkBLASInstances.reserve(m_entities.size());
 	Matrix4 m;
 
 	for(auto& entityData : m_entities) {
@@ -207,7 +210,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		auto meshController = std::dynamic_pointer_cast<VulkanMeshController>(rtComponent->GetMesh()->GetGPUHandle());
 		auto& blas = m_blasMap[meshController];
 		auto program = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(rtComponent->GetRTMaterial()->GetProgram());
-		auto& blasInstance = vkBLASInstances.emplace_back(VkAccelerationStructureInstanceKHR{});
+		auto& blasInstance = m_vkBLASInstances.emplace_back(VkAccelerationStructureInstanceKHR{});
 
 		VulkanBLASBuildInfo buildInfo = meshbuildInfos[meshController];
 		UInt32 primitiveCount = buildInfo.primitiveCount;
@@ -220,33 +223,31 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		blasInstance.accelerationStructureReference = blas->GetBLASAddress();
 	}
 
-	VkDeviceSize instanceBufferSize = sizeof(VkAccelerationStructureInstanceKHR) * vkBLASInstances.size();
-	VkBuffer instanceBuffer;
-	VkDeviceMemory instanceMemory;
-	m_bufferFactory->CreateBuffer(instanceBufferSize, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &allocFlags, &instanceBuffer, &instanceMemory);
+	VkDeviceSize instanceBufferSize = sizeof(VkAccelerationStructureInstanceKHR) * m_vkBLASInstances.size();
+	m_bufferFactory->CreateBuffer(instanceBufferSize, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &allocFlags, &m_instanceBuffer, &m_instanceMemory);
 
 	void* data = nullptr;
-	vkMapMemory(m_device, instanceMemory, 0, instanceBufferSize, 0, &data);
-	memcpy(data, vkBLASInstances.data(), instanceBufferSize);
-	vkUnmapMemory(m_device, instanceMemory);
+	vkMapMemory(m_device, m_instanceMemory, 0, instanceBufferSize, 0, &data);
+	memcpy(data, m_vkBLASInstances.data(), instanceBufferSize);
+	vkUnmapMemory(m_device, m_instanceMemory);
 
 	VkBufferDeviceAddressInfo instanceBufferAddressInfo{
 		.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-		.buffer = instanceBuffer,
+		.buffer = m_instanceBuffer,
 	};
 
-	VkDeviceAddress instanceBufferAddress = vkGetBufferDeviceAddress(m_device, &instanceBufferAddressInfo);
+	m_instanceBufferAddress = vkGetBufferDeviceAddress(m_device, &instanceBufferAddressInfo);
 
 	VkAccelerationStructureGeometryInstancesDataKHR instancesData{};
 	instancesData.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
 	instancesData.arrayOfPointers = VK_FALSE;
-	instancesData.data.deviceAddress = instanceBufferAddress;
+	instancesData.data.deviceAddress = m_instanceBufferAddress;
 
-	VkAccelerationStructureGeometryKHR asGeom{
-		VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR };
-	asGeom.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-	asGeom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
-	asGeom.geometry.instances = instancesData;
+	m_asGeom.pNext = nullptr;
+	m_asGeom.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+	m_asGeom.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+	m_asGeom.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	m_asGeom.geometry.instances = instancesData;
 
 	UInt32 primitiveCount = static_cast<UInt32>(m_entities.size());
 
@@ -254,9 +255,10 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	VkAccelerationStructureBuildGeometryInfoKHR TLASBuildInfo{
 		VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
 	TLASBuildInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-	TLASBuildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+	TLASBuildInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
+						  VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
 	TLASBuildInfo.geometryCount = 1;
-	TLASBuildInfo.pGeometries = &asGeom;
+	TLASBuildInfo.pGeometries = &m_asGeom;
 
 	VkAccelerationStructureBuildSizesInfoKHR TLASsizeInfo{VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR };
 	auto getRTASGetSizePtr = (PFN_vkGetAccelerationStructureBuildSizesKHR)vkGetDeviceProcAddr(m_device, "vkGetAccelerationStructureBuildSizesKHR");
@@ -265,14 +267,14 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 	if(TLASsizeInfo.buildScratchSize > scratchBufferSize) {
 		// Recreate scratch buffer
-		vkDestroyBuffer(m_device, scratchBuffer, nullptr);
-		vkFreeMemory(m_device, scratchMemory, nullptr);
+		vkDestroyBuffer(m_device, m_scratchBuffer, nullptr);
+		vkFreeMemory(m_device, m_scratchMemory, nullptr);
 		scratchBufferSize = TLASsizeInfo.buildScratchSize;
-		m_bufferFactory->CreateBuffer(scratchBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocFlags, &scratchBuffer, &scratchMemory);
+		m_bufferFactory->CreateBuffer(scratchBufferSize, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &allocFlags, &m_scratchBuffer, &m_scratchMemory);
 		VkBufferDeviceAddressInfo scratchAddrInfo{};
 		scratchAddrInfo.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-		scratchAddrInfo.buffer = scratchBuffer;
-		baseScratchAddress = vkGetBufferDeviceAddress(m_device, &scratchAddrInfo);
+		scratchAddrInfo.buffer = m_scratchBuffer;
+		m_baseScratchAddress = vkGetBufferDeviceAddress(m_device, &scratchAddrInfo);
 	}
 
 	// 4. Create TLAS buffer + acceleration structure
@@ -289,7 +291,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	VkAccelerationStructureBuildGeometryInfoKHR buildCmdInfo = TLASBuildInfo;
 	buildCmdInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 	buildCmdInfo.dstAccelerationStructure = m_tlas;
-	buildCmdInfo.scratchData.deviceAddress = baseScratchAddress;
+	buildCmdInfo.scratchData.deviceAddress = m_baseScratchAddress;
 
 	VkAccelerationStructureBuildRangeInfoKHR rangeInfo{};
 	rangeInfo.primitiveCount = primitiveCount;
@@ -501,10 +503,6 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		}
 	}
 
-	vkDestroyBuffer(m_device, instanceBuffer, nullptr);
-	vkFreeMemory(m_device, instanceMemory, nullptr);
-	vkDestroyBuffer(m_device, scratchBuffer, nullptr);
-	vkFreeMemory(m_device, scratchMemory, nullptr);
 	vkDestroyCommandPool(m_device, commandPool, nullptr);
 
 	return true;
@@ -542,6 +540,47 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	auto vkCmdTraceRaysPtr = (PFN_vkCmdTraceRaysKHR)vkGetDeviceProcAddr(m_device, "vkCmdTraceRaysKHR");
 
 	vkCmdTraceRaysPtr(commandBuffer, &m_rayGenRegion, &m_missRegion, &m_hitRegion, &m_callableRegion, m_extent.width, m_extent.height, 1);
+}
+
+void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::UpdateTLAS(VkCommandBuffer commandBuffer)
+{
+	Matrix4 m;
+
+	for (UInt32 i = 0; i < m_entities.size(); i++) {
+		m = m_entities[i].gameEntity->GetTransform()->Matrix();
+		auto& blasInstance = m_vkBLASInstances[i];
+		std::memcpy(&blasInstance.transform, &m, 12 * sizeof(Float));
+	}
+
+	void* data = nullptr;
+	VkDeviceSize instanceBufferSize = sizeof(VkAccelerationStructureInstanceKHR) * m_vkBLASInstances.size();
+	vkMapMemory(m_device, m_instanceMemory, 0, VK_WHOLE_SIZE, 0, &data);
+	memcpy(data, m_vkBLASInstances.data(), instanceBufferSize);
+	vkUnmapMemory(m_device, m_instanceMemory);
+
+	VkAccelerationStructureBuildGeometryInfoKHR buildCmdInfo{
+		VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR };
+	buildCmdInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+	buildCmdInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
+		VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+	buildCmdInfo.geometryCount = 1;
+	buildCmdInfo.pGeometries = &m_asGeom;
+
+	buildCmdInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
+	buildCmdInfo.srcAccelerationStructure = m_tlas;
+	buildCmdInfo.dstAccelerationStructure = m_tlas;
+	buildCmdInfo.scratchData.deviceAddress = m_baseScratchAddress;
+
+	VkAccelerationStructureBuildRangeInfoKHR rangeInfo{};
+	rangeInfo.primitiveCount = m_entities.size();
+	rangeInfo.primitiveOffset = 0;
+	rangeInfo.firstVertex = 0;
+	rangeInfo.transformOffset = 0;
+
+	const VkAccelerationStructureBuildRangeInfoKHR* pRangeInfo = &rangeInfo;
+	auto buildAccelerationStructurePtr = (PFN_vkCmdBuildAccelerationStructuresKHR)vkGetDeviceProcAddr(m_device, "vkCmdBuildAccelerationStructuresKHR");
+
+	buildAccelerationStructurePtr(commandBuffer, 1, &buildCmdInfo, &pRangeInfo);
 }
 
 void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::CreateOutputImage()

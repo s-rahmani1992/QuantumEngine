@@ -79,7 +79,8 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Rend
     };
 
     vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
-
+    
+    m_rayTracingModule->UpdateTLAS(m_commandBuffer);
 	m_rayTracingModule->RenderCommand(m_commandBuffer);
 
     VkImageMemoryBarrier rtToSrc = {};

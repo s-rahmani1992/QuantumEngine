@@ -29,6 +29,7 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 
 		bool Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, VkBuffer transformBuffer, const VkExtent2D& extent);
 		void RenderCommand(VkCommandBuffer commandBuffer);
+		void UpdateTLAS(VkCommandBuffer commandBuffer);
 		VkImage GetOutputImage() const { return m_outputImage; }
 	private:
 		void CreateOutputImage();
@@ -75,6 +76,17 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VkDeviceAddress m_tlasAddress;
 		VkBuffer m_tlasBuffer;
 		VkDeviceMemory m_tlasMemory;
+
+		std::vector<VkAccelerationStructureInstanceKHR> m_vkBLASInstances;
+		VkBuffer m_instanceBuffer;
+		VkDeviceMemory m_instanceMemory;
+		VkDeviceAddress m_instanceBufferAddress;
+		VkBuffer m_scratchBuffer;
+		VkDeviceMemory m_scratchMemory;
+		VkDeviceAddress m_baseScratchAddress;
+
+		VkAccelerationStructureGeometryKHR m_asGeom;
+		VkAccelerationStructureBuildGeometryInfoKHR m_TLASBuildInfo;
 
 		VkBuffer m_SBT;
 		VkDeviceMemory m_SBTMemory;
