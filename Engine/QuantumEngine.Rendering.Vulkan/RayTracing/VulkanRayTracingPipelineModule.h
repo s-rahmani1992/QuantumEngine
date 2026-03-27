@@ -46,8 +46,13 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 			UInt32 set;
 		};
 
-		struct MaterialResourceData {
-			std::map<ref<Material>, UInt32> materialIndexMap;
+		struct MaterialResourceDatas {
+			UInt32 textureArrayIndex;
+			std::vector<std::set<Byte*>> datalocations;
+		};
+
+		struct ProgramResourceData {
+			std::map<ref<Material>, MaterialResourceDatas> materialIndexMap;
 			std::vector<MaterialTextureFieldData> images;
 		};
 
@@ -60,6 +65,7 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		struct MaterialSBTData {
 			UInt32 missEntryIndex = VK_SHADER_UNUSED_KHR;
 			UInt32 hitEntryIndex = VK_SHADER_UNUSED_KHR;
+			std::vector<std::set<Byte*>> datalocations;
 		};
 
 		VkDevice m_device;
@@ -105,7 +111,6 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VkStridedDeviceAddressRegionKHR m_hitRegion;
 		VkStridedDeviceAddressRegionKHR m_callableRegion = {0, 0, 0};
 
-		std::map<ref<Material>, MaterialSBTData> m_rtUniqueMaterial; // TODO Might Be redundent
 		std::map<ref<SPIRVRayTracingProgram>, ref<SPIRVRayTracingProgramVariant>> m_programVariantMap;
 		VkPipelineLayout m_rtPipelineLayout;
 		std::vector<VkDescriptorSetLayout> m_descriptorLayouts;
@@ -116,6 +121,6 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		std::vector<VkBuffer> m_indexStorageBuffers;
 		std::vector<VkBuffer> m_vertexStorageBuffers;
 
-		std::map<ref<SPIRVRayTracingProgramVariant>, MaterialResourceData> m_resourceMaps;
+		std::map<ref<SPIRVRayTracingProgramVariant>, ProgramResourceData> m_resourceMaps;
 	};
 }

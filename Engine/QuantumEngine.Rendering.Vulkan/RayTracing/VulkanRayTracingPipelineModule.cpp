@@ -126,13 +126,16 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 
 	for (auto& program : pipelineResult.programPipelineBlueprintMap) {
-		m_resourceMaps.emplace(program.second.variant, MaterialResourceData{});
+		m_resourceMaps.emplace(program.second.variant, ProgramResourceData{});
 	}
 
 	for (auto& mat : sbtBuildResult.materialSBTBlueprintMap) {
 		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(mat.first->GetProgram());
 		auto& matResourceData = m_resourceMaps[pipelineResult.programPipelineBlueprintMap.at(localProgram).variant];
-		matResourceData.materialIndexMap.emplace(mat.first, matResourceData.materialIndexMap.size());
+		matResourceData.materialIndexMap.emplace(mat.first, MaterialResourceDatas{
+			.textureArrayIndex = (UInt32)matResourceData.materialIndexMap.size(),
+			.datalocations = mat.second.datalocations,
+			});
 	}
 
 	////// Create Acceleration Structures
@@ -216,7 +219,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		UInt32 primitiveCount = buildInfo.primitiveCount;
 		m = entityData.gameEntity->GetTransform()->Matrix();
 		std::memcpy(&blasInstance.transform, &m, 12 * sizeof(Float));
-		blasInstance.instanceCustomIndex = m_resourceMaps[pipelineResult.programPipelineBlueprintMap[program].variant].materialIndexMap[rtComponent->GetRTMaterial()];
+		blasInstance.instanceCustomIndex = m_resourceMaps[pipelineResult.programPipelineBlueprintMap[program].variant].materialIndexMap[rtComponent->GetRTMaterial()].textureArrayIndex;
 		blasInstance.mask = 0xFF;
 		blasInstance.instanceShaderBindingTableRecordOffset = sbtBuildResult.materialSBTBlueprintMap[entityData.gameEntity->GetRayTracingComponent()->GetRTMaterial()].hitEntryIndex;
 		blasInstance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
@@ -485,7 +488,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 				write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 				write.dstSet = m_descriptorSets[n.set];
 				write.dstBinding = n.binding;              // matches HLSL binding
-				write.dstArrayElement = index;
+				write.dstArrayElement = index.textureArrayIndex;
 				write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 				write.descriptorCount = 1;
 				write.pImageInfo = &info;
@@ -493,10 +496,26 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 				vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 			}
 
-			material->ClearModifiedTextures();
+			material->ClearTextures();
+		}
+
+		for (auto& [material, matResourceData] : matResourceData.materialIndexMap) {
+			auto& innerValueFields = material->GetModifiedValues();
+
+			if (innerValueFields.size() == 0)
+				continue;
+
+			for (auto& modifiedValueField : innerValueFields) {
+				auto& locations = matResourceData.datalocations[modifiedValueField->fieldIndex];
+				
+				for (auto& location : locations)
+					std::memcpy(location, modifiedValueField->data, modifiedValueField->size);
+
+			}
+
+			material->ClearModifiedValues();
 		}
 	}
-
 
 
 	VkImageMemoryBarrier imageBarrier{};

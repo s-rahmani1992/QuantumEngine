@@ -222,6 +222,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 			continue;
 
 		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(material->GetProgram());
+		it.first->second.datalocations.resize(material->GetValueFields()->size());
 
 		if (localProgram->HasMissStage()) {
 			it.first->second.missEntryIndex = missSBTCount;
@@ -244,16 +245,16 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 	UInt32 missEntrySize = groupHandleSize + globalRtProgram->GetShaderRecordSize();
 	UInt32 hitEntrySize = globalRtProgram->HasHitGroup() ? groupHandleSize + globalRtProgram->GetShaderRecordSize() : 0;
 
-	for (auto& matPair : sbtResult.materialSBTBlueprintMap) {
-		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(matPair.first->GetProgram());
+	for (auto& [material, matSBTData] : sbtResult.materialSBTBlueprintMap) {
+		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(material->GetProgram());
 
-		if (matPair.second.missEntryIndex != VK_SHADER_UNUSED_KHR) {
+		if (matSBTData.missEntryIndex != VK_SHADER_UNUSED_KHR) {
 			UInt32 entrySize = groupHandleSize + localProgram->GetShaderRecordSize();
 			if (entrySize > missEntrySize)
 				missEntrySize = entrySize;
 		}
 
-		if (matPair.second.hitEntryIndex != VK_SHADER_UNUSED_KHR) {
+		if (matSBTData.hitEntryIndex != VK_SHADER_UNUSED_KHR) {
 			UInt32 entrySize = groupHandleSize + localProgram->GetShaderRecordSize();
 			if (entrySize > hitEntrySize)
 				hitEntrySize = entrySize;
@@ -292,7 +293,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 
 	UInt8* dst = (UInt8*)(mapped);
 
-	auto copyToEntry = [&shaderHandleStorage, &groupHandleSize](const ref<Material>& rtMaterial, UInt8* sectionStart, UInt32 groupIndex, UInt32 missEntryIndex) {
+	auto copyToEntry = [&shaderHandleStorage, &groupHandleSize, &sbtResult](const ref<Material>& rtMaterial, UInt8* sectionStart, UInt32 groupIndex, UInt32 missEntryIndex) {
 		std::memcpy(sectionStart, shaderHandleStorage.data() + groupHandleSize * groupIndex, groupHandleSize);
 		auto program = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(rtMaterial->GetProgram());
 		auto& shaderRecordVariables = program->GetShaderRecordVariables();
@@ -306,8 +307,11 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 
 			auto d = materialFields->find(recordVar.name);
 
-			if (d != materialFields->end()) {
-				std::memcpy(sectionStart + groupHandleSize + recordVar.offset, (*d).second.data, recordVar.size);
+			if (d != materialFields->end()) {				
+				if(program->IsGlobal() == false)
+					sbtResult.materialSBTBlueprintMap[rtMaterial].datalocations[d->second.fieldIndex].emplace(sectionStart + groupHandleSize + recordVar.offset);
+				else
+					std::memcpy(sectionStart + groupHandleSize + recordVar.offset, (*d).second.data, recordVar.size);
 			}
 		}
 	};

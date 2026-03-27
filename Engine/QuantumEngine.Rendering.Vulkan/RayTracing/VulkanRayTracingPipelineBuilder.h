@@ -21,6 +21,7 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 	struct MaterialSBTData {
 		UInt32 missEntryIndex = VK_SHADER_UNUSED_KHR;
 		UInt32 hitEntryIndex = VK_SHADER_UNUSED_KHR;
+		std::vector<std::set<Byte*>> datalocations;
 	};
 
 	struct RayTracePipelineBuildResult {

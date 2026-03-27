@@ -16,12 +16,11 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		SPIRVRayTracingProgram(Byte* bytecode, UInt64 codeSize, VkDevice device);
 		~SPIRVRayTracingProgram();
 		std::vector<VkPipelineShaderStageCreateInfo> GetShaderStages();
-		//inline VkPipelineLayout GetPipelineLayout() const { return m_pipelineLayout; }
-		//inline std::vector<VkDescriptorSetLayout>& GetDiscriptorLayouts() { return m_descriptorSetLayout; }
 		ref<SPIRVRayTracingProgramVariant> CreateVariantForRT(UInt32& startBinding);
 		UInt32 GetShaderRecordSize();
 		inline bool HasMissStage() { return m_missEntryPoint != nullptr; }
 		bool HasHitGroup();
+		inline bool IsGlobal() { return m_rayGenEntryPoint != nullptr; }
 		std::vector<ShaderRecordVariableData>& GetShaderRecordVariables() { return m_shaderRecordVariables; }
 	private:
 

@@ -182,6 +182,10 @@ namespace QuantumEngine::Rendering {
 			m_modifiedTextures.clear();
 			m_modifiedValues.clear();
 		}
+
+		inline void ClearTextures() { m_modifiedTextures.clear(); }
+		inline void ClearModifiedValues() { m_modifiedValues.clear(); }
+
 	protected:
 		ref<ShaderProgram> m_program;
 	private:
