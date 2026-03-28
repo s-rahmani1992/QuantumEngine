@@ -11,15 +11,15 @@ QuantumEngine::Rendering::DX12::Rasterization::DX12RasterizationMaterial::DX12Ra
 {
 	program->GetRootSignature()->GetDevice(IID_PPV_ARGS(&m_device));
 	auto reflectionData = program->GetReflectionData();
-	auto& rootConstantList = reflectionData->GetRootConstants();
-	for (auto& cbData : rootConstantList) {
-		if(cbData.rootConstants[0].name[0] == '_')
+	auto& rootConstantBuffer = reflectionData->GetRootConstants();
+	for (auto& rootConstantBlock : rootConstantBuffer.blocks) {
+		if(rootConstantBlock.isDynamic)
 			continue;
 
 		m_constantRegisterValues.push_back(constantBufferData{
-			.rootParamIndex = cbData.rootParameterIndex,
-			.location = material->GetValueLocation(cbData.rootConstants[0].name) - cbData.rootConstants[0].variableDesc.StartOffset / 4,
-			.size = (UInt32)(cbData.registerData.Num32BitValues),
+			.rootParamIndex = rootConstantBuffer.rootParameterIndex,
+			.location = material->GetValueLocation(rootConstantBlock.variables[0].name),//-cbData.rootConstants[0].variableDesc.StartOffset / 4,
+			.size = rootConstantBlock.size / 4,
 			});
 	}
 

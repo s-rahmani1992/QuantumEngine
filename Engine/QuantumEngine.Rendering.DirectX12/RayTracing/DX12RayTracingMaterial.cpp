@@ -11,72 +11,70 @@ QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::DX12RayTraci
 {
 	program->GetRootSignature()->GetDevice(IID_PPV_ARGS(&m_device));
 	auto reflectionData = program->GetReflectionData();
-	auto& rootConstantList = reflectionData->GetRootConstants();
-
+	auto& rootConstantBuffer = reflectionData->GetRootConstants();
+	m_constantRootParameterIndex = rootConstantBuffer.rootParameterIndex;
 	auto textureFields = material->GetTextureFields();
 	auto valueFields = material->GetValueFields();
 	auto& resourceVariableList = reflectionData->GetResourceVariables();
 	m_heapValues = std::vector<HeapData>(resourceVariableList.size());
-
+	m_constantRegisterValues = std::vector<constantBufferData>(rootConstantBuffer.typeDesc.Members);
+	
 	UInt32 offset = 0;
-	UInt32 fieldIndex = 0;
-	UInt32 cbFieldIndex = 0;
-	UInt32 internalSize = 0;
-
-	for(UInt32 i = 0; i < reflectionData->GetRootParameterCount(); i++) {
-		auto cbData = reflectionData->GetRootConstantByRootIndex(i);
-
-		if (cbData != nullptr) {
-			m_constantRegisterValues.push_back(constantBufferData{
-			.rootParamIndex = i,
-			.fieldName = cbData->name,
-			.dataLocation = material->GetValueLocation(cbData->rootConstants[0].name) - cbData->rootConstants[0].variableDesc.StartOffset / 4,
-			.locationOffset = offset,
-			.size = cbData->registerData.Num32BitValues,
-				});
-
-			offset += cbData->registerData.Num32BitValues * 4;
-
-			if (cbData->name[0] == '_')
-				internalSize += (cbData->registerData.Num32BitValues * 4);
-			
-			for (auto& h : cbData->rootConstants) {
-				auto j = valueFields->find(h.name);
-
-				if (j != valueFields->end())
-					(*j).second.fieldIndex = cbFieldIndex;
-			}
-
-			cbFieldIndex++;
-
+	UInt32 textureFieldIndex = 0;
+	for (UInt32 i = 0; i < reflectionData->GetRootParameterCount(); i++) {
+		if (i == rootConstantBuffer.rootParameterIndex) {
+			offset += (rootConstantBuffer.registerData.Num32BitValues * 4);
 			continue;
 		}
-
+		
 		auto rcData = reflectionData->GetResourceVariableByRootIndex(i);
-
 		auto t = textureFields->find(rcData->name);
 
-		if(t != textureFields->end()) {
-			(*t).second.fieldIndex = fieldIndex;
+		if (t != textureFields->end()) {
+			(*t).second.fieldIndex = textureFieldIndex;
 		}
 
-		m_heapValues[fieldIndex] = HeapData{
+		m_heapValues[textureFieldIndex] = HeapData{
 			.rootParamIndex = rcData->rootParameterIndex,
 			.fieldName = rcData->name,
-			.locationOffset = offset,
+			.locationOffset = i * (UInt32)sizeof(D3D12_GPU_DESCRIPTOR_HANDLE),
 		};
 
 		offset += sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
-		fieldIndex++;
+		textureFieldIndex++;
 	}
 
+	UInt32 internalSize = 0;
+	for (auto& rootConstantBlock : rootConstantBuffer.blocks) {
+		if (rootConstantBlock.isDynamic)
+			internalSize += rootConstantBlock.size;
+	}
 	m_internalData = new Byte[internalSize];
-	UInt32 internalOffset = 0;
 
-	for (auto& constRegister : m_constantRegisterValues) {
-		if (constRegister.fieldName[0] == '_') {
-			constRegister.dataLocation = m_internalData + internalOffset;
-			internalOffset += (constRegister.size * 4);
+	UInt32 internalOffset = 0;
+	UInt32 locationOffset = (rootConstantBuffer.rootParameterIndex) * (UInt32)sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
+	for (auto& rootConstantBlock : rootConstantBuffer.blocks) {
+		if (rootConstantBlock.isDynamic) {
+			for (auto& variable : rootConstantBlock.variables) {
+				m_constantRegisterValues[variable.index] = constantBufferData{
+					.dataLocation = m_internalData + internalOffset,
+					.offset32Bits = variable.offset/4,
+					.locationOffset = locationOffset + variable.offset,
+					.size = rootConstantBlock.size,
+				};
+
+				internalOffset += variable.size;
+			}
+		}
+		else {
+			for (auto& variable : rootConstantBlock.variables) {
+				m_constantRegisterValues[variable.index] = constantBufferData{
+					.dataLocation = material->GetValueLocation(variable.name),
+					.offset32Bits = variable.offset / 4,
+					.locationOffset = locationOffset + variable.offset,
+					.size = variable.size,
+				};
+			}
 		}
 	}
 }
@@ -241,13 +239,11 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::CopyVar
 	Byte* data = dst;
 
 	for (UInt32 i = 0; i < reflectionData->GetRootParameterCount(); i++) {
-		auto cbData = std::find_if(m_constantRegisterValues.begin(), m_constantRegisterValues.end(), [i](const constantBufferData& cb) {
-			return cb.rootParamIndex == i;
-			});
-
-		if (cbData != m_constantRegisterValues.end()) {
-			std::memcpy(data, (*cbData).dataLocation, 4 * (*cbData).size);
-			data += 4 * (*cbData).size;
+		if (i == m_constantRootParameterIndex) {
+			for (auto& cbData : m_constantRegisterValues) {
+				std::memcpy(data, cbData.dataLocation, cbData.size);
+				data += cbData.size;
+			}
 			continue;
 		}
 
@@ -265,7 +261,7 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::CopyVar
 void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::BindParameters(ComPtr<ID3D12GraphicsCommandList7>& commandList)
 {
 	for (auto& rField : m_constantRegisterValues)
-		commandList->SetComputeRoot32BitConstants(rField.rootParamIndex, rField.size, rField.dataLocation, 0);
+		commandList->SetComputeRoot32BitConstants(m_constantRootParameterIndex, rField.size/4, rField.dataLocation, rField.offset32Bits);
 
 	for (auto& heapField : m_heapValues) {
 		commandList->SetComputeRootDescriptorTable(heapField.rootParamIndex, heapField.gpuHandle);
@@ -288,7 +284,7 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::UpdateM
 		auto& cbData = m_constantRegisterValues[modifiedVal->fieldIndex];
 
 		for (auto g : m_linkedLocations)
-			std::memcpy(g + cbData.locationOffset, cbData.dataLocation , 4 * cbData.size);
+			std::memcpy(g + cbData.locationOffset, cbData.dataLocation , cbData.size);
 	}
 
 	m_material->ClearModifiedTextures();

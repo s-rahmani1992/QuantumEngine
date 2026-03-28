@@ -16,14 +16,23 @@ cbuffer MaterialProps
 
 #else
 
-cbuffer MaterialProps : register(b0, space1)
+struct MaterialProperties
 {
     float ambient;
     float diffuse;
     float specular;
-    uint castShadow = 0;
-    float4 color;
+    uint castShadow;
 };
+
+cbuffer MaterialProps : register(b0, space1)
+{
+    MaterialProperties props;
+};
+
+#define ambient props.ambient
+#define diffuse props.diffuse
+#define specular props.specular
+#define castShadow props.castShadow
 
 #endif
 

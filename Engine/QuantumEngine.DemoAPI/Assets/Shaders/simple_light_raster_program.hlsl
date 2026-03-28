@@ -42,13 +42,23 @@ MaterialProperties MaterialProps;
 
 #else
 
-cbuffer MaterialProps : register(b3)
+struct MaterialProperties
 {
     float ambient;
     float diffuse;
     float specular;
     float textureFactor;
 };
+
+cbuffer MaterialProps : register(b3)
+{
+    MaterialProperties props;
+};
+
+#define ambient props.ambient
+#define diffuse props.diffuse
+#define specular props.specular
+#define textureFactor props.textureFactor
 
 #endif
 

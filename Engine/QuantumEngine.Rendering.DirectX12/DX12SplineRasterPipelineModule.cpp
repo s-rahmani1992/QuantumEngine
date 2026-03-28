@@ -31,27 +31,27 @@ QuantumEngine::Rendering::DX12::DX12SplineRasterPipelineModule::DX12SplineRaster
 {
 	auto program = m_material->GetProgram();
 	auto reflection = program->GetReflectionData();
-	auto& rootConstantList = reflection->GetRootConstants();
-	auto widthIt = std::find_if(
+	auto& rootConstantBuffer = reflection->GetRootConstants();
+	/*auto widthIt = std::find_if(
 		rootConstantList.begin(),
 		rootConstantList.end(),
 		[](const RootConstantBufferData& binding) {
 			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
-		});
+		});*/
 
-	m_widthRootIndex = (*widthIt).rootParameterIndex;
+	m_widthRootIndex = rootConstantBuffer.rootParameterIndex;
 
 	auto computeReflection = computeProgram->GetReflectionData();
 	auto& computeRootConstantList = computeReflection->GetRootConstants();
 
-	auto curveIt = std::find_if(
+	/*auto curveIt = std::find_if(
 		computeRootConstantList.begin(),
 		computeRootConstantList.end(),
 		[](const RootConstantBufferData& binding) {
 			return binding.name == SPLINE_WIDTH_BUFFER_NAME;
-		});
+		});*/
 
-	m_curveRootIndex = (*curveIt).rootParameterIndex;
+	m_curveRootIndex = rootConstantBuffer.rootParameterIndex;
 
 	auto& resourceVariableList = computeReflection->GetResourceVariables();
 

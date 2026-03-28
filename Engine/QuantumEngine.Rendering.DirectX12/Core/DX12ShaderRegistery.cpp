@@ -65,23 +65,23 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 	m_device = device;
 	std::wstring root = Platform::Application::GetExecutablePath();
 
-	std::string errorStr;
+	/*std::string errorStr;
 
 	auto gBufferProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_raster.hlsl", errorStr);
 
 	if(gBufferProgram != nullptr)
-		m_specialShaders.emplace("G_Buffer_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(gBufferProgram));
+		m_specialShaders.emplace("G_Buffer_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(gBufferProgram));*/
 	
-	auto reflectionRTLightProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", errorStr);
+	/*auto reflectionRTLightProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", errorStr);
 
 	if (reflectionRTLightProgram != nullptr)
-		m_specialShaders.emplace("G_Buffer_RT_Global_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(reflectionRTLightProgram));
+		m_specialShaders.emplace("G_Buffer_RT_Global_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(reflectionRTLightProgram));*/
 
-	auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
+	/*auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
 
 	if (computeProgram != nullptr) {
 		m_specialShaders.emplace("Bezier_Curve_Compute_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(computeProgram));
-	}
+	}*/
 }
 
 ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::GetShaderProgram(const std::string& name)

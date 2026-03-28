@@ -27,19 +27,17 @@ void QuantumEngine::Rendering::DX12::HLSLReflection::AddShaderReflection(ID3D12F
 
 ComPtr<ID3D12RootSignature> QuantumEngine::Rendering::DX12::HLSLReflection::CreateRootSignature(const ComPtr<ID3D12Device10>& device, D3D12_ROOT_SIGNATURE_FLAGS flag, std::string& errorStr)
 {
-    std::vector<D3D12_ROOT_PARAMETER> rootParameters(m_resourceVariables.size() + m_rootConstants.size());
+    std::vector<D3D12_ROOT_PARAMETER> rootParameters(m_resourceVariables.size() + (m_rootConstantBuffer.blocks.size() > 0 ? 1 : 0));
     std::vector<D3D12_STATIC_SAMPLER_DESC> staticSamplers;
     std::vector<D3D12_DESCRIPTOR_RANGE> ranges(m_resourceVariables.size());
     UInt8 rangeIndex = 0;
 
     // all root constants belonging to the same buffer are added as a single root constant variable
-    for (auto& rootConst : m_rootConstants) {
-        rootParameters[rootConst.rootParameterIndex] = D3D12_ROOT_PARAMETER{
-            .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
-            .Constants = rootConst.registerData,
-            .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-        };
-    }
+    rootParameters[m_rootConstantBuffer.rootParameterIndex] = D3D12_ROOT_PARAMETER{
+        .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
+        .Constants = m_rootConstantBuffer.registerData,
+        .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
+    };
 
     // samplers are added as static samplers for now with default settings
     for (auto& samplerVar : m_samplerVariables) {
@@ -137,17 +135,17 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::DX12::HLS
 
     // Value Fields are from Root Constants
 
-    for (auto& rootConst : m_rootConstants) {
-        if (rootConst.name[0] == '_') {// Skip internal root constants
+    for (auto& rootConstBlock : m_rootConstantBuffer.blocks) {
+        if (rootConstBlock.isDynamic == '_') {// Skip internal root constants
             fieldIndex++;
             continue;
         }
 
-        for (auto& rootVar : rootConst.rootConstants) {
-            UInt32 varSize = rootVar.variableDesc.Size;
+        for (auto& rootVar : rootConstBlock.variables) {
+            UInt32 varSize = (rootVar.variableDesc.Rows * rootVar.variableDesc.Columns * 4);
             MaterialValueFieldInfo valueFieldInfo{
                 .name = rootVar.name,
-                .fieldIndex = rtField ? rootConst.rootParameterIndex : fieldIndex,
+                .fieldIndex = fieldIndex,
                 .size = varSize,
             };
             reflectionData.valueFields.push_back(valueFieldInfo);
@@ -178,21 +176,21 @@ QuantumEngine::Rendering::MaterialReflection QuantumEngine::Rendering::DX12::HLS
 
 UInt32 QuantumEngine::Rendering::DX12::HLSLReflection::GetRootParameterIndexByName(const std::string& name) const
 {
-    for (const auto& rc : m_rootConstants) {
-        if (rc.name == name) {
-            return rc.rootParameterIndex;
-        }
-    }
+    if (m_rootConstantBuffer.name == name)
+        return m_rootConstantBuffer.rootParameterIndex;
+    
     for (const auto& rv : m_resourceVariables) {
         if (rv.name == name) {
             return rv.rootParameterIndex;
         }
     }
+
     for (const auto& sv : m_samplerVariables) {
         if (sv.name == name) {
             return sv.rootParameterIndex;
         }
     }
+
     return -1; // invalid index
 }
 
@@ -209,11 +207,9 @@ QuantumEngine::Rendering::DX12::ResourceVariableData* QuantumEngine::Rendering::
 
 QuantumEngine::Rendering::DX12::RootConstantBufferData* QuantumEngine::Rendering::DX12::HLSLReflection::GetRootConstantByRootIndex(UInt32 rootParameterIndex)
 {
-    for (auto& rc : m_rootConstants) {
-        if (rc.rootParameterIndex == rootParameterIndex) {
-            return &rc;
-        }
-    }
+    if (m_rootConstantBuffer.rootParameterIndex == rootParameterIndex)
+        return &m_rootConstantBuffer;
+
     return nullptr;
 }
 
@@ -221,12 +217,23 @@ UInt32 QuantumEngine::Rendering::DX12::HLSLReflection::GetTotalVariableSize()
 {
     UInt32 variableSize = 0;
 
-    for (auto& rootConstant : m_rootConstants) {
-        variableSize += (rootConstant.registerData.Num32BitValues * 4);
+    for (auto& rootConstantBlock : m_rootConstantBuffer.blocks) {
+        variableSize += (rootConstantBlock.size);
     }
 
     variableSize += (sizeof(D3D12_GPU_DESCRIPTOR_HANDLE) * m_resourceVariables.size());
 
     return variableSize;
     return UInt32();
+}
+
+QuantumEngine::Rendering::DX12::RootConstantVariableData* QuantumEngine::Rendering::DX12::HLSLReflection::GetRootConstantVariableByName(const std::string& name)
+{
+    for (auto& rootConstantBlock : m_rootConstantBuffer.blocks) {
+        for (auto& rootVariable : rootConstantBlock.variables) {
+            if (rootVariable.name == name)
+                return &rootVariable;
+        }
+    }
+    return nullptr;
 }

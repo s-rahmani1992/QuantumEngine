@@ -12,13 +12,17 @@ using namespace Microsoft::WRL;
 namespace QuantumEngine::Rendering::DX12 {
 	struct RootConstantVariableData {
 		std::string name;
-		D3D12_SHADER_VARIABLE_DESC variableDesc;
+		UInt32 index;
+		UInt32 size;
+		UInt32 offset;
+		D3D12_SHADER_TYPE_DESC variableDesc;
 	};
 
-	struct ResourceVariableData {
-		UInt32 rootParameterIndex;
-		std::string name;
-		D3D12_SHADER_INPUT_BIND_DESC resourceData;
+	struct RootConstantBlockData {
+		UInt32 offset;
+		UInt32 size;
+		bool isDynamic;
+		std::vector<RootConstantVariableData> variables;
 	};
 
 	struct RootConstantBufferData {
@@ -26,7 +30,14 @@ namespace QuantumEngine::Rendering::DX12 {
 		std::string name;
 		D3D12_SHADER_INPUT_BIND_DESC resourceData;
 		D3D12_ROOT_CONSTANTS registerData;
-		std::vector<RootConstantVariableData> rootConstants;
+		D3D12_SHADER_TYPE_DESC typeDesc;
+		std::vector<RootConstantBlockData> blocks;
+	};
+
+	struct ResourceVariableData {
+		UInt32 rootParameterIndex;
+		std::string name;
+		D3D12_SHADER_INPUT_BIND_DESC resourceData;
 	};
 
 	class HLSLReflection {
@@ -72,7 +83,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		/// Gets list of root constant data
 		/// </summary>
 		/// <returns></returns>
-		inline std::vector<RootConstantBufferData>& GetRootConstants() { return m_rootConstants; }
+		inline RootConstantBufferData& GetRootConstants() { return m_rootConstantBuffer; }
 		
 		/// <summary>
 		/// Gets list of resource variable data
@@ -112,13 +123,20 @@ namespace QuantumEngine::Rendering::DX12 {
 		/// <returns></returns>
 		UInt32 GetTotalVariableSize();
 
+		/// <summary>
+		/// Gets the Root Constant Variable Data by the name. if it does not exist, returns null
+		/// </summary>
+		/// <param name="name">variable name</param>
+		/// <returns></returns>
+		RootConstantVariableData* GetRootConstantVariableByName(const std::string& name);
+
 	private:
 
 		template<typename T>
 		void AddShaderInputBindings(const D3D12_SHADER_INPUT_BIND_DESC& resourceBinding, T* reflection);
 
 	private:
-		std::vector<RootConstantBufferData> m_rootConstants;
+		RootConstantBufferData m_rootConstantBuffer;
 		std::vector<ResourceVariableData> m_resourceVariables;
 		std::vector<ResourceVariableData> m_samplerVariables;
 
@@ -133,12 +151,9 @@ namespace QuantumEngine::Rendering::DX12 {
 		// Constant Buffer is processed separately. Because it can be either a single buffer or collection of root constants.
 		if (boundResource.Type == D3D_SIT_CBUFFER)
 		{
-			auto rootConstantIt = std::find_if(m_rootConstants.begin(), m_rootConstants.end(),
-				[&name](const RootConstantBufferData& data) { return data.name == name; });
-
-			if (rootConstantIt != m_rootConstants.end())
-				return; //checking if the resource is already processed because it can exist in multiple shaders
-
+			if (m_rootConstantBuffer.name == name)
+				return;
+			
 			auto recourceIt = std::find_if(m_resourceVariables.begin(), m_resourceVariables.end(),
 				[&name](const ResourceVariableData& data) { return data.name == name; });
 
@@ -155,31 +170,73 @@ namespace QuantumEngine::Rendering::DX12 {
 			D3D12_SHADER_BUFFER_DESC cbDesc;
 			cb->GetDesc(&cbDesc);
 
+			ID3D12ShaderReflectionVariable* var =
+				cb->GetVariableByIndex(0);
+
+			D3D12_SHADER_VARIABLE_DESC varDesc = {};
+			var->GetDesc(&varDesc);
+
+			ID3D12ShaderReflectionType* type = var->GetType();
+
+			D3D12_SHADER_TYPE_DESC typeDesc = {};
+			type->GetDesc(&typeDesc);
+
 			//if constant buffer size per variable is less than Matrix4, then it is considered as a holder of root constants
-			if (cbDesc.Size / cbDesc.Variables <= sizeof(Matrix4)) { //TODO Find better condition for constant buffer checking if possible
-				RootConstantBufferData cData{
-					.rootParameterIndex = m_rootparameterCount,
-					.name = name,
-					.resourceData = boundResource,
-					.registerData = D3D12_ROOT_CONSTANTS{
-						.ShaderRegister = boundResource.BindPoint,
-						.RegisterSpace = boundResource.Space,
-						.Num32BitValues = cbDesc.Size / 4,
-					},
+			if (cbDesc.Size / typeDesc.Members < 32) { //TODO Find better condition for constant buffer checking if possible
+				m_rootConstantBuffer.rootParameterIndex = m_rootparameterCount;
+				m_rootConstantBuffer.name = name;
+				m_rootConstantBuffer.resourceData = boundResource; 
+				m_rootConstantBuffer.typeDesc = typeDesc;
+				m_rootConstantBuffer.registerData = D3D12_ROOT_CONSTANTS{
+					.ShaderRegister = boundResource.BindPoint,
+					.RegisterSpace = boundResource.Space,
+					.Num32BitValues = cbDesc.Size / 4,
 				};
 
-				for (UINT v = 0; v < cbDesc.Variables; ++v) {
-					ID3D12ShaderReflectionVariable* var = cb->GetVariableByIndex(v);
-					D3D12_SHADER_VARIABLE_DESC varDesc;
-					var->GetDesc(&varDesc);
+				UInt32 index = 0;
+				UInt32 offset = 0;
 
-					cData.rootConstants.push_back(RootConstantVariableData{
-						.name = std::string(varDesc.Name),
-						.variableDesc = varDesc,
+				auto fillBlock = [this, &offset, &index, type, &typeDesc](bool dynamic) {
+					auto& blockItem = this->m_rootConstantBuffer.blocks.emplace_back(RootConstantBlockData{
+					.offset = offset,
+					.size = 0,
+					.isDynamic = dynamic,
 						});
-				}
 
-				m_rootConstants.push_back(cData);
+					while ((dynamic ? type->GetMemberTypeName(index)[0] == '_' : type->GetMemberTypeName(index)[0] != '_')) {
+						ID3D12ShaderReflectionType* memberType = type->GetMemberTypeByIndex(index);
+
+						D3D12_SHADER_TYPE_DESC memberDesc = {};
+						memberType->GetDesc(&memberDesc);
+
+						blockItem.variables.push_back(RootConstantVariableData{
+							.name = type->GetMemberTypeName(index),
+							.index = index,
+							.size = (memberDesc.Rows * memberDesc.Columns * 4),
+							.offset = offset,
+							.variableDesc = memberDesc,
+							});
+						blockItem.size += (memberDesc.Rows * memberDesc.Columns * 4);
+
+						index++;
+						offset += (memberDesc.Rows * memberDesc.Columns * 4);
+
+						if (index >= typeDesc.Members)
+							break;
+					}
+				};
+
+
+				do {
+					auto varName = type->GetMemberTypeName(index);
+
+					if (type->GetMemberTypeName(index)[0] == '_') {
+						fillBlock(true);
+					}
+					else {
+						fillBlock(false);
+					}
+				} while (index < typeDesc.Members);
 			}
 			else {
 				m_resourceVariables.push_back(ResourceVariableData{

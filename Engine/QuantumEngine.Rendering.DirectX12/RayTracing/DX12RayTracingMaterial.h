@@ -38,9 +38,8 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 	private:
 		
 		struct constantBufferData {
-			UInt32 rootParamIndex;
-			std::string fieldName;
 			Byte* dataLocation;
+			UInt32 offset32Bits;
 			UInt32 locationOffset;
 			UInt32 size;
 		};
@@ -57,6 +56,7 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 		ref<HLSLRayTracingProgram> m_program;
 		ComPtr<ID3D12Device10> m_device;
 
+		UInt32 m_constantRootParameterIndex;
 		std::vector<constantBufferData> m_constantRegisterValues;
 		std::vector<HeapData> m_heapValues;
 
@@ -69,29 +69,12 @@ namespace QuantumEngine::Rendering::DX12::RayTracing {
 	template<typename T>
 	inline void DX12RayTracingMaterial::SetInternalConstantValue(std::string fieldName, T value)
 	{
-		// GetRootConstants() should return a container of root-constant groups
-		auto& rootConstants = m_program->GetReflectionData()->GetRootConstants();
+		auto rootConstantVariable = m_program->GetReflectionData()->GetRootConstantVariableByName(fieldName);
 
-		for (auto& rt : rootConstants) {
-			// find the variable in this root-constant group
-			auto varIt = std::find_if(rt.rootConstants.begin(), rt.rootConstants.end(),
-				[&fieldName](const RootConstantVariableData& vData) {
-					return vData.name == fieldName;
-				});
+		if (rootConstantVariable == nullptr)
+			return;
 
-			if (varIt != rt.rootConstants.end()) {
-				// find the constant buffer entry that matches this root-constant group's name
-				auto cbIt = std::find_if(m_constantRegisterValues.begin(), m_constantRegisterValues.end(),
-					[&rt](const constantBufferData& cb) {
-						return rt.name == cb.fieldName;
-					});
-
-				// Validate iterator and dataLocation before writing
-				if (cbIt != m_constantRegisterValues.end() && cbIt->dataLocation != nullptr) {
-					std::memcpy(cbIt->dataLocation, &value, sizeof(T));
-				}
-				return;
-			}
-		}
+		auto& registerValue = m_constantRegisterValues[rootConstantVariable->index];
+		std::memcpy(registerValue.dataLocation, &value, sizeof(T));
 	}
 }

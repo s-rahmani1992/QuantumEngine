@@ -15,13 +15,21 @@ cbuffer ColorProperties
 
 #else
 
-RT_PROP_VAR_1(b1)
-
-cbuffer ColorProperties : register(b2)
+struct MaterialProperties
 {
     float4 missColor;
     float4 hitColor;
+    uint _missIndex;
 };
+
+cbuffer MaterialProps : register(b2)
+{
+    MaterialProperties props;
+};
+
+#define missColor props.missColor
+#define hitColor props.hitColor
+#define _missIndex props._missIndex
 
 #endif
 
