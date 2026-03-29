@@ -1,18 +1,25 @@
 #include "Common/TransformStructs.hlsli"
 #include "Common/RTStructs.hlsli"
 
-CAMERA_VAR_1(b0)
+CAMERA_VAR(b0)
 
-RT_PROP_VAR_1(b1)
+CONSTANT_VARIABLES_BEGIN
+    uint _missIndex;
+CONSTANT_VARIABLES_END(constantVars, b1)
 
-RT_SCENE_VAR_1(t0)
+#define _missIndex constantVars._missIndex
 
-RT_OUT_VAR_1(u0)
+RT_SCENE_VAR(t0)
 
-Texture2D<uint> _MaskTexture : register(t1);
-Texture2D<float4> _PositionTexture : register(t2);
-Texture2D<float4> _NormalTexture : register(t3);
-sampler mainSampler : register(s0);
+RT_OUT_TEXTURE_VAR(u0)
+
+TEXTURE(_MaskTexture, uint, t1)
+
+TEXTURE(_PositionTexture, float4, t2)
+
+TEXTURE(_NormalTexture, float4, t3)
+
+SAMPLER(mainSampler, s0)
 
 [shader("raygeneration")]
 void rayGen()

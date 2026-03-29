@@ -33,12 +33,15 @@ ComPtr<ID3D12RootSignature> QuantumEngine::Rendering::DX12::HLSLReflection::Crea
     UInt8 rangeIndex = 0;
 
     // all root constants belonging to the same buffer are added as a single root constant variable
-    rootParameters[m_rootConstantBuffer.rootParameterIndex] = D3D12_ROOT_PARAMETER{
+    
+    if (m_rootConstantBuffer.blocks.size() > 0) {
+        rootParameters[m_rootConstantBuffer.rootParameterIndex] = D3D12_ROOT_PARAMETER{
         .ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS,
         .Constants = m_rootConstantBuffer.registerData,
         .ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL,
-    };
-
+        };
+    }
+    
     // samplers are added as static samplers for now with default settings
     for (auto& samplerVar : m_samplerVariables) {
         staticSamplers.push_back(D3D12_STATIC_SAMPLER_DESC{

@@ -17,25 +17,19 @@ struct GS_OUTPUT
     float3 worldPos : POSITION;
 };
 
-TRANSFORM_VAR_1(b0)
+OBJECT_TRANSFORM_VAR(b0)
 
-CAMERA_VAR_1(b1)
+CAMERA_VAR(b1)
 
-LIGHT_VAR_1(b2)
+LIGHT_VAR(b2)
 
-#ifdef _VULKAN
-
-struct MaterialProperties
-{
+CONSTANT_VARIABLES_BEGIN
     float4 color;
     float ambient;
     float diffuse;
     float specular;
     float _width;
-};
-
-[[vk::push_constant]]
-MaterialProperties MaterialProps;
+CONSTANT_VARIABLES_END(MaterialProps, b3)
 
 #define color MaterialProps.color
 #define ambient MaterialProps.ambient
@@ -43,22 +37,6 @@ MaterialProperties MaterialProps;
 #define specular MaterialProps.specular
 #define _width MaterialProps._width
 
-#else
-
-cbuffer _CurveProperties : register(b3)
-{
-    float _width;
-};
-
-cbuffer MaterialProps : register(b4)
-{
-    float4 color;
-    float ambient;
-    float diffuse;
-    float specular;
-};
-
-#endif
 
 VS_INPUT vs_main(VS_INPUT vertexIn)
 {

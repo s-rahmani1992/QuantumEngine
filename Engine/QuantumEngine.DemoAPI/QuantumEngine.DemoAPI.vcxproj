@@ -133,6 +133,7 @@
     <None Include="Assets\Shaders\Common\LightStructs.hlsli" />
     <None Include="Assets\Shaders\Common\RTStructs.hlsli" />
     <None Include="Assets\Shaders\Common\TransformStructs.hlsli" />
+    <None Include="Assets\Shaders\Common\VariableMacros.hlsli" />
     <Text Include="Assets\Shaders\reflection_standard_g_buffer.hlsl.json">
       <FileType>Document</FileType>
     </Text>

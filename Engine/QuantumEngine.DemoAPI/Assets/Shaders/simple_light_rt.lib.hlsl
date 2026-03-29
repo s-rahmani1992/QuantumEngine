@@ -1,80 +1,33 @@
+#include "Common/VariableMacros.hlsli"
 #include "Common/TransformStructs.hlsli"
 #include "Common/LightStructs.hlsli"
 #include "Common/RTStructs.hlsli"
 
-#ifdef _VULKAN
-
-[[vk::shader_record_ext]]
-cbuffer MaterialProps
-{
+CONSTANT_VARIABLES_BEGIN
     float ambient;
     float diffuse;
     float specular;
     uint castShadow;
-    float4 color;
-};
+CONSTANT_VARIABLES_END(constantVars, b0)
 
-#else
+#define ambient constantVars.ambient
+#define diffuse constantVars.diffuse
+#define specular constantVars.specular
+#define castShadow constantVars.castShadow
 
-struct MaterialProperties
-{
-    float ambient;
-    float diffuse;
-    float specular;
-    uint castShadow;
-};
+OBJECT_TRANSFORM_VAR(b1)
 
-cbuffer MaterialProps : register(b0, space1)
-{
-    MaterialProperties props;
-};
+CAMERA_VAR(b2)
 
-#define ambient props.ambient
-#define diffuse props.diffuse
-#define specular props.specular
-#define castShadow props.castShadow
+LIGHT_VAR(b3)
 
-#endif
+TEXTURE(mainTexture, float4, t0)
 
-#ifdef _VULKAN
-[[vk::binding(0, 1)]]
-StructuredBuffer<TransformData> _ObjectTransformDataArray;
-#define transformData _ObjectTransformDataArray[InstanceIndex()]
-#else
-TRANSFORM_VAR_2(b1, space1)
-#endif
-#ifdef _VULKAN
-[[vk::binding(1, 1)]]
-#endif
-CAMERA_VAR_2(b2, space1)
+SAMPLER(mainSampler, s0)
 
-#ifdef _VULKAN
-[[vk::binding(2, 1)]]
-#endif
-LIGHT_VAR_2(b3, space1)
+RT_OBJECT_INDEX_BUFFER_VAR(t1)
 
-#ifdef _VULKAN
-[[vk::binding(3, 1)]]
-Texture2D mainTextureArray[];
-#define mainTexture mainTextureArray[InstanceID()]
-#else
-Texture2D mainTexture : register(t0, space1);
-#endif
-
-#ifdef _VULKAN
-[[vk::binding(5, 1)]]
-#endif
-sampler mainSampler : register(s0, space1);
-
-#ifdef _VULKAN
-[[vk::binding(6, 1)]]
-#endif
-RT_INDEX_BUFFER_VAR_2(t1, space1)
-
-#ifdef _VULKAN
-[[vk::binding(7, 1)]]
-#endif
-RT_VERTEX_BUFFER_VAR_2(t2, space1)
+RT_OBJECT_VERTEX_BUFFER_VAR(t2)
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

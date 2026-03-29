@@ -2,28 +2,35 @@
 #include "Common/RTStructs.hlsli"
 #include "Common/LightStructs.hlsli"
 
-TRANSFORM_VAR_2(b0, space1)
+OBJECT_TRANSFORM_VAR(b0)
 
-CAMERA_VAR_2(b1, space1)
+CAMERA_VAR(b1)
 
-LIGHT_VAR_2(b2, space1)
+LIGHT_VAR(b2)
 
-cbuffer MaterialProps : register(b4, space1)
-{
-    uint castShadow = 0;
+CONSTANT_VARIABLES_BEGIN
+    uint castShadow;
     float ambient;
     float diffuse;
     float specular;
-};
+CONSTANT_VARIABLES_END(constantVars, b3)
 
-RT_SCENE_VAR_2(t3, space1)
+#define castShadow constantVars.castShadow
+#define ambient constantVars.ambient
+#define diffuse constantVars.diffuse
+#define specular constantVars.specular
 
-Texture2D mainTexture : register(t0, space1);
-Texture2D reflectTexture : register(t4, space1);
-sampler mainSampler : register(s0, space1);
+TEXTURE(mainTexture, float4, t0)
 
-RT_INDEX_BUFFER_VAR_2(t1, space1)
-RT_VERTEX_BUFFER_VAR_2(t2, space1)
+TEXTURE(reflectTexture, float4, t1)
+
+SAMPLER(mainSampler, s0)
+
+RT_SCENE_VAR(t2)
+
+RT_OBJECT_INDEX_BUFFER_VAR(t3)
+
+RT_OBJECT_VERTEX_BUFFER_VAR(t4)
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

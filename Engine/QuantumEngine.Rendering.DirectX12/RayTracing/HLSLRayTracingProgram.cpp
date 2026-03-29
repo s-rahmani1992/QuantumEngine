@@ -103,9 +103,10 @@ bool QuantumEngine::Rendering::DX12::RayTracing::HLSLRayTracingProgram::Initiali
 	D3D12_ROOT_SIGNATURE_FLAGS flag = m_rayGenOriginalName.empty() ? D3D12_ROOT_SIGNATURE_FLAG_LOCAL_ROOT_SIGNATURE : D3D12_ROOT_SIGNATURE_FLAG_NONE;
 	m_rootSignature = m_reflection.CreateRootSignature(device, flag, errorMessage);
 
-	if(m_rootSignature == nullptr)
+	if (m_rootSignature == nullptr) {
+		error = errorMessage;
 		return false;
-
+	}
 	return true;
 }
 

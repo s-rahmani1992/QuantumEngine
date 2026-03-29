@@ -37,7 +37,7 @@ QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::DX12RayTraci
 		m_heapValues[textureFieldIndex] = HeapData{
 			.rootParamIndex = rcData->rootParameterIndex,
 			.fieldName = rcData->name,
-			.locationOffset = i * (UInt32)sizeof(D3D12_GPU_DESCRIPTOR_HANDLE),
+			.locationOffset = offset,
 		};
 
 		offset += sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
@@ -233,16 +233,10 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::CopyVar
 
 	m_linkedLocations.push_back(dst);
 
-	UInt32 offset = 0;
-	UInt32 fieldIndex = 0;
-	UInt32 internalSize = 0;
-	Byte* data = dst;
-
 	for (UInt32 i = 0; i < reflectionData->GetRootParameterCount(); i++) {
 		if (i == m_constantRootParameterIndex) {
 			for (auto& cbData : m_constantRegisterValues) {
-				std::memcpy(data, cbData.dataLocation, cbData.size);
-				data += cbData.size;
+				std::memcpy(dst + cbData.locationOffset, cbData.dataLocation, cbData.size);
 			}
 			continue;
 		}
@@ -251,10 +245,9 @@ void QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::CopyVar
 			return hpData.rootParamIndex == i;
 			});
 
-		D3D12_GPU_DESCRIPTOR_HANDLE* gpuPtr = (D3D12_GPU_DESCRIPTOR_HANDLE*)data;
+		D3D12_GPU_DESCRIPTOR_HANDLE* gpuPtr = (D3D12_GPU_DESCRIPTOR_HANDLE*)(dst + rcData->locationOffset);
 
 		*gpuPtr = (*rcData).gpuHandle;
-		data += sizeof(D3D12_GPU_DESCRIPTOR_HANDLE);
 	}
 }
 

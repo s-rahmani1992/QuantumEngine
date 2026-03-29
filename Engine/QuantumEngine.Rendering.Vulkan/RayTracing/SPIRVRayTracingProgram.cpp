@@ -19,7 +19,7 @@ QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTr
 	};
 
 	vkCreateShaderModule(device, &shaderModuleCreateInfo, nullptr, &m_rtModule);
-
+	
 	spvReflectCreateShaderModule(m_codeSize, m_bytecode, &m_reflectionModule);
 	m_reflection.AddShaderReflection(&m_reflectionModule);
 
@@ -37,16 +37,17 @@ QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTr
 		});
 
 	m_shaderRecord = shaderRecordIT != inputs.end() ? *shaderRecordIT : nullptr;
-
+	
 	if (m_shaderRecord != nullptr) {
 		UInt32 varOffset = 0;
-		for (UInt32 i = 0; i < m_shaderRecord->member_count; i++) {
-			auto member = m_shaderRecord->members[i];
-			auto numeric = member.type_description->traits.numeric;
+		auto typeDescription = m_shaderRecord->members[0].type_description;
+		for (UInt32 i = 0; i < typeDescription->member_count; i++) {
+			auto member = typeDescription->members[i];
+			auto numeric = member.traits.numeric;
 			auto varSize = (numeric.scalar.width / 8) * (numeric.vector.component_count == 0 ? 1 : numeric.vector.component_count);
 			m_shaderRecordVariables.push_back(ShaderRecordVariableData
 				{
-					.name = std::string(member.type_description->struct_member_name),
+					.name = std::string(member.struct_member_name),
 					.offset = varOffset,
 					.size = varSize,
 				});

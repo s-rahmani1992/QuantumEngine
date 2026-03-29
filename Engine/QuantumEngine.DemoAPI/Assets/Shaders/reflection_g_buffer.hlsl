@@ -15,26 +15,33 @@ struct VS_OUTPUT
     float2 normPos : POSITION;
 };
 
-TRANSFORM_VAR_1(b0)
+OBJECT_TRANSFORM_VAR(b0)
 
-CAMERA_VAR_1(b1)
+CAMERA_VAR(b1)
 
-LIGHT_VAR_1(b2)
+LIGHT_VAR(b2)
 
-cbuffer MaterialProps : register(b3)
-{
+CONSTANT_VARIABLES_BEGIN
     float reflectivity;
     float ambient;
     float diffuse;
     float specular;
-};
+CONSTANT_VARIABLES_END(constantVars, b3)
 
-Texture2D<float4> _OutputTexture : register(t0);
-Texture2D<float4> _PositionTexture : register(t1);
-Texture2D<float4> _NormalTexture : register(t2);
+#define reflectivity constantVars.reflectivity
+#define ambient constantVars.ambient
+#define diffuse constantVars.diffuse
+#define specular constantVars.specular
 
-Texture2D mainTexture : register(t3);
-sampler mainSampler : register(s0);
+TEXTURE(_OutputTexture, float4, t0)
+
+TEXTURE(_PositionTexture, float4, t1)
+
+TEXTURE(_NormalTexture, float4, t2)
+
+TEXTURE(mainTexture, float4, t3)
+
+SAMPLER(mainSampler, s0);
 
 VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {

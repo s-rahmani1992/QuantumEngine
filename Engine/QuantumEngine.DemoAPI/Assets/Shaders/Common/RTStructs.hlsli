@@ -1,3 +1,5 @@
+#include "VariableMacros.hlsli"
+
 struct GeneralPayload
 {
     float3 color;
@@ -70,6 +72,40 @@ inline float3 Refract(float3 rayDirection, float3 normal, float refractionFactor
     else
         return normalize(refractionIndex * rayDirection + (refractionIndex * cosI - sqrt(1.0f - sinT2)) * normal);
 }
+
+#ifdef _VULKAN
+    #define RT_SCENE_VAR(x)  RaytracingAccelerationStructure _RTScene;
+#else
+    #define RT_SCENE_VAR(x)  RaytracingAccelerationStructure _RTScene : DX12_REGISTER_SPACE(x);
+#endif
+
+
+#ifdef _VULKAN
+#define RT_OUT_TEXTURE_VAR(x)    RWTexture2D<float4> _OutputTexture;
+#else
+#define RT_OUT_TEXTURE_VAR(x)    RWTexture2D<float4> _OutputTexture : DX12_REGISTER_SPACE(x);
+#endif
+
+
+#ifdef _VULKAN
+#define RT_OBJECT_INDEX_BUFFER_VAR(x) \
+    StructuredBuffer<uint> _indexBufferArray[]; \
+    static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
+#else
+#define RT_OBJECT_INDEX_BUFFER_VAR(x) \
+    StructuredBuffer<uint> _indexBuffer : DX12_REGISTER_SPACE(x);
+#endif
+
+
+#ifdef _VULKAN
+#define RT_OBJECT_VERTEX_BUFFER_VAR(x) \
+    StructuredBuffer<Vertex> _vertexBufferArray[]; \
+    static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
+#else
+#define RT_OBJECT_VERTEX_BUFFER_VAR(x) \
+    StructuredBuffer<Vertex> _vertexBuffer : DX12_REGISTER_SPACE(x);
+#endif
+
 
 #define RT_SCENE_VAR_1(t) \
 RaytracingAccelerationStructure _RTScene : register(t);

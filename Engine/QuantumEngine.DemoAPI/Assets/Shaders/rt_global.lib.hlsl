@@ -1,47 +1,21 @@
 #include "Common/TransformStructs.hlsli"
 #include "Common/RTStructs.hlsli"
 
-CAMERA_VAR_1(b0)
+CAMERA_VAR(b0)
 
-#ifdef _VULKAN
-
-[[vk::shader_record_ext]]
-cbuffer ColorProperties
-{
+CONSTANT_VARIABLES_BEGIN
     float4 missColor;
     float4 hitColor;
     uint _missIndex;
-};
+CONSTANT_VARIABLES_END(constantVars, b1)
+    
+#define missColor constantVars.missColor
+#define hitColor constantVars.hitColor
+#define _missIndex constantVars._missIndex
 
-#else
+RT_SCENE_VAR(t0)
 
-struct MaterialProperties
-{
-    float4 missColor;
-    float4 hitColor;
-    uint _missIndex;
-};
-
-cbuffer MaterialProps : register(b2)
-{
-    MaterialProperties props;
-};
-
-#define missColor props.missColor
-#define hitColor props.hitColor
-#define _missIndex props._missIndex
-
-#endif
-
-#ifdef _VULKAN
-[[vk::binding(3, 0)]]
-#endif
-RT_SCENE_VAR_1(t0)
-
-#ifdef _VULKAN
-[[vk::binding(4, 0)]]
-#endif
-RT_OUT_VAR_1(u0)
+RT_OUT_TEXTURE_VAR(u0)
 
 [shader("raygeneration")]
 void rayGen()

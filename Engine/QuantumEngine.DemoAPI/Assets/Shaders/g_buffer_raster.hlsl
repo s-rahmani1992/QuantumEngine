@@ -21,9 +21,9 @@ struct PSOutput
     uint mask : SV_Target2;
 };
 
-TRANSFORM_VAR_1(b0)
+OBJECT_TRANSFORM_VAR(b0)
 
-CAMERA_VAR_1(b1)
+CAMERA_VAR(b1)
 
 VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {

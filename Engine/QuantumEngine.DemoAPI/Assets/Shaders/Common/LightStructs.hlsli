@@ -1,3 +1,5 @@
+#include "VariableMacros.hlsli"
+
 struct Attenuation
 {
     float c0;
@@ -96,6 +98,16 @@ inline float3 PhongLight(LightData lightData, float3 camPosition, float3 positio
     
     return lightFactor;
 }
+
+#if defined(_VULKAN)
+    #define LIGHT_VAR(x)  cbuffer _LightData{ \
+        LightData lightData; \
+    };
+#else
+    #define LIGHT_VAR(x)  cbuffer _LightData : DX12_REGISTER_SPACE(x) {  \
+        LightData lightData; \
+    };
+#endif
 
 #define LIGHT_VAR_1(b) \
 cbuffer _LightData : register(b) \

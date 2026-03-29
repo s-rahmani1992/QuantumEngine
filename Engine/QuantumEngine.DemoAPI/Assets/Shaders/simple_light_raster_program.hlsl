@@ -16,61 +16,26 @@ struct VS_OUTPUT
     float3 worldPos : POSITION;
 };
 
+OBJECT_TRANSFORM_VAR(b0) 
 
-TRANSFORM_VAR_1(b0) 
+CAMERA_VAR(b1) 
 
-CAMERA_VAR_1(b1) 
+LIGHT_VAR(b2)
 
-LIGHT_VAR_1(b2)
-
-#ifdef _VULKAN
-struct MaterialProperties
-{
+CONSTANT_VARIABLES_BEGIN
     float ambient;
     float diffuse;
     float specular;
     float textureFactor;
-};
+CONSTANT_VARIABLES_END(constantVars, b3)
 
-[[vk::push_constant]]
-MaterialProperties MaterialProps;
+#define ambient constantVars.ambient
+#define diffuse constantVars.diffuse
+#define specular constantVars.specular
 
-#define ambient MaterialProps.ambient
-#define diffuse MaterialProps.diffuse
-#define specular MaterialProps.specular
-#define textureFactor MaterialProps.textureFactor
+TEXTURE(mainTexture, float4, t0)
 
-#else
-
-struct MaterialProperties
-{
-    float ambient;
-    float diffuse;
-    float specular;
-    float textureFactor;
-};
-
-cbuffer MaterialProps : register(b3)
-{
-    MaterialProperties props;
-};
-
-#define ambient props.ambient
-#define diffuse props.diffuse
-#define specular props.specular
-#define textureFactor props.textureFactor
-
-#endif
-
-#ifdef _VULKAN
-[[vk::binding(3, 0)]]
-#endif
-Texture2D mainTexture : register(t0);
-
-#ifdef _VULKAN
-[[vk::binding(4, 0)]]
-#endif
-sampler mainSampler : register(s0);
+SAMPLER(mainSampler, s0)
 
 VS_OUTPUT vs_main(VS_INPUT vertexIn)
 {

@@ -166,5 +166,8 @@
     <None Include="Assets\Shaders\Common\TransformStructs.hlsli">
       <Filter>Assets\Shaders\Common</Filter>
     </None>
+    <None Include="Assets\Shaders\Common\VariableMacros.hlsli">
+      <Filter>Assets\Shaders\Common</Filter>
+    </None>
   </ItemGroup>
 </Project>

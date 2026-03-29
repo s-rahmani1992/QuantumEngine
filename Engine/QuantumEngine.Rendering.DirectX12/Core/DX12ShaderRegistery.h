@@ -26,7 +26,7 @@ namespace QuantumEngine::Rendering::DX12 {
 	private:
 
 		ref<HLSLShader> CompileShaderStage(const DxcBuffer* sourceBuffer, DX12_Shader_Type shaderType, std::string& error);
-		bool CompileInternal(const DxcBuffer* sourceBuffer, ComPtr<IDxcBlob>& pshaderData, ComPtr<IUnknown>& reflection, std::string& error);
+		bool CompileInternal(const DxcBuffer* sourceBuffer, ComPtr<IDxcBlob>& pshaderData, ComPtr<IUnknown>& reflection, UInt32 argumentCount, std::string& error);
 	
 	private:
 		ComPtr<ID3D12Device10> m_device;
@@ -37,6 +37,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		IDxcIncludeHandler* m_includeHandler;
 		IDxcCompiler3* m_dxcCompiler;
 		std::vector<LPWSTR> m_compileArguments;
+		UInt32 m_minArguments;
 		const UInt32 m_mainIndex = 1;
 		const UInt32 m_targetIndex = 3;
 	};

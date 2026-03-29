@@ -26,7 +26,7 @@ namespace HLSL = QuantumEngine::Rendering::DX12::Rasterization;
 namespace Compute = QuantumEngine::Rendering::DX12::Compute;
 
 QuantumEngine::Rendering::DX12::DX12ShaderRegistery::DX12ShaderRegistery()
-	:m_compileArguments(10)
+	:m_minArguments(10), m_compileArguments(15)
 {
 	// Create compiler-related objects
 	DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
@@ -35,6 +35,7 @@ QuantumEngine::Rendering::DX12::DX12ShaderRegistery::DX12ShaderRegistery()
 
 	DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&m_dxcCompiler));
 
+	m_compileArguments.reserve(20);
 	// -E for the entry point (eg. 'main')
 	m_compileArguments[0] = (WCHAR*)L"-E";
 	m_compileArguments[1] = (WCHAR*)L"-Main";
@@ -51,6 +52,8 @@ QuantumEngine::Rendering::DX12::DX12ShaderRegistery::DX12ShaderRegistery()
 	m_compileArguments[7] = (WCHAR*)L"-Qstrip_reflect";
 	m_compileArguments[8] = (WCHAR*)DXC_ARG_WARNINGS_ARE_ERRORS; //-WX
 	m_compileArguments[9] = (WCHAR*)DXC_ARG_DEBUG; //-Zi
+	m_compileArguments[10] = (WCHAR*)L"-D";
+	m_compileArguments[11] = (WCHAR*)L"";
 }
 
 QuantumEngine::Rendering::DX12::DX12ShaderRegistery::~DX12ShaderRegistery()
@@ -65,23 +68,23 @@ void QuantumEngine::Rendering::DX12::DX12ShaderRegistery::Initialize(const ComPt
 	m_device = device;
 	std::wstring root = Platform::Application::GetExecutablePath();
 
-	/*std::string errorStr;
+	std::string errorStr;
 
 	auto gBufferProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_raster.hlsl", errorStr);
 
 	if(gBufferProgram != nullptr)
-		m_specialShaders.emplace("G_Buffer_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(gBufferProgram));*/
+		m_specialShaders.emplace("G_Buffer_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(gBufferProgram));
 	
-	/*auto reflectionRTLightProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", errorStr);
+	auto reflectionRTLightProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", errorStr);
 
 	if (reflectionRTLightProgram != nullptr)
-		m_specialShaders.emplace("G_Buffer_RT_Global_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(reflectionRTLightProgram));*/
+		m_specialShaders.emplace("G_Buffer_RT_Global_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(reflectionRTLightProgram));
 
-	/*auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
+	auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
 
 	if (computeProgram != nullptr) {
 		m_specialShaders.emplace("Bezier_Curve_Compute_Program", std::dynamic_pointer_cast<HLSLShaderProgram>(computeProgram));
-	}*/
+	}
 }
 
 ref<QuantumEngine::Rendering::DX12::HLSLShaderProgram> QuantumEngine::Rendering::DX12::DX12ShaderRegistery::GetShaderProgram(const std::string& name)
@@ -159,7 +162,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX1
 			target += properties["model"].as_string().c_str();
 			std::wstring wTarget = CharToString(target.c_str());
 			m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
-			
+			m_compileArguments[11] = (WCHAR*)L"_DX12_VERTEX_STAGE";
 			auto vertexShader = CompileShaderStage(&sourceBuffer, DX12::VERTEX_SHADER, stageError);
 			
 			if (vertexShader == nullptr) {
@@ -179,7 +182,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX1
 			target += properties["model"].as_string().c_str();
 			std::wstring wTarget = CharToString(target.c_str());
 			m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
-
+			m_compileArguments[11] = (WCHAR*)L"_DX12_GEOMETRY_STAGE";
 			auto geometryShader = CompileShaderStage(&sourceBuffer, DX12::GEOMETRY_SHADER, stageError);
 
 			if (geometryShader == nullptr) {
@@ -199,7 +202,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX1
 			target += properties["model"].as_string().c_str();
 			std::wstring wTarget = CharToString(target.c_str());
 			m_compileArguments[m_targetIndex] = (WCHAR*)(wTarget.c_str());
-
+			m_compileArguments[11] = (WCHAR*)L"_DX12_PIXEL_STAGE";
 			auto pixelShader = CompileShaderStage(&sourceBuffer, DX12::PIXEL_SHADER, stageError);
 
 			if (pixelShader == nullptr) {
@@ -235,7 +238,9 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX1
 		ComPtr<IDxcBlob> pshaderObjectData;
 		ComPtr<IUnknown> shaderRefl;
 
-		if (CompileInternal(&sourceBuffer, pshaderObjectData, shaderRefl, error) == false) {
+		UInt32 argCount = properties.contains("rayGeneration") ? m_minArguments : m_minArguments + 2;
+		m_compileArguments[11] = (WCHAR*)L"_DX12_RAY_TRACING_LOCAL";
+		if (CompileInternal(&sourceBuffer, pshaderObjectData, shaderRefl, argCount, error) == false) {
 			return nullptr;
 		}
 
@@ -256,7 +261,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::DX12::DX1
 		ComPtr<IDxcBlob> pshaderObjectData;
 		ComPtr<IUnknown> shaderRefl;
 		
-		if (CompileInternal(&sourceBuffer, pshaderObjectData, shaderRefl, error) == false) {
+		if (CompileInternal(&sourceBuffer, pshaderObjectData, shaderRefl, m_minArguments, error) == false) {
 			return nullptr;
 		}
 
@@ -289,7 +294,7 @@ ref<QuantumEngine::Rendering::DX12::HLSLShader> QuantumEngine::Rendering::DX12::
 	ComPtr<IDxcBlob> pshaderObjectData;
 	ComPtr<IUnknown> shaderRefl;
 
-	if (CompileInternal(sourceBuffer, pshaderObjectData, shaderRefl, error) == false) {
+	if (CompileInternal(sourceBuffer, pshaderObjectData, shaderRefl, m_minArguments + 2, error) == false) {
 		return nullptr;
 	}
 
@@ -298,11 +303,11 @@ ref<QuantumEngine::Rendering::DX12::HLSLShader> QuantumEngine::Rendering::DX12::
 	return std::make_shared<HLSLShader>((Byte*)pshaderObjectData->GetBufferPointer(), pshaderObjectData->GetBufferSize(), shaderType, pShaderReflection);
 }
 
-bool QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CompileInternal(const DxcBuffer* sourceBuffer, ComPtr<IDxcBlob>& pshaderData, ComPtr<IUnknown>& reflection, std::string& error)
+bool QuantumEngine::Rendering::DX12::DX12ShaderRegistery::CompileInternal(const DxcBuffer* sourceBuffer, ComPtr<IDxcBlob>& pshaderData, ComPtr<IUnknown>& reflection, UInt32 argumentCount, std::string& error)
 {
 	ComPtr<IDxcResult> compileResult;
 	HRESULT result;
-	result = m_dxcCompiler->Compile(sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_compileArguments.size(), m_includeHandler, IID_PPV_ARGS(&compileResult));
+	result = m_dxcCompiler->Compile(sourceBuffer, (LPCWSTR*)m_compileArguments.data(), argumentCount, m_includeHandler, IID_PPV_ARGS(&compileResult));
 
 	if (FAILED(result)) {
 		error = "Unknown Error when Beginning to compile";

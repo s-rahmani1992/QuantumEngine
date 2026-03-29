@@ -108,13 +108,13 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
         return nullptr;
 	}
 
-	/*std::wstring curveRasterPath = root + L"\\Assets\\Shaders\\curve_raster_program.hlsl";
+	std::wstring curveRasterPath = root + L"\\Assets\\Shaders\\curve_raster_program.hlsl";
     auto curveRasterProgram = shaderRegistery->CompileProgram(curveRasterPath, errorStr);
 
     if (curveRasterProgram == nullptr) {
         error = "Error in Compiling Shader At: \n" + WStringToString(curveRasterPath) + "Error: \n" + errorStr;
         return nullptr;
-    }*/
+    }
 
     std::wstring rtGlobalShaderPath = root + L"\\Assets\\Shaders\\rt_global.lib.hlsl";
 	auto globalRTProgram = shaderRegistery->CompileProgram(rtGlobalShaderPath, errorStr);
@@ -305,11 +305,11 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
     groundRTMaterial->SetValue("diffuse", 0.8f);
     groundRTMaterial->SetValue("specular", 0.4f);
 
-	/*auto curveMaterial = materialFactory->CreateMaterial(curveRasterProgram);
+	auto curveMaterial = materialFactory->CreateMaterial(curveRasterProgram);
     curveMaterial->SetValue("ambient", 0.1f);
     curveMaterial->SetValue("diffuse", 0.8f);
     curveMaterial->SetValue("specular", 0.4f);
-	curveMaterial->SetValue("color", Color(0.5f, 0.2f, 0.6f, 1.0f));*/
+	curveMaterial->SetValue("color", Color(0.5f, 0.2f, 0.6f, 1.0f));
 
 	////// Creating the entities
 
@@ -362,13 +362,13 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
     auto containerRTComponent2 = std::make_shared<Render::RayTracingComponent>(containerMesh, containerRTMaterial);
     auto containerEntity2 = std::make_shared<QuantumEngine::GameEntity>(containerTransform2, containerMeshRenderer2, containerRTComponent2);
 
-	//auto curveTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
-	//auto curveRenderer = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, -4.0f), Vector3(0.0f, 4.0f, 0.0f), Vector3(4.0f, 0.0f, 4.0f) }, 2.2f, 10);
-	//auto curveEntity = std::make_shared<QuantumEngine::GameEntity>(curveTransform, curveRenderer, nullptr);
- //   
- //   auto curveTransform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
- //   auto curveRenderer1 = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, 0.0f), Vector3(0.0f, 12.0f, 0.0f), Vector3(4.0f, 0.0f, 0.0f) }, 0.8f, 20);
- //   auto curveEntity1 = std::make_shared<QuantumEngine::GameEntity>(curveTransform1, curveRenderer1, nullptr);
+	auto curveTransform = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
+	auto curveRenderer = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, -4.0f), Vector3(0.0f, 4.0f, 0.0f), Vector3(4.0f, 0.0f, 4.0f) }, 2.2f, 10);
+	auto curveEntity = std::make_shared<QuantumEngine::GameEntity>(curveTransform, curveRenderer, nullptr);
+    
+    auto curveTransform1 = std::make_shared<Transform>(Vector3(0.0f, 0.0f, 0.0f), Vector3(1.0f), Vector3(0.0f, 1.0f, 0.0f), 0);
+    auto curveRenderer1 = std::make_shared<Render::SplineRenderer>(curveMaterial, std::vector<Vector3>{ Vector3(-4.0f, 0.0f, 0.0f), Vector3(0.0f, 12.0f, 0.0f), Vector3(4.0f, 0.0f, 0.0f) }, 0.8f, 20);
+    auto curveEntity1 = std::make_shared<QuantumEngine::GameEntity>(curveTransform1, curveRenderer1, nullptr);
 
     ////// Creating the lights
 
@@ -393,7 +393,7 @@ ref<Scene> SceneBuilder::BuildSimpleLightScene(const ref<Render::GPUAssetManager
         });
     
     auto frameLogger = std::make_shared<FrameRateLogger>();
-	//auto curveModifier = std::make_shared<CurveModifier>(curveRenderer, 2.0f);
+	auto curveModifier = std::make_shared<CurveModifier>(curveRenderer, 2.0f);
     ref<Scene> scene = std::make_shared<Scene>();
     scene->mainCamera = mainCamera;
     scene->lightData = lightData;
