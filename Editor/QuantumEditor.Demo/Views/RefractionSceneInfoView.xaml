@@ -66,12 +66,12 @@
                             </TextBlock>
                             <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
                     <Run Text="Render Method:" Foreground="Black"/>
-                    <Run Text="Hybrid" Foreground="{StaticResource Hybrid_Color}"/>
+                    <Run Text="Ray Tracing" Foreground="{StaticResource RayTracing_Color}"/>
                             </TextBlock>
-                            <TextBlock FontFamily="{StaticResource Global_Font}" 
-                               TextAlignment="Center" FontSize="30" Foreground="DarkSlateBlue"
-                               Margin="10"
-                               Text="Coming Soon"/>
+                            <Button Style="{StaticResource Run_Button_Style}"
+                            Click="OnRefractionRayTracingDX12">
+                                Run
+                            </Button>
                         </StackPanel>
                     </Border>
                     <Border Padding="10" Margin="10" BorderThickness="2" CornerRadius="10">
@@ -81,56 +81,16 @@
                         <StackPanel HorizontalAlignment="Center" Width="350">
                             <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
                     <Run Text="Graphics API:" Foreground="Black"/>
-                    <Run Text=" DirectX 12" Foreground="{StaticResource DX12_Color}"/>
+                    <Run Text=" Vulkan" Foreground="{StaticResource VK_Color}"/>
                             </TextBlock>
                             <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
                     <Run Text="Render Method:" Foreground="Black"/>
                     <Run Text="Ray Tracing" Foreground="{StaticResource RayTracing_Color}"/>
                             </TextBlock>
                             <Button Style="{StaticResource Run_Button_Style}"
-                        Click="OnRefractionRayTracingDX12">
+                            Click="OnRefractionRayTracingVK">
                                 Run
                             </Button>
-                        </StackPanel>
-
-                    </Border>
-                    <Border Padding="10" Margin="10" BorderThickness="2" CornerRadius="10">
-                        <Border.BorderBrush>
-                            <SolidColorBrush Color="DarkGoldenrod"/>
-                        </Border.BorderBrush>
-                        <StackPanel HorizontalAlignment="Center" Width="350">
-                            <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
-                    <Run Text="Graphics API:" Foreground="Black"/>
-                    <Run Text=" Vulkan" Foreground="{StaticResource VK_Color}"/>
-                            </TextBlock>
-                            <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
-                    <Run Text="Render Method:" Foreground="Black"/>
-                    <Run Text="Hybrid" Foreground="{StaticResource Hybrid_Color}"/>
-                            </TextBlock>
-                            <TextBlock FontFamily="{StaticResource Global_Font}" 
-                               TextAlignment="Center" FontSize="30" Foreground="DarkSlateBlue"
-                               Margin="10"
-                               Text="Coming Soon"/>
-                        </StackPanel>
-
-                    </Border>
-                    <Border Padding="10" Margin="10" BorderThickness="2" CornerRadius="10">
-                        <Border.BorderBrush>
-                            <SolidColorBrush Color="DarkGoldenrod"/>
-                        </Border.BorderBrush>
-                        <StackPanel HorizontalAlignment="Center" Width="350">
-                            <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
-                    <Run Text="Graphics API:" Foreground="Black"/>
-                    <Run Text=" Vulkan" Foreground="{StaticResource VK_Color}"/>
-                            </TextBlock>
-                            <TextBlock FontSize="25" TextAlignment="Center" Margin="5 5" FontFamily="{StaticResource Global_Font}">
-                    <Run Text="Render Method:" Foreground="Black"/>
-                    <Run Text="Ray Tracing" Foreground="{StaticResource RayTracing_Color}"/>
-                            </TextBlock>
-                            <TextBlock FontFamily="{StaticResource Global_Font}" 
-                               TextAlignment="Center" FontSize="30" Foreground="DarkSlateBlue"
-                               Margin="10"
-                               Text="Coming Soon"/>
                         </StackPanel>
                     </Border>
                 </ItemsControl>

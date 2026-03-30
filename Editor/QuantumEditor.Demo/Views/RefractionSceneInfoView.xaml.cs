@@ -29,7 +29,13 @@ namespace QuantumEditor.Demo.Views
         private void OnRefractionRayTracingDX12(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper interop = new(Window.GetWindow(this));
-            DemoNativeAPI.RunRefractionSceneRayTracingDX12(interop.Handle);
+            DemoNativeAPI.RunRefractionScene(interop.Handle, GraphicAPI.DIRECTX_12);
+        }
+
+        private void OnRefractionRayTracingVK(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(Window.GetWindow(this));
+            DemoNativeAPI.RunRefractionScene(interop.Handle, GraphicAPI.VULKAN);
         }
     }
 }

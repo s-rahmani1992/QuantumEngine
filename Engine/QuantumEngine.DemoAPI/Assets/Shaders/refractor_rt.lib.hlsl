@@ -1,19 +1,23 @@
 #include "Common/TransformStructs.hlsli"
 #include "Common/RTStructs.hlsli"
 
-TRANSFORM_VAR_2(b0, space1)
+OBJECT_TRANSFORM_VAR(b0)
 
-RT_PROP_VAR_2(b1, space1)
-
-cbuffer MaterialProps : register(b2, space1)
-{
+CONSTANT_VARIABLES_BEGIN
     float refractionFactor;
     uint maxRecursion;
-};
+    uint _missIndex;
+CONSTANT_VARIABLES_END(constantVars, b1)
 
-RT_SCENE_VAR_2(t0, space1);
-RT_INDEX_BUFFER_VAR_2(t1, space1)
-RT_VERTEX_BUFFER_VAR_2(t2, space1)
+#define refractionFactor constantVars.refractionFactor
+#define maxRecursion constantVars.maxRecursion
+#define _missIndex constantVars._missIndex
+
+RT_SCENE_VAR(t0)
+
+RT_OBJECT_INDEX_BUFFER_VAR(t1)
+
+RT_OBJECT_VERTEX_BUFFER_VAR(t2)
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

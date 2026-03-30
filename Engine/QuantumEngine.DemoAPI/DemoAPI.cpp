@@ -177,13 +177,29 @@ bool Run_Shadow_Scene(HWND parentWindow, Graphics_API graphicApi)
 	return true;
 }
 
-bool Run_Refraction_Scene_RayTracing_DX12(HWND parentWindow)
+bool Run_Refraction_Scene(HWND parentWindow, Graphics_API graphicApi)
 {
 	OS::Application::CreateApplication(GetModuleHandleA(nullptr));
-	auto gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
-	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Refraction Scene ---- Ray Tracing ---- DirectX 12", .parentWinHandle = parentWindow });
 
+	ref<Render::GPUDeviceManager> gpuDevice;
+	std::wstring graphicAPIStr;
+
+	switch (graphicApi) {
+	case DIRECTX_12:
+		gpuDevice = OS::Application::InitializeGraphicDevice<DX12::DX12GPUDeviceManager>();
+		graphicAPIStr = L"DirectX 12";
+		break;
+	case VULKAN:
+		gpuDevice = OS::Application::InitializeGraphicDevice<VK::VulkanDeviceManager>();
+		graphicAPIStr = L"Vulkan";
+		break;
+	default:
+		return false;
+	}
+
+	auto win = OS::Application::CreateGraphicWindow({ .width = 1280, .height = 720, .title = L"Refraction Scene ---- Ray Tracing ---- " + graphicAPIStr, .parentWinHandle = parentWindow });
 	auto gpuContext = gpuDevice->CreateRayTracingContextForWindows(win);
+
 	auto assetManager = gpuDevice->CreateAssetManager();
 	gpuContext->RegisterAssetManager(assetManager);
 	auto shaderRegistery = gpuDevice->CreateShaderRegistery();
