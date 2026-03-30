@@ -81,92 +81,25 @@ inline float3 Refract(float3 rayDirection, float3 normal, float refractionFactor
 
 
 #ifdef _VULKAN
-#define RT_OUT_TEXTURE_VAR(x)    RWTexture2D<float4> _OutputTexture;
+    #define RT_OUT_TEXTURE_VAR(x)    RWTexture2D<float4> _OutputTexture;
 #else
-#define RT_OUT_TEXTURE_VAR(x)    RWTexture2D<float4> _OutputTexture : DX12_REGISTER_SPACE(x);
+    #define RT_OUT_TEXTURE_VAR(x)    RWTexture2D<float4> _OutputTexture : DX12_REGISTER_SPACE(x);
 #endif
 
 
 #ifdef _VULKAN
-#define RT_OBJECT_INDEX_BUFFER_VAR(x) \
-    StructuredBuffer<uint> _indexBufferArray[]; \
-    static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
+    #define RT_OBJECT_INDEX_BUFFER_VAR(x) \
+        StructuredBuffer<uint> _indexBufferArray[]; \
+        static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
 #else
-#define RT_OBJECT_INDEX_BUFFER_VAR(x) \
-    StructuredBuffer<uint> _indexBuffer : DX12_REGISTER_SPACE(x);
+    #define RT_OBJECT_INDEX_BUFFER_VAR(x)  StructuredBuffer<uint> _indexBuffer : DX12_REGISTER_SPACE(x);
 #endif
 
 
 #ifdef _VULKAN
-#define RT_OBJECT_VERTEX_BUFFER_VAR(x) \
-    StructuredBuffer<Vertex> _vertexBufferArray[]; \
-    static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
+    #define RT_OBJECT_VERTEX_BUFFER_VAR(x) \
+        StructuredBuffer<Vertex> _vertexBufferArray[]; \
+        static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
 #else
-#define RT_OBJECT_VERTEX_BUFFER_VAR(x) \
-    StructuredBuffer<Vertex> _vertexBuffer : DX12_REGISTER_SPACE(x);
-#endif
-
-
-#define RT_SCENE_VAR_1(t) \
-RaytracingAccelerationStructure _RTScene : register(t);
-
-#define RT_SCENE_VAR_2(t, space) \
-RaytracingAccelerationStructure _RTScene : register(t, space);
-
-#define RT_PROP_VAR_1(b) \
-cbuffer _RTProperties : register(b) \
-{ \
-    uint _missIndex; \
-};
-
-#define RT_PROP_VAR_2(b, space) \
-cbuffer _RTProperties : register(b, space) \
-{ \
-    uint _missIndex; \
-};
-
-#define RT_OUT_VAR_1(u) \
-RWTexture2D<float4> _OutputTexture : register(u);
-
-#define RT_OUT_VAR_2(u, space) \
-RWTexture2D<float4> _OutputTexture : register(u, space);
-
-
-#ifdef _VULKAN
-#define RT_INDEX_BUFFER_VAR_1(t) \
-    StructuredBuffer<uint> _indexBufferArray[]; \
-    static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
-#else
-#define RT_INDEX_BUFFER_VAR_1(t) \
-    StructuredBuffer<uint> _indexBuffer : register(t);
-#endif
-
-
-#ifdef _VULKAN
-#define RT_INDEX_BUFFER_VAR_2(t, space) \
-    StructuredBuffer<uint> _indexBufferArray[]; \
-    static const StructuredBuffer<uint> _indexBuffer = _indexBufferArray[InstanceIndex()];
-#else
-#define RT_INDEX_BUFFER_VAR_2(t, space) \
-    StructuredBuffer<uint> _indexBuffer : register(t, space);
-#endif
-
-
-#ifdef _VULKAN
-#define RT_VERTEX_BUFFER_VAR_1(t) \
-    StructuredBuffer<Vertex> _vertexBufferArray[]; \
-    static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
-#else
-#define RT_VERTEX_BUFFER_VAR_1(t) \
-    StructuredBuffer<Vertex> _vertexBuffer : register(t);
-#endif
-
-
-#ifdef _VULKAN
-#define RT_VERTEX_BUFFER_VAR_2(t, space) \
-    StructuredBuffer<Vertex> _vertexBufferArray[]; \
-    static const StructuredBuffer<Vertex> _vertexBuffer = _vertexBufferArray[InstanceIndex()];
-#else
-#define RT_VERTEX_BUFFER_VAR_2(t, space) \
-    StructuredBuffer<Vertex> _vertexBuffer : register(t, space);
+    #define RT_OBJECT_VERTEX_BUFFER_VAR(x)  StructuredBuffer<Vertex> _vertexBuffer : DX12_REGISTER_SPACE(x);
 #endif

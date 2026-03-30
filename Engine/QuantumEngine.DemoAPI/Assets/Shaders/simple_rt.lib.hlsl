@@ -2,16 +2,17 @@
 #include "Common/LightStructs.hlsli"
 #include "Common/RTStructs.hlsli"
 
-TRANSFORM_VAR_2(b0, space1)
+OBJECT_TRANSFORM_VAR(b0)
 
-CAMERA_VAR_2(b1, space1)
+CAMERA_VAR(b1)
 
-Texture2D mainTexture : register(t0, space1);
-sampler mainSampler : register(s0, space1);
+TEXTURE(mainTexture, float4, t0)
 
-RT_INDEX_BUFFER_VAR_2(t1, space1)
+SAMPLER(mainSampler, s0)
 
-RT_VERTEX_BUFFER_VAR_2(t2, space1)
+RT_OBJECT_INDEX_BUFFER_VAR(t1)
+
+RT_OBJECT_VERTEX_BUFFER_VAR(t2)
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

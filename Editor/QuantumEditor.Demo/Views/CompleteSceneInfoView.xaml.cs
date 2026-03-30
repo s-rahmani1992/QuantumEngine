@@ -29,7 +29,13 @@ namespace QuantumEditor.Demo.Views
         private void OnCompleteRayTracingDX12(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper interop = new(Window.GetWindow(this));
-            DemoNativeAPI.RunCompleteSceneRayTracingDX12(interop.Handle);
+            DemoNativeAPI.RunCompleteScene(interop.Handle, GraphicAPI.DIRECTX_12);
+        }
+
+        private void OnCompleteRayTracingVK(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(Window.GetWindow(this));
+            DemoNativeAPI.RunCompleteScene(interop.Handle, GraphicAPI.VULKAN);
         }
     }
 }

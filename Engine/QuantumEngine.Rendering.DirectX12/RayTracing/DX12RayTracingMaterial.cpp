@@ -17,7 +17,7 @@ QuantumEngine::Rendering::DX12::RayTracing::DX12RayTracingMaterial::DX12RayTraci
 	auto valueFields = material->GetValueFields();
 	auto& resourceVariableList = reflectionData->GetResourceVariables();
 	m_heapValues = std::vector<HeapData>(resourceVariableList.size());
-	m_constantRegisterValues = std::vector<constantBufferData>(rootConstantBuffer.typeDesc.Members);
+	m_constantRegisterValues = std::vector<constantBufferData>(rootConstantBuffer.blocks.size() > 0 ? rootConstantBuffer.typeDesc.Members : 0);
 	
 	UInt32 offset = 0;
 	UInt32 textureFieldIndex = 0;

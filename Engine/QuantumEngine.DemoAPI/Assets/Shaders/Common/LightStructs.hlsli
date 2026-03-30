@@ -108,15 +108,3 @@ inline float3 PhongLight(LightData lightData, float3 camPosition, float3 positio
         LightData lightData; \
     };
 #endif
-
-#define LIGHT_VAR_1(b) \
-cbuffer _LightData : register(b) \
-{ \
-    LightData lightData; \
-};
-
-#define LIGHT_VAR_2(b, space) \
-cbuffer _LightData : register(b, space) \
-{ \
-    LightData lightData; \
-};
