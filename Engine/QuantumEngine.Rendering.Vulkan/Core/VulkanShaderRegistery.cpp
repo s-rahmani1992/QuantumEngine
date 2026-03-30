@@ -19,7 +19,7 @@
 using namespace Microsoft::WRL;
 
 QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::VulkanShaderRegistery(VkDevice device)
-	: m_compileArguments(12), m_device(device)
+	: m_compileArguments(16), m_device(device)
 {
 	// Create compiler-related objects
 	DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&m_utils));
@@ -46,6 +46,10 @@ QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::VulkanShaderRegistery(V
 	m_compileArguments[9] = (WCHAR*)L"-fspv-target-env=vulkan1.3";
 	m_compileArguments[10] = (WCHAR*)L"-O3";
 	m_compileArguments[11] = (WCHAR*)L"-fvk-use-dx-layout";
+	m_compileArguments[12] = (WCHAR*)L"-D";
+	m_compileArguments[13] = (WCHAR*)L"_VK_RAY_TRACING";
+	m_compileArguments[14] = (WCHAR*)L"-D";
+	m_compileArguments[15] = (WCHAR*)L"_VK_RAY_TRACING_LOCAL";
 }
 
 QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::~VulkanShaderRegistery()
@@ -182,7 +186,8 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 
 		ComPtr<IDxcResult> compileResult;
 		HRESULT result;
-		result = m_dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_compileArguments.size(), m_includeHandler, IID_PPV_ARGS(&compileResult));
+		UInt32 argumentCounts = properties.contains("rayGeneration") ? m_minArguments + 2 : m_minArguments + 4;
+		result = m_dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)m_compileArguments.data(), argumentCounts, m_includeHandler, IID_PPV_ARGS(&compileResult));
 
 		if (FAILED(result)) {
 			error = "Unknown Error when Beginning to compile";
@@ -227,7 +232,7 @@ ref<QuantumEngine::Rendering::ShaderProgram> QuantumEngine::Rendering::Vulkan::V
 
 		ComPtr<IDxcResult> compileResult;
 		HRESULT result;
-		result = m_dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_compileArguments.size(), m_includeHandler, IID_PPV_ARGS(&compileResult));
+		result = m_dxcCompiler->Compile(&sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_minArguments, m_includeHandler, IID_PPV_ARGS(&compileResult));
 
 		if (FAILED(result)) {
 			error = "Unknown Error when Beginning to compile";
@@ -292,7 +297,7 @@ ref<QuantumEngine::Rendering::Vulkan::SPIRVShader> QuantumEngine::Rendering::Vul
 
 	ComPtr<IDxcResult> compileResult;
 	HRESULT result;
-	result = m_dxcCompiler->Compile(sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_compileArguments.size(), m_includeHandler, IID_PPV_ARGS(&compileResult));
+	result = m_dxcCompiler->Compile(sourceBuffer, (LPCWSTR*)m_compileArguments.data(), m_minArguments, m_includeHandler, IID_PPV_ARGS(&compileResult));
 
 	if (FAILED(result)) {
 		error = "Unknown Error when Beginning to compile";

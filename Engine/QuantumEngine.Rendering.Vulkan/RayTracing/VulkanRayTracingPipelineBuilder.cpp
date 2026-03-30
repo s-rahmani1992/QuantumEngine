@@ -131,17 +131,17 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 		groupIndex++;
 	}
 
-	for (auto& programPair : pipelineResult.programPipelineBlueprintMap) {
+	for (auto& [program, shaderPipelineData] : pipelineResult.programPipelineBlueprintMap) {
 		hitGroup.anyHitShader = hitGroup.closestHitShader = hitGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 
-		auto localStages = programPair.second.variant->GetStages();
+		auto localStages = shaderPipelineData.variant->GetStages();
 		stages.insert(stages.end(), localStages.begin(), localStages.end());
 
 		for (auto& stage : localStages) {
 			if (stage.stage == VK_SHADER_STAGE_MISS_BIT_KHR) {
 				missOrGenGroup.generalShader = stageIndex;
 				groups.push_back(missOrGenGroup);
-				programPair.second.missIndex = groupIndex;
+				shaderPipelineData.missIndex = groupIndex;
 				groupIndex++;
 				stageIndex++;
 				continue;
@@ -171,7 +171,8 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 			|| hitGroup.anyHitShader != VK_SHADER_UNUSED_KHR)
 		{
 			groups.push_back(hitGroup);
-			programPair.second.hitGroupIndex = groupIndex;
+			shaderPipelineData.hitGroupIndex = groupIndex;
+			groupIndex++;
 		}
 	}
 
@@ -337,12 +338,12 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineBuild
 		copyToEntry(globalRTMaterial, dst + hitOffset + hitEntrySize * sbtResult.globalEntryIndex.hitEntryIndex, pipelineData.globalProgramPipelineBlueprint.hitGroupIndex, sbtResult.globalEntryIndex.missEntryIndex);
 	}
 
-	for (auto& matPair : sbtResult.materialSBTBlueprintMap) {
-		if (matPair.second.hitEntryIndex == VK_SHADER_UNUSED_KHR)
+	for (auto& [material, matSBTData] : sbtResult.materialSBTBlueprintMap) {
+		if (matSBTData.hitEntryIndex == VK_SHADER_UNUSED_KHR)
 			continue;
 
-		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(matPair.first->GetProgram());
-		copyToEntry(matPair.first, dst + hitOffset + hitEntrySize * matPair.second.hitEntryIndex, pipelineData.programPipelineBlueprintMap.at(localProgram).hitGroupIndex, matPair.second.missEntryIndex);
+		auto localProgram = std::dynamic_pointer_cast<SPIRVRayTracingProgram>(material->GetProgram());
+		copyToEntry(material, dst + hitOffset + hitEntrySize * matSBTData.hitEntryIndex, pipelineData.programPipelineBlueprintMap.at(localProgram).hitGroupIndex, matSBTData.missEntryIndex);
 	}
 
 	vkUnmapMemory(device,sbtResult.sbtMemory);

@@ -221,7 +221,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		std::memcpy(&blasInstance.transform, &m, 12 * sizeof(Float));
 		blasInstance.instanceCustomIndex = m_resourceMaps[pipelineResult.programPipelineBlueprintMap[program].variant].materialIndexMap[rtComponent->GetRTMaterial()].textureArrayIndex;
 		blasInstance.mask = 0xFF;
-		blasInstance.instanceShaderBindingTableRecordOffset = sbtBuildResult.materialSBTBlueprintMap[entityData.gameEntity->GetRayTracingComponent()->GetRTMaterial()].hitEntryIndex;
+		blasInstance.instanceShaderBindingTableRecordOffset = sbtBuildResult.materialSBTBlueprintMap[rtComponent->GetRTMaterial()].hitEntryIndex;
 		blasInstance.flags = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 		blasInstance.accelerationStructureReference = blas->GetBLASAddress();
 	}
@@ -318,28 +318,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 	// Material Descriptors
 	auto& descriptors = m_reflection.GetDescriptors();
-	auto textureFields = rtMaterial->GetTextureFields();
-	UInt32 fieldIndex = 0;
-
-	for (auto& descriptor : descriptors) {
-		if (descriptor.name[0] == '_')
-			continue;
-
-		m_descriptorData.push_back(DescriptorData{
-			.setIndex = descriptor.data.set,
-			.binding = descriptor.data.binding,
-			.descriptorType = descriptor.descriptorType,
-			});
-
-		auto matIt = textureFields->find(descriptor.name);
-
-		if (matIt != textureFields->end())
-			(*matIt).second.fieldIndex = fieldIndex;
-
-		fieldIndex++;
-	}
-
-
+	
 	std::vector<VkDescriptorPoolSize> poolSizes;
 	poolSizes.reserve(20);
 	UInt32 setcount = m_reflection.GetDescriptorLayoutCount();
@@ -378,7 +357,6 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		return false;
 
 	m_descriptorSets.resize(m_descriptorLayouts.size());
-	m_descriptorData.resize(m_descriptorLayouts.size());
 
 	VkDescriptorSetAllocateInfo descSetAlloc{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,

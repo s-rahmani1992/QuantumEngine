@@ -35,5 +35,6 @@ namespace QuantumEngine::Rendering::Vulkan {
 		std::vector<LPWSTR> m_compileArguments;
 		const UInt32 m_mainIndex = 1;
 		const UInt32 m_targetIndex = 3;
+		const UInt32 m_minArguments = 12;
 	};
 }

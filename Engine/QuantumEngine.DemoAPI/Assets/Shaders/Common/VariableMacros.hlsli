@@ -19,7 +19,7 @@
         };
     #else
         #define CONSTANT_VARIABLES_END(propName, x) }; \
-        [[vk::push_constants]]    \
+        [[vk::push_constant]]    \
         MaterialConstantProperties propName;
     #endif
 #else
@@ -33,7 +33,7 @@
 #ifdef _VULKAN
     #ifdef _VK_RAY_TRACING_LOCAL
         #define TEXTURE(texName, type, x)   Texture2D<type> texName##Array[];  \
-        #define texName texName##Array[InstanceID()]
+        static Texture2D<type> texName = texName##Array[InstanceID()];
     #else
         #define TEXTURE(texName, type, x)   Texture2D<type> texName;
     #endif

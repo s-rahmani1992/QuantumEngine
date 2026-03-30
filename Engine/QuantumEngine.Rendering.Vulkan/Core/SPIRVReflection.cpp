@@ -197,13 +197,15 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 		vkCreateDescriptorSetLayout(device, &descriptorCreateInfo, nullptr, descriptorSetLayout + i);
 	}
 
+	UInt32 pcCount = m_pushConstant.blocks.size() == 0 ? 0 : 1;
+
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{
 		.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
 		.pNext = nullptr,
 		.flags = 0,
 		.setLayoutCount = (UInt32)descriptorLayoutBindings.size(),
 		.pSetLayouts = descriptorSetLayout,
-		.pushConstantRangeCount = (UInt32)m_pushConstant.blocks.size(),
+		.pushConstantRangeCount = pcCount,
 		.pPushConstantRanges = m_pushConstant.blocks.size() == 0 ? nullptr : pushConstantRanges.data(),
 	};
 

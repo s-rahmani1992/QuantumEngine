@@ -100,7 +100,6 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VkPipeline m_rtPipeline;
 
 		std::vector<VkDescriptorSet> m_descriptorSets;		
-		std::vector<DescriptorData> m_descriptorData;
 
 		VkImage m_outputImage;
 		VkDeviceMemory m_outputImageMemory;
