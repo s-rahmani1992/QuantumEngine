@@ -17,7 +17,7 @@ DEMO_API bool Run_Simple_Scene(HWND parentWindow, Graphics_API graphicApi, Rende
 
 DEMO_API bool Run_Reflection_Scene(HWND parentWindow, Graphics_API graphicApi, RenderMode renderMode);
 
-DEMO_API bool Run_Shadow_Scene_RayTracing_DX12(HWND parentWindow);
+DEMO_API bool Run_Shadow_Scene(HWND parentWindow, Graphics_API graphicApi);
 
 DEMO_API bool Run_Refraction_Scene_RayTracing_DX12(HWND parentWindow);
 

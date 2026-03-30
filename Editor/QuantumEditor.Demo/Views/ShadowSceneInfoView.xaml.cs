@@ -17,7 +17,13 @@ namespace QuantumEditor.Demo.Views
         private void OnShadowRayTracingDX12(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper interop = new(Window.GetWindow(this));
-            DemoNativeAPI.RunShadowSceneRayTracingDX12(interop.Handle);
+            DemoNativeAPI.RunShadowScene(interop.Handle, GraphicAPI.DIRECTX_12);
+        }
+
+        private void OnShadowRayTracingVK(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(Window.GetWindow(this));
+            DemoNativeAPI.RunShadowScene(interop.Handle, GraphicAPI.VULKAN);
         }
     }
 }

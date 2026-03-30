@@ -2,30 +2,35 @@
 #include "Common/TransformStructs.hlsli"
 #include "Common/LightStructs.hlsli"
 
-cbuffer MissProps : register(b0, space1)
-{
+CONSTANT_VARIABLES_BEGIN
     uint castShadow;
     float ambient;
     float diffuse;
     float specular;
-};
+    uint _missIndex;
+CONSTANT_VARIABLES_END(constantVars, b0)
 
-TRANSFORM_VAR_2(b1, space1)
+#define castShadow constantVars.castShadow
+#define ambient constantVars.ambient
+#define diffuse constantVars.diffuse
+#define specular constantVars.specular
+#define _missIndex constantVars._missIndex
 
-CAMERA_VAR_2(b2, space1)
+OBJECT_TRANSFORM_VAR(b1)
 
-LIGHT_VAR_2(b3, space1)
+CAMERA_VAR(b2)
 
-RT_PROP_VAR_2(b4, space1)
+LIGHT_VAR(b3)
 
-RT_SCENE_VAR_2(t0, space1);
+RT_SCENE_VAR(t0);
 
-RT_INDEX_BUFFER_VAR_2(t1, space1)
+RT_OBJECT_INDEX_BUFFER_VAR(t1)
 
-RT_VERTEX_BUFFER_VAR_2(t2, space1)
+RT_OBJECT_VERTEX_BUFFER_VAR(t2)
 
-Texture2D mainTexture : register(t3, space1);
-sampler mainSampler : register(s0, space1);
+TEXTURE(mainTexture, float4, t3)
+
+SAMPLER(mainSampler, s0)
 
 [shader("closesthit")]
 void chs(inout GeneralPayload payload, in BuiltInTriangleIntersectionAttributes attribs)

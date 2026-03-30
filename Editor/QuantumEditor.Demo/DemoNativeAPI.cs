@@ -24,8 +24,8 @@ namespace QuantumEditor.Demo
         public static extern bool RunReflectionScene(IntPtr handle, GraphicAPI graphicAPI, RenderMode renderMode);
 
        
-        [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Shadow_Scene_RayTracing_DX12")]
-        public static extern bool RunShadowSceneRayTracingDX12(IntPtr handle);
+        [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Shadow_Scene")]
+        public static extern bool RunShadowScene(IntPtr handle, GraphicAPI graphicAPI);
 
         [DllImport("QuantumEngine.DemoAPI.dll", EntryPoint = "Run_Refraction_Scene_RayTracing_DX12")]
         public static extern bool RunRefractionSceneRayTracingDX12(IntPtr handle);
