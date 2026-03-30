@@ -17,13 +17,19 @@ namespace QuantumEditor.Demo.Views
         private void OnReflectionHybridDX12(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper interop = new(Window.GetWindow(this));
-            DemoNativeAPI.RunReflectionSceneHybridDX12(interop.Handle);
+            DemoNativeAPI.RunReflectionScene(interop.Handle, GraphicAPI.DIRECTX_12, RenderMode.HYBRID);
         }
 
         private void OnReflectionRayTracingDX12(object sender, RoutedEventArgs e)
         {
             WindowInteropHelper interop = new(Window.GetWindow(this));
-            DemoNativeAPI.RunReflectionSceneRayTracingDX12(interop.Handle);
+            DemoNativeAPI.RunReflectionScene(interop.Handle, GraphicAPI.DIRECTX_12, RenderMode.RAY_TRACING);
+        }
+
+        private void OnReflectionRayTracingVulkan(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(Window.GetWindow(this));
+            DemoNativeAPI.RunReflectionScene(interop.Handle, GraphicAPI.VULKAN, RenderMode.RAY_TRACING);
         }
     }
 }
