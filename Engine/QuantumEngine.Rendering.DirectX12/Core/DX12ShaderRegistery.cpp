@@ -15,7 +15,7 @@
 #include <dxcapi.h>
 
 #include <boost/uuid/string_generator.hpp>
-#include <boost/json/src.hpp>
+#include <boost/json.hpp>
 
 #define RASTERIZATION "Rasterization"
 #define RAY_TRACING "RayTracing"

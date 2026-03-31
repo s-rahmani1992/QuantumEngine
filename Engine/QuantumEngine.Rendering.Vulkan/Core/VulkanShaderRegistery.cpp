@@ -11,7 +11,7 @@
 #include "Compute/SPIRVComputeProgram.h"
 
 #include <boost/uuid/string_generator.hpp>
-#include <boost/json/src.hpp>
+#include <boost/json.hpp>
 
 #include "StringUtilities.h"
 #include "Platform/Application.h"

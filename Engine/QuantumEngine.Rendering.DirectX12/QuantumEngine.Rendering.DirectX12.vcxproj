@@ -89,6 +89,9 @@
     <PostBuildEvent>
       <Command>XCOPY "$(ProjectDir)ExternalDLLs\DXC\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I</Command>
     </PostBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Engine\QuantumEngine.Core\ExternalPackages\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -113,6 +116,9 @@
     <PostBuildEvent>
       <Command>XCOPY "$(ProjectDir)ExternalDLLs\DXC\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I</Command>
     </PostBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Engine\QuantumEngine.Core\ExternalPackages\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -133,6 +139,9 @@
     <PostBuildEvent>
       <Command>XCOPY "$(ProjectDir)ExternalDLLs\DXC\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I</Command>
     </PostBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Engine\QuantumEngine.Core\ExternalPackages\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -157,6 +166,9 @@
     <PostBuildEvent>
       <Command>XCOPY "$(ProjectDir)ExternalDLLs\DXC\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I</Command>
     </PostBuildEvent>
+    <Lib>
+      <AdditionalLibraryDirectories>$(SolutionDir)Engine\QuantumEngine.Core\ExternalPackages\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Compute\HLSLComputeProgram.h" />
@@ -234,9 +246,8 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-
   <Target Name="AfterBuild" AfterTargets="Build">
     <Message Text="Running AfterBuild for $(ProjectName)" Importance="high" />
-    <Exec Command='XCOPY "$(ProjectDir)ExternalDLLs\DXC\*" "$(SolutionDir)Build\$(Configuration)" /E /Y /I' />
+    <Exec Command="XCOPY &quot;$(ProjectDir)ExternalDLLs\DXC\*&quot; &quot;$(SolutionDir)Build\$(Configuration)&quot; /E /Y /I" />
   </Target>
 </Project>
