@@ -99,6 +99,7 @@ void QuantumEngine::Platform::Application::Release()
 {
     EnableWindow(m_instance.hostWindow, TRUE);
     SetForegroundWindow(m_instance.hostWindow);
+    m_instance.m_gpu_device = nullptr;
     UnregisterClass((LPCTSTR)m_instance.winClass, m_instance.m_app_instance);
 }
 

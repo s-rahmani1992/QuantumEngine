@@ -24,7 +24,6 @@ QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTr
 	m_reflection.AddShaderReflection(&m_reflectionModule);
 
 	m_reflection.Initializes();
-	//InitializeSampler();
 
 	UInt32 inputCount;
 
@@ -85,22 +84,10 @@ QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::SPIRVRayTr
 				break;
 		}
 	}
-
-	//m_descriptorSetLayout.resize(m_reflection.GetDescriptorLayoutCount());
-	//m_reflection.CreatePipelineLayout(m_device, shaderStageFlags, m_sampler, &m_pipelineLayout, m_descriptorSetLayout.data());
-
-
-	int h = 0;
 }
 
 QuantumEngine::Rendering::Vulkan::RayTracing::SPIRVRayTracingProgram::~SPIRVRayTracingProgram()
 {
-	vkDestroySampler(m_device, m_sampler, nullptr);
-	vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
-
-	for (auto& descriptorLayout : m_descriptorSetLayout)
-		vkDestroyDescriptorSetLayout(m_device, descriptorLayout, nullptr);
-
 	vkDestroyShaderModule(m_device, m_rtModule, nullptr);
 
 	delete[] m_bytecode;
