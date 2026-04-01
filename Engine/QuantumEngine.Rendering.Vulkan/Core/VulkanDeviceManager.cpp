@@ -306,6 +306,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL QuantumEngine::Rendering::Vulkan::VulkanDeviceMan
 		std::string message = "[VULKAN ";
 		message += (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) ? "ERROR] --> " : "WARNING] --> ";
 		message += pCallbackData->pMessage;
+		message += '\n';
 		OutputDebugStringA(message.c_str());
 	}
 	

@@ -284,6 +284,12 @@ void QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::Initialize()
 
 	std::string errorStr;
 
+	auto gBufferProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_raster.hlsl", errorStr);
+
+	if (gBufferProgram != nullptr) {
+		m_specialPrograms.emplace("G_Buffer_Program", std::dynamic_pointer_cast<SPIRVShaderProgram>(gBufferProgram));
+	}
+
 	auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
 
 	if (computeProgram != nullptr) {

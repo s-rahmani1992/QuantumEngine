@@ -21,9 +21,8 @@ struct CameraData
         #define OBJECT_TRANSFORM_VAR(x)    StructuredBuffer<TransformData> _ObjectTransformDataArray;
         #define transformData _ObjectTransformDataArray[InstanceIndex()]
     #else
-        #define OBJECT_TRANSFORM_VAR(x)  cbuffer _ObjectTransformData{ \
-            TransformData transformData; \
-        };
+#define OBJECT_TRANSFORM_VAR(x)    StructuredBuffer<TransformData> _ObjectTransformData;    \
+        static const TransformData transformData = _ObjectTransformData[0];
     #endif
 #else
     #define OBJECT_TRANSFORM_VAR(x)  cbuffer _ObjectTransformData : DX12_REGISTER_SPACE(x) {  \

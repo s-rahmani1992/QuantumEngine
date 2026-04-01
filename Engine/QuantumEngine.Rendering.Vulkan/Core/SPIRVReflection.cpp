@@ -99,7 +99,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::AddShaderReflection(cons
 			desType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
 			break;
 		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-			desType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+			desType = (isRayTracing || descriptor->name[0] != '_') ? VK_DESCRIPTOR_TYPE_STORAGE_BUFFER : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
 			break;
 		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
 			desType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;

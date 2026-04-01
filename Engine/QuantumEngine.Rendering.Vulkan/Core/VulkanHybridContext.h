@@ -11,10 +11,17 @@ namespace QuantumEngine {
 
 namespace QuantumEngine::Rendering::Vulkan {
 	class VulkanSplinePipelineModule;
+	class VulkanGBufferPipelineModule;
 
 	namespace Rasterization {
 		class VulkanRasterizationPipelineModule;
 	}
+
+	struct VKEntityGPUData {
+	public:
+		ref<GameEntity> gameEntity;
+		UInt32 index;
+	};
 
 	class VulkanHybridContext : public VulkanGraphicContext {
 	public:
@@ -25,11 +32,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		virtual void Render() override;
 	private:
 
-		struct VKEntityGPUData {
-		public:
-			ref<GameEntity> gameEntity;
-			UInt32 index;
-		};
+		
 
 		void UploadMeshesToGPU(const std::vector<ref<GameEntity>>& entities);
 		bool InitializeDepthBuffer();
@@ -50,8 +53,11 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkImageView m_depthImageView;
 
 		std::vector<VKEntityGPUData> m_entityGPUList;
+		std::vector<VKEntityGPUData> m_gBufferEntityGPUList;
 		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_rasterizationModules;
 		std::vector<ref<VulkanSplinePipelineModule>> m_splineModues;
+
+		ref<VulkanGBufferPipelineModule> m_gbufferModule = nullptr;
 
 		VkDescriptorPool m_descriptorPool;
 	};

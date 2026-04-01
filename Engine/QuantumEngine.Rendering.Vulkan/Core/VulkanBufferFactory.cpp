@@ -52,6 +52,9 @@ bool QuantumEngine::Rendering::Vulkan::VulkanBufferFactory::CreateBuffer(UInt32 
 	if ((usageFlags & m_uniformFlag) > 0)
 		alignment = m_physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
 
+	if ((usageFlags & VK_BUFFER_USAGE_STORAGE_BUFFER_BIT) > 0)
+		alignment = m_physicalDeviceProperties.limits.minStorageBufferOffsetAlignment;
+
 	UInt32 objectSize = ALIGN(size, alignment);
 	*stride = objectSize;
 

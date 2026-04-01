@@ -7,6 +7,7 @@
 #include "Rendering/Renderer.h"
 #include "Rendering/MeshRenderer.h"
 #include "Rendering/SplineRenderer.h"
+#include "Rendering/GBufferRTReflectionRenderer.h"
 #include "Rendering/RayTracingComponent.h"
 #include "VulkanAssetManager.h"
 #include "VulkanUtilities.h"
@@ -17,6 +18,7 @@
 #include "Rasterization/VulkanRasterizationPipelineModule.h"
 #include "VulkanSplinePipelineModule.h"
 #include "Compute/SPIRVComputeProgram.h"
+#include "VulkanGBufferPipelineModule.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanHybridContext::VulkanHybridContext(const VkInstance vkInstance, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	:VulkanGraphicContext(vkInstance, surfaceQueueFamilyIndex, window)
@@ -70,7 +72,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 
 	// Create Uniform Buffers for Transforms
 	m_bufferFactory->CreateBuffer(sizeof(TransformGPU), scene->entities.size()
-		, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_transformBuffer, &m_transformBufferMemory, &m_transformStride);
 
 
@@ -156,6 +158,8 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 				rasterizationModule->SetDescriptorOffset(HLSL_CAMERA_DATA_NAME, 0);
 				rasterizationModule->SetDescriptorOffset(HLSL_LIGHT_DATA_NAME, 0);
 			}
+
+			continue;
 		}
 
 		auto splineRenderer = std::dynamic_pointer_cast<SplineRenderer>(Renderer);
@@ -174,6 +178,14 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 				splineModule->WriteOffset(HLSL_CAMERA_DATA_NAME, 0);
 				splineModule->WriteOffset(HLSL_LIGHT_DATA_NAME, 0);
 			}
+
+			continue;
+		}
+
+		auto gBufferRenderer = std::dynamic_pointer_cast<GBufferRTReflectionRenderer>(Renderer);
+
+		if (gBufferRenderer != nullptr) {
+			m_gBufferEntityGPUList.push_back(entityGPU);
 		}
 	}
 
@@ -185,6 +197,13 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 		matPair.second->WriteBuffer(HLSL_LIGHT_DATA_NAME, m_lightBuffer, m_lightStride);
 	}
 
+	if (m_gBufferEntityGPUList.size() > 0) {
+		auto gBufferProgram = std::dynamic_pointer_cast<Rasterization::SPIRVRasterizationProgram>( m_shaderRegistery->GetShaderPrograms("G_Buffer_Program"));
+		m_gbufferModule = std::make_shared<VulkanGBufferPipelineModule>();
+		m_gbufferModule->InitializePipeline(m_gBufferEntityGPUList, gBufferProgram, m_swapChainCapability.currentExtent.width, m_swapChainCapability.currentExtent.height, m_depthImageView);
+		m_gbufferModule->WriteBuffer(HLSL_OBJECT_TRANSFORM_DATA_NAME, m_transformBuffer, m_transformStride);
+		m_gbufferModule->WriteBuffer(HLSL_CAMERA_DATA_NAME, m_cameraBuffer, m_cameraStride);
+	}
 
 	return true;
 }
@@ -214,6 +233,9 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 		m_splineModues->ComputeCommand(m_commandBuffer);
 	}
 
+	if (m_gbufferModule != nullptr)
+		m_gbufferModule->RenderCommand(m_commandBuffer);
+
 	VkClearValue clearValues[2];
 	clearValues[0].color = { {0.2f, 0.4f, 0.6f, 1.0f} };
 	clearValues[1].depthStencil = { 1.0f, 0 };
@@ -229,19 +251,6 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 		},
 		.clearValueCount = 2,
 		.pClearValues = clearValues,
-	};
-
-	VkRenderPassBeginInfo middleRenderPassInfo{
-		.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
-		.pNext = nullptr,
-		.renderPass = m_renderPass,
-		.framebuffer = m_swapChainFramebuffers[imageIndex],
-		.renderArea = {
-			.offset = { 0, 0 },
-			.extent = m_swapChainCapability.currentExtent,
-		},
-		.clearValueCount = 0,
-		.pClearValues = nullptr,
 	};
 
 	vkCmdBeginRenderPass(m_commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -261,7 +270,6 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 	scissor.extent = m_swapChainCapability.currentExtent;
 
 	vkCmdSetScissor(m_commandBuffer, 0, 1, &scissor);
-
 
 	// Render Objects here
 	for (auto& module : m_rasterizationModules) {
