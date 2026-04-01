@@ -34,6 +34,7 @@ namespace QuantumEngine {
 		ref<Rendering::GPUMeshController> GetGPUHandle() { return m_gpuHandle; }
 		void SetGPUHandle(ref<Rendering::GPUMeshController> gpuHandle) { m_gpuHandle = gpuHandle; }
 		bool IsUploadedToGPU() const { return m_gpuHandle != nullptr; }
+		void Release();
 	private:
 		std::vector<Vertex> m_vertices;
 		std::vector<UInt32> m_indices;

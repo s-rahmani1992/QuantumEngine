@@ -5,6 +5,7 @@
 
 namespace QuantumEngine::Rendering::Vulkan {
 	class VulkanTexture2DController;
+	class VulkanMeshController;
 
 	class VulkanAssetManager : public GPUAssetManager 
 	{
@@ -26,5 +27,6 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
 
 		std::map<ref<Texture2D>, ref<VulkanTexture2DController>> m_texturePairs;
+		std::map<ref<Mesh>, ref<VulkanMeshController>> m_meshPairs;
 	};
 }

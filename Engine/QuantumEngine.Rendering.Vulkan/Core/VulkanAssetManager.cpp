@@ -131,6 +131,9 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(con
 
 	for(auto& mesh : meshes)
 	{
+		if(mesh->IsUploadedToGPU())
+			continue;
+
 		auto meshPairIt = meshPairs.emplace(mesh, nullptr);
 
 		if(meshPairIt.second == false)
@@ -217,6 +220,8 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(con
 		meshPair.first->SetGPUHandle(meshPair.second);
 	}
 
+	m_meshPairs.insert(meshPairs.begin(), meshPairs.end());
+
 	vkDestroyBuffer(m_device, stageBuffer, nullptr);
 	vkFreeMemory(m_device, stageBufferMemory, nullptr);
 }
@@ -226,5 +231,10 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UnloadAssets()
 	for(auto& [texture, gpuTexture] : m_texturePairs)
 	{
 		texture->Release();
+	}
+
+	for(auto& [mesh, gpuMesh] : m_meshPairs)
+	{
+		mesh->Release();
 	}
 }

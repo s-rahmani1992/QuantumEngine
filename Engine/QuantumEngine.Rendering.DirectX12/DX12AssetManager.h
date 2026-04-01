@@ -29,7 +29,7 @@ namespace QuantumEngine::Rendering::DX12 {
 		ComPtr<ID3D12CommandAllocator> m_uploadCommandAllocator;
 		ComPtr<ID3D12GraphicsCommandList7> m_uploadCommandList;
 		ref<DX12CommandExecuter> m_meshUploadCommandExecuter;
-		std::set<ref<Mesh>> m_uploadedMeshes;
+		std::map<ref<Mesh>, ref<DX12MeshController>> m_uploadedMeshes;
 		std::map<ref<Texture2D>, ref<DX12Texture2DController>> m_textures;
 	};
 }

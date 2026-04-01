@@ -80,6 +80,7 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadMeshesToGPU(const s
 
 		meshController->CopyToGPU(uploadBuffer, m_uploadCommandList, offset, mappedData);
 		mesh->SetGPUHandle(meshController);
+		m_uploadedMeshes.emplace(mesh, meshController);
 		offset += mesh->GetTotalSize();
 		mappedData += mesh->GetTotalSize();
 	}
@@ -91,6 +92,10 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UnloadAssets()
 {
 	for(auto& [texture, textureGPU] : m_textures) {
 		texture->Release();
+	}
+
+	for(auto& [mesh, meshGPU] : m_uploadedMeshes) {
+		mesh->Release();
 	}
 }
 

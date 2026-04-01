@@ -15,3 +15,9 @@ void QuantumEngine::Mesh::CopyVertexData(Byte* dest)
 {
 	std::memcpy(dest, m_vertices.data(), m_vertices.size() * sizeof(Vertex));
 }
+
+void QuantumEngine::Mesh::Release()
+{
+	m_vertices.clear();
+	m_indices.clear();
+}
