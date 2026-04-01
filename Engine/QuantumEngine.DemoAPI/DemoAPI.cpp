@@ -4,6 +4,7 @@
 #include <DX12GPUDeviceManager.h>
 #include <Core/VulkanDeviceManager.h>
 #include <Rendering/GraphicContext.h>
+#include "Rendering/GPUAssetManager.h"
 #include "SceneBuilder.h"
 #include <Core/Scene.h>
 
@@ -265,6 +266,7 @@ bool Run_Complete_Scene(HWND parentWindow, Graphics_API graphicApi)
 	gpuContext->PrepareScene(scene);
 	Platform::Application::Run(win, gpuContext, scene->behaviours);
 
+	assetManager->UnloadAssets();
 	DestroyWindow(win->GetHandle());
 	Platform::Application::Release();
 

@@ -55,6 +55,9 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshToGPU(const
 
 void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadTextureToGPU(const ref<Texture2D>& texture)
 {
+	if(m_texturePairs.find(texture) != m_texturePairs.end())
+		return;
+
 	ref<VulkanTexture2DController> gpuTexture = std::make_shared<VulkanTexture2DController>(texture, m_device);
 
 	if (gpuTexture->Initialize(m_memoryProperties) == false)
@@ -118,6 +121,7 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadTextureToGPU(co
 	vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(m_graphicsQueue);
 	texture->SetGPUHandle(gpuTexture);
+	m_texturePairs.emplace(texture, gpuTexture);
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(const std::vector<ref<Mesh>>& meshes)
@@ -215,4 +219,12 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(con
 
 	vkDestroyBuffer(m_device, stageBuffer, nullptr);
 	vkFreeMemory(m_device, stageBufferMemory, nullptr);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UnloadAssets()
+{
+	for(auto& [texture, gpuTexture] : m_texturePairs)
+	{
+		texture->Release();
+	}
 }

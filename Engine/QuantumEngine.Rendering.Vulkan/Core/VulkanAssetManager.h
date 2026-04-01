@@ -1,8 +1,11 @@
 #pragma once
 #include "vulkan-pch.h"
 #include "Rendering/GPUAssetManager.h"
+#include <map>
 
 namespace QuantumEngine::Rendering::Vulkan {
+	class VulkanTexture2DController;
+
 	class VulkanAssetManager : public GPUAssetManager 
 	{
 	public:
@@ -12,6 +15,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		virtual void UploadMeshToGPU(const ref<Mesh>& mesh) override;
 		virtual void UploadTextureToGPU(const ref<Texture2D>& texture) override;
 		virtual void UploadMeshesToGPU(const std::vector<ref<Mesh>>& meshes) override;
+		virtual void UnloadAssets() override;
 
 	private:
 		VkDevice m_device;
@@ -20,5 +24,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		VkCommandBuffer m_commandBuffer;
 		VkQueue m_graphicsQueue;
 		VkPhysicalDeviceMemoryProperties m_memoryProperties;
+
+		std::map<ref<Texture2D>, ref<VulkanTexture2DController>> m_texturePairs;
 	};
 }

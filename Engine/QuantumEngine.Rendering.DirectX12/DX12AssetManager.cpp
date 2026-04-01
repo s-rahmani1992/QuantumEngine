@@ -87,6 +87,13 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadMeshesToGPU(const s
 	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
 }
 
+void QuantumEngine::Rendering::DX12::DX12AssetManager::UnloadAssets()
+{
+	for(auto& [texture, textureGPU] : m_textures) {
+		texture->Release();
+	}
+}
+
 bool QuantumEngine::Rendering::DX12::DX12AssetManager::Initialize(ComPtr<ID3D12Device10>& device)
 {
 	m_device = device;

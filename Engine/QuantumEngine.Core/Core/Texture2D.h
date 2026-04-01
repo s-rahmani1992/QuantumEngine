@@ -27,7 +27,6 @@ namespace QuantumEngine {
 	class Texture2D {
 	public:
 		Texture2D(const TextureProperties& properties);
-		~Texture2D();
 		inline UInt32 GetWidth() const { return m_width; }
 		inline UInt32 GetHeight() const { return m_height; }
 		inline UInt32 GetTotalSize() const { return m_size; }
@@ -36,6 +35,7 @@ namespace QuantumEngine {
 		Byte* GetData() { return m_data; }
 		ref<Rendering::GPUTexture2DController> GetGPUHandle() { return m_gpuHandle; }
 		void SetGPUHandle(ref<Rendering::GPUTexture2DController> handle) { m_gpuHandle = handle; }
+		void Release();
 	private:
 		Byte* m_data;
 		UInt32 m_width;

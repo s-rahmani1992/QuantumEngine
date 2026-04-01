@@ -9,7 +9,7 @@ QuantumEngine::Texture2D::Texture2D(const TextureProperties& properties)
 		std::memcpy(m_data, properties.data, m_size);
 }
 
-QuantumEngine::Texture2D::~Texture2D()
+void QuantumEngine::Texture2D::Release()
 {
 	delete[] m_data;
 }
