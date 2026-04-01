@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "DX12Texture2DController.h"
 #include "Core/Texture2D.h"
+#include "DX12Utilities.h"
 
 const std::map<QuantumEngine::TextureFormat, DXGI_FORMAT> QuantumEngine::Rendering::DX12::DX12Texture2DController::m_texFormatMaps{
 	{QuantumEngine::TextureFormat::Unknown, DXGI_FORMAT_UNKNOWN},
@@ -15,41 +16,6 @@ QuantumEngine::Rendering::DX12::DX12Texture2DController::DX12Texture2DController
 
 bool QuantumEngine::Rendering::DX12::DX12Texture2DController::Initialize(const ComPtr<ID3D12Device10>& device) {
 	m_dxFormat = m_texFormatMaps.at(m_texture->GetFormat());
-	
-	D3D12_HEAP_PROPERTIES uploadHeapProps
-	{
-	.Type = D3D12_HEAP_TYPE_UPLOAD,
-	.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-	.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
-	.CreationNodeMask = 0,
-	.VisibleNodeMask = 0,
-	};
-
-	D3D12_RESOURCE_DESC uploadBufferDesc
-	{
-	uploadBufferDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER,
-	uploadBufferDesc.Alignment = D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT,
-	uploadBufferDesc.Width = m_texture->GetTotalSize(),
-	uploadBufferDesc.Height = 1,
-	uploadBufferDesc.DepthOrArraySize = 1,
-	uploadBufferDesc.MipLevels = 1,
-	uploadBufferDesc.Format = DXGI_FORMAT_UNKNOWN,
-	uploadBufferDesc.SampleDesc.Count = 1,
-	uploadBufferDesc.SampleDesc.Quality = 0,
-	uploadBufferDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-	uploadBufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE,
-	};
-	
-	if (FAILED(device->CreateCommittedResource(&uploadHeapProps, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
-		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_uploadTextureBuffer))))
-		return false;
-
-	D3D12_HEAP_PROPERTIES bufferHeapProps{};
-	bufferHeapProps.Type = D3D12_HEAP_TYPE_DEFAULT;
-	bufferHeapProps.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN;
-	bufferHeapProps.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN;
-	bufferHeapProps.CreationNodeMask = 0;
-	bufferHeapProps.VisibleNodeMask = 0;
 	
 	D3D12_RESOURCE_DESC bufferDesc
 	{
@@ -66,7 +32,7 @@ bool QuantumEngine::Rendering::DX12::DX12Texture2DController::Initialize(const C
 	bufferDesc.Flags = D3D12_RESOURCE_FLAG_NONE,
 	};
 
-	if (FAILED(device->CreateCommittedResource(&bufferHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
+	if (FAILED(device->CreateCommittedResource(&DX12::DescriptorUtilities::CommonDefaultHeapProps, D3D12_HEAP_FLAG_NONE, &bufferDesc,
 		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&m_tectureResource))))
 		return false;
 
@@ -87,12 +53,12 @@ bool QuantumEngine::Rendering::DX12::DX12Texture2DController::Initialize(const C
 		return false;
 	}
 
-	device->CreateShaderResourceView(m_tectureResource.Get(), &textureSRVDesc, m_textureHeap->GetCPUDescriptorHandleForHeapStart());
+	device->CreateShaderResourceView(m_tectureResource, &textureSRVDesc, m_textureHeap->GetCPUDescriptorHandleForHeapStart());
 
 	return true;
 }
 
-void QuantumEngine::Rendering::DX12::DX12Texture2DController::UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList)
+void QuantumEngine::Rendering::DX12::DX12Texture2DController::UploadToGPU(ComPtr<ID3D12GraphicsCommandList7>& uploadCommandList, const ComPtr<ID3D12Resource2>& uploadTextureBuffer)
 {
 	auto meshData = m_texture->GetData();
 	auto size = m_texture->GetTotalSize();
@@ -100,9 +66,9 @@ void QuantumEngine::Rendering::DX12::DX12Texture2DController::UploadToGPU(ComPtr
 	D3D12_RANGE range;
 	range.Begin = 0;
 	range.End = size - 1;
-	m_uploadTextureBuffer->Map(0, &range, &uploadAddress);
+	uploadTextureBuffer->Map(0, &range, &uploadAddress);
 	std::memcpy(uploadAddress, meshData, range.End);
-	m_uploadTextureBuffer->Unmap(0, &range);
+	uploadTextureBuffer->Unmap(0, &range);
 	D3D12_BOX srcBox{
 		.left = 0,
 		.top = 0,
@@ -113,7 +79,7 @@ void QuantumEngine::Rendering::DX12::DX12Texture2DController::UploadToGPU(ComPtr
 	};
 
 	D3D12_TEXTURE_COPY_LOCATION srcTexLocation{};
-	srcTexLocation.pResource = m_uploadTextureBuffer.Get();
+	srcTexLocation.pResource = uploadTextureBuffer.Get();
 	srcTexLocation.Type = D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT;
 	srcTexLocation.PlacedFootprint.Offset = 0;
 	srcTexLocation.PlacedFootprint.Footprint.Width = m_texture->GetWidth();
@@ -123,8 +89,13 @@ void QuantumEngine::Rendering::DX12::DX12Texture2DController::UploadToGPU(ComPtr
 	srcTexLocation.PlacedFootprint.Footprint.Format = m_dxFormat;
 
 	D3D12_TEXTURE_COPY_LOCATION destTexLocation{};
-	destTexLocation.pResource = m_tectureResource.Get();
+	destTexLocation.pResource = m_tectureResource;
 	destTexLocation.Type = D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX;
 	destTexLocation.SubresourceIndex = 0;
 	uploadCommandList->CopyTextureRegion(&destTexLocation, 0, 0, 0, &srcTexLocation, &srcBox);
+}
+
+void QuantumEngine::Rendering::DX12::DX12Texture2DController::Release() {
+	m_tectureResource->Release();
+	m_textureHeap->Release();
 }

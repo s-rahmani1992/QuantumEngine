@@ -6,6 +6,7 @@
 namespace QuantumEngine::Rendering::Vulkan {
 	class VulkanTexture2DController;
 	class VulkanMeshController;
+	class VulkanBufferFactory;
 
 	class VulkanAssetManager : public GPUAssetManager 
 	{
@@ -21,6 +22,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 	private:
 		VkDevice m_device;
 		VkPhysicalDevice m_physicalDevice;
+		ref<VulkanBufferFactory> m_bufferFactory;
 		VkCommandPool m_commandPool;
 		VkCommandBuffer m_commandBuffer;
 		VkQueue m_graphicsQueue;

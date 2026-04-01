@@ -6,9 +6,12 @@
 #include "VulkanUtilities.h"
 #include "Core/Texture2D.h"
 #include "VulkanTexture2DController.h"
+#include "VulkanBufferFactory.h"
+#include "VulkanDeviceManager.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanAssetManager::VulkanAssetManager(const VkDevice device, VkPhysicalDevice physicalDevice)
-	: m_device(device), m_physicalDevice(physicalDevice)
+	: m_device(device), m_physicalDevice(physicalDevice),
+	m_bufferFactory(VulkanDeviceManager::Instance()->GetBufferFactory())
 {
 	vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &m_memoryProperties);
 }
@@ -63,40 +66,10 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadTextureToGPU(co
 	if (gpuTexture->Initialize(m_memoryProperties) == false)
 		return;
 
-	VkBufferCreateInfo stageBufferCreateInfo{
-		.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-		.pNext = nullptr,
-		.flags = 0,
-		.size = texture->GetTotalSize(),
-		.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-		.queueFamilyIndexCount = 0,
-		.pQueueFamilyIndices = nullptr,
-	};
-
 	VkBuffer stageBuffer;
-
-	if (vkCreateBuffer(m_device, &stageBufferCreateInfo, nullptr, &stageBuffer) != VK_SUCCESS)
-		return;
-
-	VkMemoryRequirements stagingBufferMemoryRequirement;
-	vkGetBufferMemoryRequirements(m_device, stageBuffer, &stagingBufferMemoryRequirement);
-
-	VkMemoryAllocateInfo stageAllocInfo{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = stagingBufferMemoryRequirement.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&stagingBufferMemoryRequirement, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_memoryProperties),
-	};
-
 	VkDeviceMemory stageBufferMemory;
 
-	if (vkAllocateMemory(m_device, &stageAllocInfo, nullptr, &stageBufferMemory) != VK_SUCCESS) {
-		vkDestroyBuffer(m_device, stageBuffer, nullptr);
-		vkFreeMemory(m_device, stageBufferMemory, nullptr);
-		return;
-	}
-
-	vkBindBufferMemory(m_device, stageBuffer, stageBufferMemory, 0);
+	m_bufferFactory->CreateBuffer(texture->GetTotalSize(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, nullptr, &stageBuffer, &stageBufferMemory);
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -122,6 +95,9 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadTextureToGPU(co
 	vkQueueWaitIdle(m_graphicsQueue);
 	texture->SetGPUHandle(gpuTexture);
 	m_texturePairs.emplace(texture, gpuTexture);
+
+	vkDestroyBuffer(m_device, stageBuffer, nullptr);
+	vkFreeMemory(m_device, stageBufferMemory, nullptr);
 }
 
 void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(const std::vector<ref<Mesh>>& meshes)
@@ -231,6 +207,7 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UnloadAssets()
 	for(auto& [texture, gpuTexture] : m_texturePairs)
 	{
 		texture->Release();
+		gpuTexture->Release();
 	}
 
 	for(auto& [mesh, gpuMesh] : m_meshPairs)

@@ -12,10 +12,10 @@ namespace QuantumEngine::Rendering::Vulkan {
 	class VulkanTexture2DController : public GPUTexture2DController {
 	public:
 		VulkanTexture2DController(const ref<Texture2D>& texture, const VkDevice device);
-		~VulkanTexture2DController();
 		bool Initialize(const VkPhysicalDeviceMemoryProperties& memoryProperties);
 		void CopyCommand(VkCommandBuffer commandBuffer, VkBuffer stageBuffer);
 		inline VkImageView GetImageView() const { return m_imageView; }
+		void Release();
 	private:
 		const static std::map<TextureFormat, VkFormat> s_texFormatMaps;
 		ref<Texture2D> m_texture;

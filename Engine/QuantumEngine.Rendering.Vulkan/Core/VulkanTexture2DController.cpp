@@ -14,13 +14,6 @@ QuantumEngine::Rendering::Vulkan::VulkanTexture2DController::VulkanTexture2DCont
 {
 }
 
-QuantumEngine::Rendering::Vulkan::VulkanTexture2DController::~VulkanTexture2DController()
-{
-	vkDestroyImageView(m_device, m_imageView, nullptr);
-	vkDestroyImage(m_device, m_textureImage, nullptr);
-	vkFreeMemory(m_device, m_textureImageMemory, nullptr);
-}
-
 bool QuantumEngine::Rendering::Vulkan::VulkanTexture2DController::Initialize(const VkPhysicalDeviceMemoryProperties& memoryProperties)
 {
 	VkImageCreateInfo imageInfo{
@@ -117,4 +110,11 @@ void QuantumEngine::Rendering::Vulkan::VulkanTexture2DController::CopyCommand(Vk
 	};
 
 	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageEndCopyBarrier);
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanTexture2DController::Release()
+{
+	vkDestroyImageView(m_device, m_imageView, nullptr);
+	vkDestroyImage(m_device, m_textureImage, nullptr);
+	vkFreeMemory(m_device, m_textureImageMemory, nullptr);
 }

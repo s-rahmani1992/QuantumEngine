@@ -23,12 +23,20 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UploadTextureToGPU(const 
 	if (texture2DController->Initialize(m_device) == false)
 		return;
 
+	ComPtr<ID3D12Resource2> uploadTextureBuffer;
+
+	auto uploadBufferDesc = DX12::ResourceUtilities::GetCommonBufferResourceDesc(texture->GetTotalSize(), D3D12_RESOURCE_FLAG_NONE);
+
+	if (FAILED(m_device->CreateCommittedResource(&DX12::DescriptorUtilities::CommonUploadHeapProps, D3D12_HEAP_FLAG_NONE, &uploadBufferDesc,
+		D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&uploadTextureBuffer))))
+		return;
+
 	// Reset Commands
 	m_uploadCommandAllocator->Reset();
 	m_uploadCommandList->Reset(m_uploadCommandAllocator.Get(), nullptr);
 
 	// Execute Upload Commands
-	texture2DController->UploadToGPU(m_uploadCommandList);
+	texture2DController->UploadToGPU(m_uploadCommandList, uploadTextureBuffer);
 	m_meshUploadCommandExecuter->ExecuteAndWait(m_uploadCommandList.Get());
 	texture->SetGPUHandle(texture2DController);
 	m_textures.insert({ texture, texture2DController });
@@ -92,6 +100,7 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UnloadAssets()
 {
 	for(auto& [texture, textureGPU] : m_textures) {
 		texture->Release();
+		textureGPU->Release();
 	}
 
 	for(auto& [mesh, meshGPU] : m_uploadedMeshes) {
