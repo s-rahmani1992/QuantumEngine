@@ -112,10 +112,10 @@
                     <Run Text="Render Method:" Foreground="Black"/>
                     <Run Text="Hybrid" Foreground="{StaticResource Hybrid_Color}"/>
                             </TextBlock>
-                            <TextBlock FontFamily="{StaticResource Global_Font}" 
-                               TextAlignment="Center" FontSize="30" Foreground="DarkSlateBlue"
-                               Margin="10"
-                               Text="Coming Soon"/>
+                            <Button Style="{StaticResource Run_Button_Style}"
+                            Click="OnReflectionHybridVulkan">
+                                Run
+                            </Button>
                         </StackPanel>
 
                     </Border>

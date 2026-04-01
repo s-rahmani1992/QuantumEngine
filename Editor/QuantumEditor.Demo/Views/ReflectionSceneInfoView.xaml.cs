@@ -31,5 +31,12 @@ namespace QuantumEditor.Demo.Views
             WindowInteropHelper interop = new(Window.GetWindow(this));
             DemoNativeAPI.RunReflectionScene(interop.Handle, GraphicAPI.VULKAN, RenderMode.RAY_TRACING);
         }
+
+        private void OnReflectionHybridVulkan(object sender, RoutedEventArgs e)
+        {
+            WindowInteropHelper interop = new(Window.GetWindow(this));
+            DemoNativeAPI.RunReflectionScene(interop.Handle, GraphicAPI.VULKAN, RenderMode.HYBRID);
+
+        }
     }
 }

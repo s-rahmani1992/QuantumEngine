@@ -12,7 +12,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
-    Run_Simple_Scene(nullptr, VULKAN, FULL_RAY_TRACING);
+    Run_Complete_Scene(nullptr, VULKAN);
 
     return 0;
 }
