@@ -31,6 +31,7 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		void RenderCommand(VkCommandBuffer commandBuffer);
 		void UpdateTLAS(VkCommandBuffer commandBuffer);
 		VkImage GetOutputImage() const { return m_outputImage; }
+		void SetImage(const std::string& name, const VkImageView imageView);
 	private:
 		void CreateOutputImage();
 		void WriteBuffers(const std::string name, const VkBuffer buffer);

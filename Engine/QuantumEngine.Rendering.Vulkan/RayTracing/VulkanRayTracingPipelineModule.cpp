@@ -567,6 +567,27 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	buildAccelerationStructurePtr(commandBuffer, 1, &buildCmdInfo, &pRangeInfo);
 }
 
+void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::SetImage(const std::string& name, const VkImageView imageView)
+{
+	auto descriptorData = m_reflection.GetDescriptorData(name);
+
+	if (descriptorData != nullptr) {
+		VkDescriptorImageInfo imgDesc{};
+		imgDesc.imageView = imageView;
+		imgDesc.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+
+		VkWriteDescriptorSet write{};
+		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		write.dstSet = m_descriptorSets[descriptorData->data.set];
+		write.dstBinding = descriptorData->data.binding;
+		write.descriptorType = descriptorData->descriptorType;
+		write.descriptorCount = 1;
+		write.pImageInfo = &imgDesc;
+
+		vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+	}
+}
+
 void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::CreateOutputImage()
 {
 	VkImageCreateInfo imgInfo{};

@@ -19,6 +19,9 @@
 #include "VulkanSplinePipelineModule.h"
 #include "Compute/SPIRVComputeProgram.h"
 #include "VulkanGBufferPipelineModule.h"
+#include "RayTracing/VulkanRayTracingPipelineModule.h"
+#include "Core/VulkanDeviceManager.h"
+#include "Core/VulkanMaterialFactory.h"
 
 QuantumEngine::Rendering::Vulkan::VulkanHybridContext::VulkanHybridContext(const VkInstance vkInstance, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	:VulkanGraphicContext(vkInstance, surfaceQueueFamilyIndex, window)
@@ -203,6 +206,19 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 		m_gbufferModule->InitializePipeline(m_gBufferEntityGPUList, gBufferProgram, m_swapChainCapability.currentExtent.width, m_swapChainCapability.currentExtent.height, m_depthImageView);
 		m_gbufferModule->WriteBuffer(HLSL_OBJECT_TRANSFORM_DATA_NAME, m_transformBuffer, m_transformStride);
 		m_gbufferModule->WriteBuffer(HLSL_CAMERA_DATA_NAME, m_cameraBuffer, m_cameraStride);
+
+		auto gBufferGlobalProgram = m_shaderRegistery->GetShaderPrograms("G_Buffer_RT_Global_Program");
+
+		auto materialFactory = VulkanDeviceManager::Instance()->CreateMaterialFactory();
+		auto gBufferGlobalMaterial = materialFactory->CreateMaterial(gBufferGlobalProgram);
+		m_rayTracingModule = std::make_shared<RayTracing::VulkanRayTracingPipelineModule>();
+		
+		if (m_rayTracingModule->Initialize(scene->entities, gBufferGlobalMaterial, m_cameraBuffer, m_lightBuffer, m_transformBuffer, m_swapChainCapability.currentExtent) == false)
+			return false;
+
+		m_rayTracingModule->SetImage("_PositionTexture", m_gbufferModule->GetPositionImageView());
+		m_rayTracingModule->SetImage("_NormalTexture", m_gbufferModule->GetNormalImageView());
+		m_rayTracingModule->SetImage("_MaskTexture", m_gbufferModule->GetMaskImageView());
 	}
 
 	return true;
@@ -233,8 +249,10 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 		m_splineModues->ComputeCommand(m_commandBuffer);
 	}
 
-	if (m_gbufferModule != nullptr)
+	if (m_gbufferModule != nullptr) {
 		m_gbufferModule->RenderCommand(m_commandBuffer);
+		m_rayTracingModule->RenderCommand(m_commandBuffer);
+	}
 
 	VkClearValue clearValues[2];
 	clearValues[0].color = { {0.2f, 0.4f, 0.6f, 1.0f} };

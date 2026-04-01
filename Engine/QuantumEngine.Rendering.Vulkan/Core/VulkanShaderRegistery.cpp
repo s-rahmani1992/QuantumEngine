@@ -290,6 +290,12 @@ void QuantumEngine::Rendering::Vulkan::VulkanShaderRegistery::Initialize()
 		m_specialPrograms.emplace("G_Buffer_Program", std::dynamic_pointer_cast<SPIRVShaderProgram>(gBufferProgram));
 	}
 
+	auto gBufferGlobalRTProgram = CompileProgram(root + L"\\Assets\\Shaders\\g_buffer_rt_global.lib.hlsl", errorStr);
+
+	if (gBufferGlobalRTProgram != nullptr) {
+		m_specialPrograms.emplace("G_Buffer_RT_Global_Program", std::dynamic_pointer_cast<SPIRVShaderProgram>(gBufferGlobalRTProgram));
+	}
+
 	auto computeProgram = CompileProgram(root + L"\\Assets\\Shaders\\curve_mesh_compute.cs.hlsl", errorStr);
 
 	if (computeProgram != nullptr) {

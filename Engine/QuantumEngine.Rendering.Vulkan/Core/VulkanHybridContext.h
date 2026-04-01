@@ -17,6 +17,11 @@ namespace QuantumEngine::Rendering::Vulkan {
 		class VulkanRasterizationPipelineModule;
 	}
 
+	namespace RayTracing {
+		class SpirvrayTracingProgram;
+		class VulkanRayTracingPipelineModule;
+	}
+
 	struct VKEntityGPUData {
 	public:
 		ref<GameEntity> gameEntity;
@@ -58,6 +63,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 		std::vector<ref<VulkanSplinePipelineModule>> m_splineModues;
 
 		ref<VulkanGBufferPipelineModule> m_gbufferModule = nullptr;
+		ref<RayTracing::VulkanRayTracingPipelineModule> m_rayTracingModule;
 
 		VkDescriptorPool m_descriptorPool;
 	};
