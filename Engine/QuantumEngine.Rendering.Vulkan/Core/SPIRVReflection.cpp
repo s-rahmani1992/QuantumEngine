@@ -170,7 +170,14 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::CreatePipelineLayout(con
 		});
 	}
 
+	std::set<std::pair<UInt32, UInt32>> samplerBindings;
+
 	for (auto& samplerDescriptor : m_samplers) {
+		auto it = samplerBindings.emplace(samplerDescriptor.data.set, samplerDescriptor.data.binding);
+
+		if(it.second == false)//checking if the sampler binding is already processed because it can exist in multiple shaders
+			continue;
+
 		descriptorLayoutBindings[samplerDescriptor.data.set].push_back(VkDescriptorSetLayoutBinding{
 			.binding = samplerDescriptor.data.binding,
 			.descriptorType = samplerDescriptor.descriptorType,

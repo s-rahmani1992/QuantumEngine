@@ -599,7 +599,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	imgInfo.arrayLayers = 1;
 	imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	m_bufferFactory->CreateImage(&imgInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_outputImage, &m_outputImageMemory);
 

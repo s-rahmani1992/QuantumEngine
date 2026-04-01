@@ -15,6 +15,7 @@ namespace QuantumEngine::Rendering::Vulkan::Rasterization {
 		void BindValues(VkCommandBuffer commandBuffer);
 		void BindDynamicValues(VkCommandBuffer commandBuffer, UInt32* offsets, UInt32 offsetCount);
 		void WriteBuffer(const std::string name, const VkBuffer buffer, UInt32 stride);
+		void SetImageView(const std::string& name, const VkImageView imageView);
 	private:
 		struct pushConstantData {
 			UInt32 offset;

@@ -189,6 +189,15 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 
 		if (gBufferRenderer != nullptr) {
 			m_gBufferEntityGPUList.push_back(entityGPU);
+
+			auto& gpuMateiral = usedMaterials[gBufferRenderer->GetMaterial()];
+			ref<Rasterization::VulkanRasterizationPipelineModule> rasterizationModule = std::make_shared<Rasterization::VulkanRasterizationPipelineModule>(m_logicDevice);
+			if (rasterizationModule->Initialize(entity, gpuMateiral, m_renderPass)) {
+				m_gBufferRasterizationModules.push_back(rasterizationModule);
+				rasterizationModule->SetDescriptorOffset(HLSL_OBJECT_TRANSFORM_DATA_NAME, entityGPU.index * m_transformStride);
+				rasterizationModule->SetDescriptorOffset(HLSL_CAMERA_DATA_NAME, 0);
+				rasterizationModule->SetDescriptorOffset(HLSL_LIGHT_DATA_NAME, 0);
+			}
 		}
 	}
 
@@ -219,6 +228,13 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 		m_rayTracingModule->SetImage("_PositionTexture", m_gbufferModule->GetPositionImageView());
 		m_rayTracingModule->SetImage("_NormalTexture", m_gbufferModule->GetNormalImageView());
 		m_rayTracingModule->SetImage("_MaskTexture", m_gbufferModule->GetMaskImageView());
+	
+		for(auto& [material, rasterMaterial] : usedMaterials) {
+			rasterMaterial->SetImageView("_PositionTexture", m_gbufferModule->GetPositionImageView());
+			rasterMaterial->SetImageView("_NormalTexture", m_gbufferModule->GetNormalImageView());
+			rasterMaterial->SetImageView("_MaskTexture", m_gbufferModule->GetMaskImageView());
+			rasterMaterial->SetImageView(HLSL_RT_OUTPUT_TEXTURE_NAME, m_rayTracingModule->GetOutputImageView());
+		}
 	}
 
 	return true;
@@ -251,6 +267,7 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 
 	if (m_gbufferModule != nullptr) {
 		m_gbufferModule->RenderCommand(m_commandBuffer);
+		m_rayTracingModule->UpdateTLAS(m_commandBuffer);
 		m_rayTracingModule->RenderCommand(m_commandBuffer);
 	}
 
@@ -295,6 +312,10 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 	}
 
 	for (auto& module : m_splineModues) {
+		module->RenderCommand(m_commandBuffer);
+	}
+
+	for(auto& module : m_gBufferRasterizationModules) {
 		module->RenderCommand(m_commandBuffer);
 	}
 

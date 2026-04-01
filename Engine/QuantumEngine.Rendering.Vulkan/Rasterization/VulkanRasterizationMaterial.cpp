@@ -52,7 +52,7 @@ bool QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationMateria
 {
 	auto& layouts = m_program->GetDiscriptorLayouts();
 	m_descriptorSets.resize(layouts.size());
-	m_descriptorData.resize(layouts.size());
+	m_descriptorData.resize(m_material->GetTextureFields()->size());
 
 	VkDescriptorSetAllocateInfo descSetAlloc{
 		.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -134,6 +134,35 @@ void QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationMateria
 		.pImageInfo = nullptr,
 		.pBufferInfo = &descBufferInfo,
 		.pTexelBufferView = nullptr,
+	};
+
+	vkUpdateDescriptorSets(m_device, 1, &writeDescriptor, 0, nullptr);
+}
+
+void QuantumEngine::Rendering::Vulkan::Rasterization::VulkanRasterizationMaterial::SetImageView(const std::string& name, const VkImageView imageView)
+{
+	auto descriptorData = m_program->GetReflection().GetDescriptorData(name);
+
+	if (descriptorData == nullptr)
+		return;
+
+	VkDescriptorImageInfo imageInfo{
+			.sampler = nullptr,
+			.imageView = imageView,
+			.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	};
+
+	VkWriteDescriptorSet writeDescriptor{
+	.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+	.pNext = nullptr,
+	.dstSet = m_descriptorSets[descriptorData->data.set],
+	.dstBinding = descriptorData->data.binding,
+	.dstArrayElement = 0,
+	.descriptorCount = 1,
+	.descriptorType = descriptorData->descriptorType,
+	.pImageInfo = &imageInfo,
+	.pBufferInfo = nullptr,
+	.pTexelBufferView = nullptr,
 	};
 
 	vkUpdateDescriptorSets(m_device, 1, &writeDescriptor, 0, nullptr);

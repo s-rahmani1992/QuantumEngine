@@ -64,6 +64,7 @@ namespace QuantumEngine::Rendering::Vulkan {
 
 		ref<VulkanGBufferPipelineModule> m_gbufferModule = nullptr;
 		ref<RayTracing::VulkanRayTracingPipelineModule> m_rayTracingModule;
+		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_gBufferRasterizationModules;
 
 		VkDescriptorPool m_descriptorPool;
 	};
