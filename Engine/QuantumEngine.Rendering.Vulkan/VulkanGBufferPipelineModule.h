@@ -30,6 +30,10 @@ namespace QuantumEngine::Rendering::Vulkan {
 		inline VkImageView GetPositionImageView() const { return m_positionImageView; }
 		inline VkImageView GetNormalImageView() const { return m_normalImageView; }
 		inline VkImageView GetMaskImageView() const { return m_maskImageView; }
+
+		inline VkImage GetPositionImage() const { return m_positionImage; }
+		inline VkImage GetNormalImage() const { return m_normalImage; }
+		inline VkImage GetMaskImage() const { return m_maskImage; }
 	private:
 		bool CreateRenderPass();
 		bool CreateFrameBuffers(UInt32 width, UInt32 height);

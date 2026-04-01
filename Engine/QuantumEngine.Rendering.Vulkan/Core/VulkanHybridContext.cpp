@@ -60,6 +60,31 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Initialize()
 	if(InitializeFencesAndSemaphores() == false)
 		return false;
 
+	VkImageCreateInfo imgInfo{};
+	imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imgInfo.imageType = VK_IMAGE_TYPE_2D;
+	imgInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	imgInfo.extent = { m_swapChainCapability.currentExtent.width, m_swapChainCapability.currentExtent.height, 1 };
+	imgInfo.mipLevels = 1;
+	imgInfo.arrayLayers = 1; 
+	imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+	m_bufferFactory->CreateImage(&imgInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_rtOutputImage, &m_rtOutputImageMemory);
+
+	VkImageViewCreateInfo viewInfo{};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = m_rtOutputImage;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = imgInfo.format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	vkCreateImageView(m_logicDevice, &viewInfo, nullptr, &m_rtOutputImageView);
+
 	return true;
 }
 
@@ -228,12 +253,13 @@ bool QuantumEngine::Rendering::Vulkan::VulkanHybridContext::PrepareScene(const r
 		m_rayTracingModule->SetImage("_PositionTexture", m_gbufferModule->GetPositionImageView());
 		m_rayTracingModule->SetImage("_NormalTexture", m_gbufferModule->GetNormalImageView());
 		m_rayTracingModule->SetImage("_MaskTexture", m_gbufferModule->GetMaskImageView());
-	
+		m_rayTracingModule->SetImage(HLSL_RT_OUTPUT_TEXTURE_NAME, m_rtOutputImageView);
+
 		for(auto& [material, rasterMaterial] : usedMaterials) {
 			rasterMaterial->SetImageView("_PositionTexture", m_gbufferModule->GetPositionImageView());
 			rasterMaterial->SetImageView("_NormalTexture", m_gbufferModule->GetNormalImageView());
 			rasterMaterial->SetImageView("_MaskTexture", m_gbufferModule->GetMaskImageView());
-			rasterMaterial->SetImageView(HLSL_RT_OUTPUT_TEXTURE_NAME, m_rayTracingModule->GetOutputImageView());
+			rasterMaterial->SetImageView(HLSL_RT_OUTPUT_TEXTURE_NAME, m_rtOutputImageView);
 		}
 	}
 
@@ -267,8 +293,93 @@ void QuantumEngine::Rendering::Vulkan::VulkanHybridContext::Render()
 
 	if (m_gbufferModule != nullptr) {
 		m_gbufferModule->RenderCommand(m_commandBuffer);
+
+		// Transition G-Buffer images from SHADER_READ_ONLY_OPTIMAL -> GENERAL for ray tracing usage.
+		// The ray tracing descriptors were created with VK_IMAGE_LAYOUT_GENERAL, so we must match that layout before tracing.
+		VkImageMemoryBarrier gBufferBarriers[3]{};
+
+		// Position image
+		gBufferBarriers[0].sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		gBufferBarriers[0].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+		gBufferBarriers[0].dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+		gBufferBarriers[0].oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		gBufferBarriers[0].newLayout = VK_IMAGE_LAYOUT_GENERAL;
+		gBufferBarriers[0].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		gBufferBarriers[0].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		gBufferBarriers[0].image = m_gbufferModule->GetPositionImage();
+		gBufferBarriers[0].subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		gBufferBarriers[0].subresourceRange.baseMipLevel = 0;
+		gBufferBarriers[0].subresourceRange.levelCount = 1;
+		gBufferBarriers[0].subresourceRange.baseArrayLayer = 0;
+		gBufferBarriers[0].subresourceRange.layerCount = 1;
+
+		// Normal image
+		gBufferBarriers[1] = gBufferBarriers[0];
+		gBufferBarriers[1].image = m_gbufferModule->GetNormalImage();
+
+		// Mask image
+		gBufferBarriers[2] = gBufferBarriers[0];
+		gBufferBarriers[2].image = m_gbufferModule->GetMaskImage();
+
+		vkCmdPipelineBarrier(
+			m_commandBuffer,
+			VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+			0,
+			0, nullptr,
+			0, nullptr,
+			3, gBufferBarriers);
+
+		// Prepare ray tracing output image for writes
+		VkImageMemoryBarrier rtOutImageBarrier{};
+		rtOutImageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+		rtOutImageBarrier.srcAccessMask = 0;
+		rtOutImageBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		rtOutImageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		rtOutImageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+		rtOutImageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		rtOutImageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		rtOutImageBarrier.image = m_rtOutputImage;
+		rtOutImageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		rtOutImageBarrier.subresourceRange.baseMipLevel = 0;
+		rtOutImageBarrier.subresourceRange.levelCount = 1;
+		rtOutImageBarrier.subresourceRange.baseArrayLayer = 0;
+		rtOutImageBarrier.subresourceRange.layerCount = 1;
+
+		vkCmdPipelineBarrier(m_commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+			0, 0, nullptr, 0, nullptr, 1, &rtOutImageBarrier);
+
+
 		m_rayTracingModule->UpdateTLAS(m_commandBuffer);
 		m_rayTracingModule->RenderCommand(m_commandBuffer);
+
+		// Transition ray tracing output to SHADER_READ_ONLY_OPTIMAL for later sampling in rasterization
+		rtOutImageBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+		rtOutImageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		rtOutImageBarrier.oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+		rtOutImageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+		vkCmdPipelineBarrier(m_commandBuffer, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR, VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+			0, 0, nullptr, 0, nullptr, 1, &rtOutImageBarrier);
+
+		// Transition G-Buffer images back from GENERAL -> SHADER_READ_ONLY_OPTIMAL
+		// so further graphics/fragment sampling sees the expected layout.
+		for (int i = 0; i < 3; ++i) {
+			gBufferBarriers[i].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT | VK_ACCESS_SHADER_READ_BIT;
+			gBufferBarriers[i].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			gBufferBarriers[i].oldLayout = VK_IMAGE_LAYOUT_GENERAL;
+			gBufferBarriers[i].newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+
+		vkCmdPipelineBarrier(
+			m_commandBuffer,
+			VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			0,
+			0, nullptr,
+			0, nullptr,
+			3, gBufferBarriers);
+
 	}
 
 	VkClearValue clearValues[2];

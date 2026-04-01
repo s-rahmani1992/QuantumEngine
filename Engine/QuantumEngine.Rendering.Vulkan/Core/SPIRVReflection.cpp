@@ -136,7 +136,7 @@ UInt32 QuantumEngine::Rendering::Vulkan::SPIRVReflection::GetDescriptorLayoutCou
 UInt32 QuantumEngine::Rendering::Vulkan::SPIRVReflection::GetDynamicDescriptorCount()
 {
 	auto h = std::count_if(m_descripters.begin(), m_descripters.end(), [](const DescriptableBufferData& desc) {
-		return desc.name[0] == '_';
+		return (desc.descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC || desc.descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC);
 		});
 	return UInt32(h);
 }
@@ -301,7 +301,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::Initializes()
 	UInt32 offsetIndex = UINT32_MAX;
 
 	for (auto& descriptor : m_descripters) {
-		if (descriptor.name[0] != '_')
+		if (descriptor.name[0] != '_' || (descriptor.descriptorType != VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC && descriptor.descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC))
 			continue;
 
 		descriptor.offsetIndex = offsets[descriptor.data.set];
@@ -313,7 +313,7 @@ void QuantumEngine::Rendering::Vulkan::SPIRVReflection::Initializes()
 
 	for (auto& descriptor : m_descripters) {
 
-		if (descriptor.name[0] != '_')
+		if (descriptor.name[0] != '_' || (descriptor.descriptorType != VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC && descriptor.descriptorType != VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC))
 			continue;
 
 		descriptor.offsetIndex += finalOffsets[descriptor.data.set];

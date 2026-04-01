@@ -221,6 +221,7 @@ bool QuantumEngine::Rendering::Vulkan::VulkanGBufferPipelineModule::CreateFrameB
 	imgInfo.extent = { width, height, 1 };
 	imgInfo.mipLevels = 1;
 	imgInfo.arrayLayers = 1;
+	imgInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | 

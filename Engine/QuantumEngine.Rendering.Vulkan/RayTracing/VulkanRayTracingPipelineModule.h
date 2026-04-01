@@ -30,11 +30,8 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		bool Initialize(std::vector<ref<GameEntity>>& entities, const ref<Material> rtMaterial, VkBuffer camBuffer, VkBuffer lightBuffer, VkBuffer transformBuffer, const VkExtent2D& extent);
 		void RenderCommand(VkCommandBuffer commandBuffer);
 		void UpdateTLAS(VkCommandBuffer commandBuffer);
-		VkImage GetOutputImage() const { return m_outputImage; }
-		VkImageView GetOutputImageView() const { return m_outputImageView; }
 		void SetImage(const std::string& name, const VkImageView imageView);
 	private:
-		void CreateOutputImage();
 		void WriteBuffers(const std::string name, const VkBuffer buffer);
 		void WriteArrayBuffer(const std::string name, const std::vector<VkBuffer>& buffers);
 		struct VKEntityGPUData {
@@ -102,10 +99,6 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VkPipeline m_rtPipeline;
 
 		std::vector<VkDescriptorSet> m_descriptorSets;		
-
-		VkImage m_outputImage;
-		VkDeviceMemory m_outputImageMemory;
-		VkImageView m_outputImageView;
 
 		VkStridedDeviceAddressRegionKHR m_rayGenRegion;
 		VkStridedDeviceAddressRegionKHR m_missRegion;

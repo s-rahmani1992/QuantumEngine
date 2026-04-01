@@ -38,10 +38,6 @@ QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::~V
 	vkDestroyBuffer(m_device, m_tlasBuffer, nullptr);
 	vkFreeMemory(m_device, m_tlasMemory, nullptr);
 
-	vkDestroyImageView(m_device, m_outputImageView, nullptr);
-	vkDestroyImage(m_device, m_outputImage, nullptr);
-	vkFreeMemory(m_device, m_outputImageMemory, nullptr);
-
 	vkDestroyBuffer(m_device, m_SBT, nullptr);
 	vkFreeMemory(m_device, m_SBTMemory, nullptr);
 }
@@ -313,9 +309,6 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(m_graphicsQueue);
 
-	// create output texture
-	CreateOutputImage();
-
 	// Material Descriptors
 	auto& descriptors = m_reflection.GetDescriptors();
 	
@@ -376,25 +369,7 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 	WriteBuffers(HLSL_LIGHT_DATA_NAME, lightBuffer);
 	WriteBuffers(HLSL_TRANSFORM_ARRAY, transformBuffer);
 
-	auto descriptorData = m_reflection.GetDescriptorData(HLSL_RT_OUTPUT_TEXTURE_NAME);
-
-	if (descriptorData != nullptr) {
-		VkDescriptorImageInfo imgDesc{};
-		imgDesc.imageView = m_outputImageView;
-		imgDesc.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-		VkWriteDescriptorSet write{};
-		write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		write.dstSet = m_descriptorSets[descriptorData->data.set];
-		write.dstBinding = descriptorData->data.binding;
-		write.descriptorType = descriptorData->descriptorType;
-		write.descriptorCount = 1;
-		write.pImageInfo = &imgDesc;
-
-		vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
-	}
-
-	descriptorData = m_reflection.GetDescriptorData(HLSL_RT_TLAS_SCENE_NAME);
+	auto descriptorData = m_reflection.GetDescriptorData(HLSL_RT_TLAS_SCENE_NAME);
 	
 	if (descriptorData != nullptr) {
 		VkWriteDescriptorSetAccelerationStructureKHR asInfo{};
@@ -495,26 +470,6 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 		}
 	}
 
-
-	VkImageMemoryBarrier imageBarrier{};
-	imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	imageBarrier.srcAccessMask = 0;
-	imageBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-	imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-	imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	imageBarrier.image = m_outputImage;
-	imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	imageBarrier.subresourceRange.baseMipLevel = 0;
-	imageBarrier.subresourceRange.levelCount = 1;
-	imageBarrier.subresourceRange.baseArrayLayer = 0;
-	imageBarrier.subresourceRange.layerCount = 1;
-
-	vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
-		0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-
-
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, m_rtPipeline);
 
 	int shaderFlag = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
@@ -586,33 +541,6 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModul
 
 		vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
 	}
-}
-
-void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::CreateOutputImage()
-{
-	VkImageCreateInfo imgInfo{};
-	imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imgInfo.imageType = VK_IMAGE_TYPE_2D;
-	imgInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
-	imgInfo.extent = { m_extent.width, m_extent.height, 1 };
-	imgInfo.mipLevels = 1;
-	imgInfo.arrayLayers = 1;
-	imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-	m_bufferFactory->CreateImage(&imgInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_outputImage, &m_outputImageMemory);
-
-	VkImageViewCreateInfo viewInfo{};
-	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	viewInfo.image = m_outputImage;
-	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	viewInfo.format = imgInfo.format;
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	viewInfo.subresourceRange.levelCount = 1;
-	viewInfo.subresourceRange.layerCount = 1;
-
-	vkCreateImageView(m_device, &viewInfo, nullptr, &m_outputImageView);
 }
 
 void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingPipelineModule::WriteBuffers(const std::string name, const VkBuffer buffer)

@@ -66,6 +66,10 @@ namespace QuantumEngine::Rendering::Vulkan {
 		ref<RayTracing::VulkanRayTracingPipelineModule> m_rayTracingModule;
 		std::vector<ref<Rasterization::VulkanRasterizationPipelineModule>> m_gBufferRasterizationModules;
 
+		VkImage m_rtOutputImage;
+		VkDeviceMemory m_rtOutputImageMemory;
+		VkImageView m_rtOutputImageView;
+
 		VkDescriptorPool m_descriptorPool;
 	};
 }

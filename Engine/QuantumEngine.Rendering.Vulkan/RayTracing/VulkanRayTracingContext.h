@@ -8,6 +8,7 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 	class VulkanRayTracingContext : public VulkanGraphicContext {
 	public:
 		VulkanRayTracingContext(const VkInstance vkInstance, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window);
+		virtual ~VulkanRayTracingContext();
 		bool Initialize();
 		virtual bool PrepareScene(const ref<Scene>& scene) override;
 		virtual void Render() override;
@@ -25,6 +26,10 @@ namespace QuantumEngine::Rendering::Vulkan::RayTracing {
 		VkBuffer m_transformBuffer;
 		VkDeviceMemory m_transformBufferMemory;
 		TransformGPU m_transformData;
+
+		VkImage m_outputImage;
+		VkDeviceMemory m_outputImageMemory;
+		VkImageView m_outputImageView;
 
 		std::vector<VKEntityGPUData> m_entityGPUList;
 

@@ -9,6 +9,7 @@
 #include "Core/VulkanBufferFactory.h"
 #include "Core/VulkanDeviceManager.h"
 #include "Core/Transform.h"
+#include "Core/VulkanUtilities.h"
 
 QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::VulkanRayTracingContext(const VkInstance vkInstance, UInt32 surfaceQueueFamilyIndex, const ref<Platform::GraphicWindow>& window)
 	: VulkanGraphicContext(vkInstance, surfaceQueueFamilyIndex, window),
@@ -16,9 +17,16 @@ QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::VulkanRay
 {
 }
 
+QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::~VulkanRayTracingContext()
+{
+    vkDestroyImageView(m_logicDevice, m_outputImageView, nullptr);
+    vkDestroyImage(m_logicDevice, m_outputImage, nullptr);
+    vkFreeMemory(m_logicDevice, m_outputImageMemory, nullptr);
+}
+
 bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Initialize()
 {
-	if (InitializeSwapChain(VK_IMAGE_USAGE_TRANSFER_DST_BIT) == false)
+	if (InitializeSwapChain(VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == false)
 		return false;
 
 	if (InitializeCommandObjects() == false)
@@ -26,6 +34,30 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Init
 
 	if (InitializeFencesAndSemaphores() == false)
 		return false;
+
+    VkImageCreateInfo imgInfo{};
+    imgInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imgInfo.imageType = VK_IMAGE_TYPE_2D;
+    imgInfo.format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    imgInfo.extent = { m_swapChainCapability.currentExtent.width, m_swapChainCapability.currentExtent.height, 1 };
+    imgInfo.mipLevels = 1;
+    imgInfo.arrayLayers = 1;
+    imgInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imgInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imgInfo.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+    m_bufferFactory->CreateImage(&imgInfo, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &m_outputImage, &m_outputImageMemory);
+
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = m_outputImage;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = imgInfo.format;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.layerCount = 1;
+
+    vkCreateImageView(m_logicDevice, &viewInfo, nullptr, &m_outputImageView);
 
 	return true;
 }
@@ -56,6 +88,8 @@ bool QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Prep
 	if(m_rayTracingModule->Initialize(scene->entities, scene->rtGlobalMaterial, m_cameraBuffer, m_lightBuffer, m_transformBuffer, m_swapChainCapability.currentExtent) == false)
 		return false;
 
+	m_rayTracingModule->SetImage(HLSL_RT_OUTPUT_TEXTURE_NAME, m_outputImageView);
+
 	return true;
 }
 
@@ -79,6 +113,25 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Rend
     };
 
     vkBeginCommandBuffer(m_commandBuffer, &beginInfo);
+
+    VkImageMemoryBarrier imageBarrier{};
+    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageBarrier.srcAccessMask = 0;
+    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
+    imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    imageBarrier.image = m_outputImage;
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrier.subresourceRange.baseMipLevel = 0;
+    imageBarrier.subresourceRange.levelCount = 1;
+    imageBarrier.subresourceRange.baseArrayLayer = 0;
+    imageBarrier.subresourceRange.layerCount = 1;
+
+    vkCmdPipelineBarrier(m_commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR,
+        0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
     
     m_rayTracingModule->UpdateTLAS(m_commandBuffer);
 	m_rayTracingModule->RenderCommand(m_commandBuffer);
@@ -89,7 +142,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Rend
     rtToSrc.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
     rtToSrc.oldLayout = VK_IMAGE_LAYOUT_GENERAL; // typical RT output layout
     rtToSrc.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    rtToSrc.image = m_rayTracingModule->GetOutputImage();
+    rtToSrc.image = m_outputImage;
     rtToSrc.subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
 
     vkCmdPipelineBarrier(
@@ -133,7 +186,7 @@ void QuantumEngine::Rendering::Vulkan::RayTracing::VulkanRayTracingContext::Rend
 
     vkCmdBlitImage(
         m_commandBuffer,
-        m_rayTracingModule->GetOutputImage(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        m_outputImage, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
         m_swapChainImages[imageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
         1, &blit,
         VK_FILTER_LINEAR
