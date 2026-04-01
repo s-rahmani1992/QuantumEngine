@@ -120,7 +120,7 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 		},
 	};
 
-	device->CreateShaderResourceView(m_vertexBuffer.Get(), &vertexView, m_vertexHeap->GetCPUDescriptorHandleForHeapStart());
+	device->CreateShaderResourceView(m_vertexBuffer, &vertexView, m_vertexHeap->GetCPUDescriptorHandleForHeapStart());
 
 	if (FAILED(device->CreateDescriptorHeap(&meshHeapDesc, IID_PPV_ARGS(&m_indexHeap)))) {
 		return false;
@@ -138,7 +138,7 @@ bool QuantumEngine::Rendering::DX12::DX12MeshController::Initialize(const ComPtr
 		},
 	};
 
-	device->CreateShaderResourceView(m_indexBuffer.Get(), &indexView, m_indexHeap->GetCPUDescriptorHandleForHeapStart());
+	device->CreateShaderResourceView(m_indexBuffer, &indexView, m_indexHeap->GetCPUDescriptorHandleForHeapStart());
 	
 	return true;
 }
@@ -149,9 +149,9 @@ void QuantumEngine::Rendering::DX12::DX12MeshController::CopyToGPU(const ComPtr<
 	UInt32 indexSize = sizeof(UInt32) * m_mesh->GetIndexCount();
 	
 	m_mesh->CopyVertexData(mapData);
-	uploadCommandList->CopyBufferRegion(m_vertexBuffer.Get(), 0, uploadBuffer.Get(), offset, vertexSize);
+	uploadCommandList->CopyBufferRegion(m_vertexBuffer, 0, uploadBuffer.Get(), offset, vertexSize);
 	m_mesh->CopyIndexData(mapData + vertexSize);
-	uploadCommandList->CopyBufferRegion(m_indexBuffer.Get(), 0, uploadBuffer.Get(), offset + vertexSize, indexSize);
+	uploadCommandList->CopyBufferRegion(m_indexBuffer, 0, uploadBuffer.Get(), offset + vertexSize, indexSize);
 }
 
 ComPtr<ID3D12Resource2> QuantumEngine::Rendering::DX12::DX12MeshController::CreateBLASResource(const ComPtr<ID3D12GraphicsCommandList7>& commandList, ComPtr<ID3D12Resource2>& scratchBuffer)
@@ -210,6 +210,13 @@ ComPtr<ID3D12Resource2> QuantumEngine::Rendering::DX12::DX12MeshController::Crea
 	commandList->ResourceBarrier(1, &uavBarrier);
 
 	return BLASBuffer;
+}
+
+void QuantumEngine::Rendering::DX12::DX12MeshController::Release() {
+	m_vertexHeap->Release();
+	m_indexHeap->Release();
+	m_vertexBuffer->Release();
+	m_indexBuffer->Release();
 }
 
 D3D12_RAYTRACING_GEOMETRY_DESC QuantumEngine::Rendering::DX12::DX12MeshController::GetRTGeometryDesc() const

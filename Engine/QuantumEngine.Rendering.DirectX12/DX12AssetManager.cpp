@@ -105,6 +105,7 @@ void QuantumEngine::Rendering::DX12::DX12AssetManager::UnloadAssets()
 
 	for(auto& [mesh, meshGPU] : m_uploadedMeshes) {
 		mesh->Release();
+		meshGPU->Release();
 	}
 }
 

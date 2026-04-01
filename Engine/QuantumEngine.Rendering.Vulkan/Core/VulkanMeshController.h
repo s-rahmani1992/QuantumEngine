@@ -11,19 +11,20 @@ namespace QuantumEngine::Rendering::Vulkan {
 		struct VulkanBLASBuildInfo;
 	}
 
+	class VulkanBufferFactory;
 
 	class VulkanMeshController : public GPUMeshController
 	{
 	public: 		
 		VulkanMeshController(const ref<Mesh>& mesh, const VkDevice device);
-		~VulkanMeshController() override;
-		bool Initialize(const VkPhysicalDeviceMemoryProperties* memoryProperties);
+		bool Initialize(const ref<VulkanBufferFactory>& bufferFactory);
 		inline VkBuffer GetVertexBuffer() { return m_vertexBuffer; }
 		inline VkBuffer GetIndexBuffer() { return m_indexBuffer; }
 		void CopyCommand(VkCommandBuffer commandBuffer, VkBuffer stageBuffer, UInt32 offset);
 		void GetBLASBuildInfo(RayTracing::VulkanBLASBuildInfo* blasBuildInfo);
 		VkBuffer CreateVertexStorageBuffer();
 		VkBuffer CreateIndexStorageBuffer();
+		void Release();
 	private:
 
 		ref<Mesh> m_mesh;

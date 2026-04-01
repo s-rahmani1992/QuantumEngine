@@ -116,7 +116,7 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(con
 			continue;
 
 		ref<VulkanMeshController> meshController = std::make_shared<VulkanMeshController>(mesh, m_device);
-		if (meshController->Initialize(&m_memoryProperties)) {
+		if (meshController->Initialize(m_bufferFactory)) {
 			(*(meshPairIt.first)).second = meshController;
 
 			totalVBSize += mesh->GetTotalSize();
@@ -135,28 +135,8 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UploadMeshesToGPU(con
 	};
 
 	VkBuffer stageBuffer;
-
-	if (vkCreateBuffer(m_device, &stageBufferCreateInfo, nullptr, &stageBuffer) != VK_SUCCESS)
-		return;
-
-	VkMemoryRequirements stagingBufferMemoryRequirement;
-	vkGetBufferMemoryRequirements(m_device, stageBuffer, &stagingBufferMemoryRequirement);
-
-	VkMemoryAllocateInfo stageAllocInfo{
-		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
-		.allocationSize = stagingBufferMemoryRequirement.size,
-		.memoryTypeIndex = GetMemoryTypeIndex(&stagingBufferMemoryRequirement, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &m_memoryProperties),
-	};
-
 	VkDeviceMemory stageBufferMemory;
-
-	if (vkAllocateMemory(m_device, &stageAllocInfo, nullptr, &stageBufferMemory) != VK_SUCCESS) {
-		vkDestroyBuffer(m_device, stageBuffer, nullptr);
-		vkFreeMemory(m_device, stageBufferMemory, nullptr);
-		return;
-	}
-
-	vkBindBufferMemory(m_device, stageBuffer, stageBufferMemory, 0);
+	m_bufferFactory->CreateBuffer(totalVBSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, nullptr, &stageBuffer, &stageBufferMemory);
 
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -213,5 +193,6 @@ void QuantumEngine::Rendering::Vulkan::VulkanAssetManager::UnloadAssets()
 	for(auto& [mesh, gpuMesh] : m_meshPairs)
 	{
 		mesh->Release();
+		gpuMesh->Release();
 	}
 }

@@ -11,19 +11,8 @@ QuantumEngine::Rendering::Vulkan::VulkanMeshController::VulkanMeshController(con
 {
 }
 
-QuantumEngine::Rendering::Vulkan::VulkanMeshController::~VulkanMeshController()
+bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(const ref<VulkanBufferFactory>& bufferFactory)
 {
-	vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
-	vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
-
-	vkDestroyBuffer(m_device, m_indexBuffer, nullptr);
-	vkFreeMemory(m_device, m_indexBufferMemory, nullptr);
-}
-
-bool QuantumEngine::Rendering::Vulkan::VulkanMeshController::Initialize(const VkPhysicalDeviceMemoryProperties* memoryProperties)
-{
-	auto bufferFactory = VulkanDeviceManager::Instance()->GetBufferFactory();
-
 	VkMemoryAllocateFlagsInfo flags{
 		.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO,
 		.flags = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT,
@@ -143,4 +132,13 @@ VkBuffer QuantumEngine::Rendering::Vulkan::VulkanMeshController::CreateIndexStor
 	vkBindBufferMemory(m_device, indexStorageBuffer, m_indexBufferMemory, 0);
 
 	return indexStorageBuffer;
+}
+
+void QuantumEngine::Rendering::Vulkan::VulkanMeshController::Release()
+{
+	vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
+	vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
+
+	vkDestroyBuffer(m_device, m_indexBuffer, nullptr);
+	vkFreeMemory(m_device, m_indexBufferMemory, nullptr);
 }
