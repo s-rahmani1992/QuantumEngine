@@ -65,6 +65,7 @@ bool Run_Simple_Scene(HWND parentWindow, Graphics_API graphicApi, RenderMode ren
 	gpuContext->PrepareScene(scene);
 	Platform::Application::Run(win, gpuContext, scene->behaviours);
 
+	assetManager->UnloadAssets();
 	DestroyWindow(win->GetHandle());
 	Platform::Application::Release();
 
@@ -125,6 +126,7 @@ bool Run_Reflection_Scene(HWND parentWindow, Graphics_API graphicApi, RenderMode
 	gpuContext->PrepareScene(scene);
 	Platform::Application::Run(win, gpuContext, scene->behaviours);
 
+	assetManager->UnloadAssets();
 	DestroyWindow(win->GetHandle());
 	Platform::Application::Release();
 
@@ -172,6 +174,7 @@ bool Run_Shadow_Scene(HWND parentWindow, Graphics_API graphicApi)
 	gpuContext->PrepareScene(scene);
 	Platform::Application::Run(win, gpuContext, scene->behaviours);
 
+	assetManager->UnloadAssets();
 	DestroyWindow(win->GetHandle());
 	Platform::Application::Release();
 
@@ -219,6 +222,7 @@ bool Run_Refraction_Scene(HWND parentWindow, Graphics_API graphicApi)
 	gpuContext->PrepareScene(scene);
 	Platform::Application::Run(win, gpuContext, scene->behaviours);
 
+	assetManager->UnloadAssets();
 	DestroyWindow(win->GetHandle());
 	Platform::Application::Release();
 
